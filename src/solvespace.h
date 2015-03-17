@@ -7,9 +7,7 @@
 #ifndef __SOLVESPACE_H
 #define __SOLVESPACE_H
 
-#ifdef HAVE_CONFIG_H
-#   include <config.h>
-#endif
+#include <config.h>
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
@@ -85,7 +83,7 @@ inline double ffabs(double v) { return (v > 0) ? v : (-v); }
 
 #define isforname(c) (isalnum(c) || (c) == '_' || (c) == '-' || (c) == '#')
 
-#if defined(WIN32) && !defined(HAVE_C99_INTEGER_TYPES)
+#if defined(WIN32) && !defined(HAVE_STDINT_H)
 // Define some useful C99 integer types.
 typedef UINT64 uint64_t;
 typedef  INT64  int64_t;
@@ -462,7 +460,7 @@ public:
     void LoadGlyph(int index);
     bool LoadFontFromFile(bool nameOnly);
     const char *FontFileBaseName(void);
-   
+
     void Flush(void);
     void Handle(int *dx, int x, int y, bool onCurve);
     void PlotCharacter(int *dx, int c, double spacing);
