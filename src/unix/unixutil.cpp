@@ -29,7 +29,9 @@ void dbp(const char *str, ...)
 
 void GetAbsoluteFilename(char *file)
 {
-    realpath(file, file);
+    char expanded[MAX_PATH];
+    realpath(file, expanded);
+    strcpy(file, expanded);
 }
 
 //-----------------------------------------------------------------------------
