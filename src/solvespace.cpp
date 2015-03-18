@@ -9,7 +9,7 @@
 SolveSpace SS;
 Sketch SK;
 
-void SolveSpace::Init(char *cmdLine) {
+void SolveSpace::Init(const char *cmdLine) {
     SS.tangentArcRadius = 10.0;
 
     // Then, load the registry settings.
@@ -295,7 +295,7 @@ void SolveSpace::AfterNewFile(void) {
     UpdateWindowTitle();
 }
 
-void SolveSpace::RemoveFromRecentList(char *file) {
+void SolveSpace::RemoveFromRecentList(const char *file) {
     int src, dest;
     dest = 0;
     for(src = 0; src < MAX_RECENT; src++) {
@@ -307,7 +307,7 @@ void SolveSpace::RemoveFromRecentList(char *file) {
     while(dest < MAX_RECENT) strcpy(RecentFile[dest++], "");
     RefreshRecentMenus();
 }
-void SolveSpace::AddToRecentList(char *file) {
+void SolveSpace::AddToRecentList(const char *file) {
     RemoveFromRecentList(file);
 
     int src;

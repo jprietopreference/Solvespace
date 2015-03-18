@@ -1227,9 +1227,9 @@ void GraphicsWindow::MouseScroll(double x, double y, int delta) {
 
     if(delta > 0) {
         scale *= 1.2;
-    } else {
+    } else if(delta < 0) {
         scale /= 1.2;
-    }
+    } else return;
 
     double rightf = x/scale - offsetRight;
     double upf = y/scale - offsetUp;

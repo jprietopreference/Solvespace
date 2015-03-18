@@ -5,6 +5,14 @@ include_directories(
     ${PNG_INCLUDE_DIRS}
     ${ZLIB_INCLUDE_DIRS})
 
+link_directories(
+    ${PNG_LIBRARY_DIRS}
+    ${ZLIB_LIBRARY_DIRS})
+
+add_definitions(
+    ${PNG_CFLAGS_OTHER}
+    ${ZLIB_CFLAGS_OTHER})
+
 include_directories(
     "${CMAKE_CURRENT_SOURCE_DIR}"
     "${CMAKE_CURRENT_SOURCE_DIR}/built"
@@ -43,7 +51,7 @@ set(libslvs_SOURCES
 set(libslvs_HEADERS
     solvespace.h)
 
-    add_library(slvs SHARED
+add_library(slvs SHARED
     ${libslvs_SOURCES}
     ${libslvs_HEADERS}
     ${util_SOURCES}
@@ -113,16 +121,26 @@ if(WIN32)
         win32/freeze.cpp
         win32/w32main.cpp
         win32/resource.rc)
-else()
-    include_directories(
-        "${FLTK_INCLUDE_DIR}")
+elseif(GUI STREQUAL "fltk")
+    include_directories(${FLTK_INCLUDE_DIR})
 
     set(platform_SOURCES
         fltk/fltkmain.cpp)
 
-    set(platform_LIBS
+    set(platform_LIBRARIES
         ${CMAKE_DL_LIBS}
-        "${FLTK_LIBRARIES}")
+        ${FLTK_LIBRARIES})
+elseif(GUI STREQUAL "gtk3")
+    include_directories(${GTKMM3_INCLUDE_DIRS} ${JSONC_INCLUDE_DIRS})
+    link_directories(${GTKMM3_LIBRARY_DIRS} ${JSONC_LIBRARY_DIRS})
+    add_definitions(${GTKMM3_CFLAGS_OTHER} ${JSONC_CFLAGS_OTHER})
+
+    set(platform_SOURCES
+        gtk3/gtk3main.cpp)
+
+    set(platform_LIBRARIES
+        ${GTKMM3_LIBRARIES}
+        ${JSONC_LIBRARIES})
 endif()
 
 # solvespace executable
@@ -197,7 +215,7 @@ target_link_libraries(solvespace
     "${OPENGL_LIBRARIES}"
     "${PNG_LIBRARIES}"
     "${ZLIB_LIBRARIES}"
-    "${platform_LIBS}")
+    "${platform_LIBRARIES}")
 
 if(WIN32)
     set_target_properties(solvespace PROPERTIES LINK_FLAGS /MANIFEST:NO)

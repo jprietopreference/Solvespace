@@ -18,6 +18,10 @@ project(solvespace)
 set(solvespace_VERSION_MAJOR 2)
 set(solvespace_VERSION_MINOR 1)
 
+if(NOT WIN32)
+    set(GUI gtk3 CACHE STRING "GUI toolkit to use (one of: fltk gtk3)")
+endif()
+
 # compiler
 
 if(WIN32)
@@ -75,12 +79,25 @@ if(WIN32)
     set(SPACEWARE_LIBRARIES
         "${CMAKE_SOURCE_DIR}/extlib/si/siapp.lib")
 else()
-    find_package(PNG REQUIRED)
-    find_package(ZLIB REQUIRED)
     find_package(SpaceWare)
 
-    find_package(FLTK REQUIRED)
-    CHECK_INCLUDE_FILE("fontconfig/fontconfig.h" HAVE_FONTCONFIG)
+    if(GUI STREQUAL "fltk")
+        # Find the packages the old-fashioned way. Doesn't require
+        # the system to follow freedesktop standards.
+        find_package(PNG REQUIRED)
+        find_package(ZLIB REQUIRED)
+        find_package(FLTK REQUIRED)
+        CHECK_INCLUDE_FILE("fontconfig/fontconfig.h" HAVE_FONTCONFIG)
+    elseif(GUI STREQUAL "gtk3")
+        # Use freedesktop's pkg-config to locate everything.
+        find_package(PkgConfig REQUIRED)
+        pkg_check_modules(PNG REQUIRED libpng)
+        pkg_check_modules(ZLIB REQUIRED zlib)
+        pkg_check_modules(GTKMM3 REQUIRED gtkmm-3.0)
+        pkg_check_modules(JSONC REQUIRED json-c)
+    else()
+        message(FATAL_ERROR "GUI unrecognized: ${GUI}")
+    endif()
 endif()
 
 # components

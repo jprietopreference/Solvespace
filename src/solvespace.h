@@ -521,7 +521,7 @@ public:
 
     static double MmToPts(double mm);
 
-    static VectorFileWriter *ForFile(char *file);
+    static VectorFileWriter *ForFile(const char *file);
 
     void Output(SBezierLoopSetSet *sblss, SMesh *sm);
 
@@ -774,15 +774,15 @@ public:
     bool tangentArcDeleteOld;
 
     // The platform-dependent code calls this before entering the msg loop
-    void Init(char *cmdLine);
+    void Init(const char *cmdLine);
     void Exit(void);
 
     // File load/save routines, including the additional files that get
     // loaded when we have import groups.
     FILE        *fh;
     void AfterNewFile(void);
-    static void RemoveFromRecentList(char *file);
-    static void AddToRecentList(char *file);
+    static void RemoveFromRecentList(const char *file);
+    static void AddToRecentList(const char *file);
     char saveFile[MAX_PATH];
     bool fileLoadError;
     bool unsaved;
@@ -810,18 +810,18 @@ public:
     void UpdateWindowTitle(void);
     void ClearExisting(void);
     void NewFile(void);
-    bool SaveToFile(char *filename);
-    bool LoadFromFile(char *filename);
-    bool LoadEntitiesFromFile(char *filename, EntityList *le,
-                                SMesh *m, SShell *sh);
+    bool SaveToFile(const char *filename);
+    bool LoadFromFile(const char *filename);
+    bool LoadEntitiesFromFile(const char *filename, EntityList *le,
+                              SMesh *m, SShell *sh);
     void ReloadAllImported(void);
     // And the various export options
-    void ExportAsPngTo(char *file);
-    void ExportMeshTo(char *file);
+    void ExportAsPngTo(const char *file);
+    void ExportMeshTo(const char *file);
     void ExportMeshAsStlTo(FILE *f, SMesh *sm);
     void ExportMeshAsObjTo(FILE *f, SMesh *sm);
-    void ExportViewOrWireframeTo(char *file, bool wireframe);
-    void ExportSectionTo(char *file);
+    void ExportViewOrWireframeTo(const char *file, bool wireframe);
+    void ExportSectionTo(const char *file);
     void ExportWireframeCurves(SEdgeList *sel, SBezierList *sbl,
                                VectorFileWriter *out);
     void ExportLinesAndMesh(SEdgeList *sel, SBezierList *sbl, SMesh *sm,
