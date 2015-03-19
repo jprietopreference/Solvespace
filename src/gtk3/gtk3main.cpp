@@ -37,6 +37,7 @@
 #include <cairomm/xlib_surface.h>
 #include <pangomm/fontdescription.h>
 #include <gdk/gdkx.h>
+#include <fontconfig/fontconfig.h>
 #undef HAVE_STDINT_H /* no thanks, we have our own config.h */
 
 #include <GL/glx.h>
@@ -1238,8 +1239,28 @@ void OpenWebsite(const char *url) {
     gtk_show_uri(Gdk::Screen::get_default()->gobj(), url, GDK_CURRENT_TIME, NULL);
 }
 
+/* fontconfig is already initialized by GTK */
 void LoadAllFontFiles(void) {
-    oops();
+    FcPattern   *pat = FcPatternCreate();
+    FcObjectSet *os  = FcObjectSetBuild(FC_FILE, (char *)0);
+    FcFontSet   *fs  = FcFontList(0, pat, os);
+
+    for(int i = 0; i < fs->nfont; i++) {
+        FcChar8 *filename = FcPatternFormat(fs->fonts[i], (const FcChar8*) "%{file}");
+        Glib::ustring ufilename = (char*) filename;
+        if(ufilename.length() > 4 &&
+           ufilename.substr(ufilename.length() - 4, 4).lowercase() == ".ttf") {
+            TtfFont tf;
+            ZERO(&tf);
+            strcpy(tf.fontFile, (char*) filename);
+            SS.fonts.l.Add(&tf);
+        }
+        FcStrFree(filename);
+    }
+
+    FcFontSetDestroy(fs);
+    FcObjectSetDestroy(os);
+    FcPatternDestroy(pat);
 }
 
 void ExitNow(void) {

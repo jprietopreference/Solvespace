@@ -132,16 +132,28 @@ elseif(GUI STREQUAL "fltk")
         ${CMAKE_DL_LIBS}
         ${FLTK_LIBRARIES})
 elseif(GUI STREQUAL "gtk3")
-    include_directories(${GTKMM3_INCLUDE_DIRS} ${JSONC_INCLUDE_DIRS})
-    link_directories(${GTKMM3_LIBRARY_DIRS} ${JSONC_LIBRARY_DIRS})
-    add_definitions(${GTKMM3_CFLAGS_OTHER} ${JSONC_CFLAGS_OTHER})
+    include_directories(
+        ${GTKMM3_INCLUDE_DIRS}
+        ${JSONC_INCLUDE_DIRS}
+        ${FONTCONFIG_INCLUDE_DIRS})
+
+    link_directories(
+        ${GTKMM3_LIBRARY_DIRS}
+        ${JSONC_LIBRARY_DIRS}
+        ${FONTCONFIG_LIBRARY_DIRS})
+
+    add_definitions(
+        ${GTKMM3_CFLAGS_OTHER}
+        ${JSONC_CFLAGS_OTHER}
+        ${FONTCONFIG_CFLAGS_OTHER})
 
     set(platform_SOURCES
         gtk3/gtk3main.cpp)
 
     set(platform_LIBRARIES
         ${GTKMM3_LIBRARIES}
-        ${JSONC_LIBRARIES})
+        ${JSONC_LIBRARIES}
+        ${FONTCONFIG_LIBRARIES})
 endif()
 
 # solvespace executable
