@@ -628,11 +628,13 @@ void GetGraphicsWindowSize(int *w, int *h) {
 }
 
 void InvalidateGraphics(void) {
-    GtkGW->get_widget().get_window()->invalidate(true);
+    GtkGW->get_widget().queue_draw();
 }
 
 void PaintGraphics(void) {
     GtkGW->get_widget().queue_draw();
+    /* Process animation */
+    Glib::MainContext::get_default()->iteration(false);
 }
 
 void SetWindowTitle(const char *str) {
@@ -1025,8 +1027,7 @@ void GetTextWindowSize(int *w, int *h) {
 }
 
 void InvalidateText(void) {
-    if(GtkTW->get_window())
-        GtkTW->get_window()->invalidate(true);
+    GtkTW->get_widget().queue_draw();
 }
 
 void MoveTextScrollbarTo(int pos, int maxPos, int page) {
