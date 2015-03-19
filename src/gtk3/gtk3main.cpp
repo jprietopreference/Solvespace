@@ -24,6 +24,9 @@
 #include <gtkmm/adjustment.h>
 #include <gtkmm/separatormenuitem.h>
 #include <gtkmm/menuitem.h>
+#include <gtkmm/checkmenuitem.h>
+#include <gtkmm/radiomenuitem.h>
+#include <gtkmm/radiobuttongroup.h>
 #include <gtkmm/menu.h>
 #include <gtkmm/menubar.h>
 #include <gtkmm/applicationwindow.h>
@@ -778,9 +781,10 @@ int ShowContextMenu(void) {
 
 /* Main menu */
 
-class MainMenuItem : public Gtk::MenuItem {
+template<class MenuItem> class MainMenuItem : public MenuItem {
 public:
-    MainMenuItem(const GraphicsWindow::MenuEntry &entry) : _entry(entry) {
+    MainMenuItem(const GraphicsWindow::MenuEntry &entry) :
+            MenuItem(), _entry(entry) {
         Glib::ustring label(_entry.label);
         for(int i = 0; i < label.length(); i++) {
             if(label[i] == '&')
@@ -789,7 +793,7 @@ public:
 
         guint accel_key = 0;
         Gdk::ModifierType accel_mods = Gdk::ModifierType();
-        switch(entry.accel) {
+        switch(_entry.accel) {
             case GraphicsWindow::DELETE_KEY:
             accel_key = GDK_KEY_Delete;
             break;
@@ -799,29 +803,27 @@ public:
             break;
 
             default:
-            accel_key = entry.accel & ~(GraphicsWindow::SHIFT_MASK | GraphicsWindow::CTRL_MASK);
+            accel_key = _entry.accel & ~(GraphicsWindow::SHIFT_MASK | GraphicsWindow::CTRL_MASK);
             if(accel_key > GraphicsWindow::FUNCTION_KEY_BASE &&
                     accel_key <= GraphicsWindow::FUNCTION_KEY_BASE + 12)
                 accel_key = GDK_KEY_F1 + (accel_key - GraphicsWindow::FUNCTION_KEY_BASE - 1);
             else
                 accel_key = gdk_unicode_to_keyval(accel_key);
 
-            if(entry.accel & GraphicsWindow::SHIFT_MASK)
+            if(_entry.accel & GraphicsWindow::SHIFT_MASK)
                 accel_mods |= Gdk::SHIFT_MASK;
-            if(entry.accel & GraphicsWindow::CTRL_MASK)
+            if(_entry.accel & GraphicsWindow::CTRL_MASK)
                 accel_mods |= Gdk::CONTROL_MASK;
         }
 
-        set_label(label);
-        set_use_underline(true);
+        MenuItem::set_label(label);
+        MenuItem::set_use_underline(true);
         if(!(accel_key & 0x01000000))
-            set_accel_key(Gtk::AccelKey(accel_key, accel_mods));
+            MenuItem::set_accel_key(Gtk::AccelKey(accel_key, accel_mods));
     }
 
 protected:
     virtual void on_activate() {
-        Gtk::MenuItem::on_activate();
-
         if(_entry.fn)
             _entry.fn(_entry.id);
     }
@@ -829,6 +831,8 @@ protected:
 private:
     const GraphicsWindow::MenuEntry &_entry;
 };
+
+static std::map<int, Gtk::MenuItem *> main_menu_items;
 
 static void InitMainMenu(Gtk::MenuShell *menu_shell) {
     Gtk::MenuItem *menu_item = NULL;
@@ -849,27 +853,46 @@ static void InitMainMenu(Gtk::MenuShell *menu_shell) {
 
         current_level = entry->level;
 
-        if(entry->label)
-            menu_item = new MainMenuItem(*entry);
-        else
+        if(entry->label) {
+            switch(entry->kind) {
+                case GraphicsWindow::MENU_ITEM_NORMAL:
+                menu_item = new MainMenuItem<Gtk::MenuItem>(*entry);
+                break;
+
+                case GraphicsWindow::MENU_ITEM_CHECK:
+                menu_item = new MainMenuItem<Gtk::CheckMenuItem>(*entry);
+                break;
+
+                case GraphicsWindow::MENU_ITEM_RADIO:
+                MainMenuItem<Gtk::CheckMenuItem> *radio_item =
+                        new MainMenuItem<Gtk::CheckMenuItem>(*entry);
+                radio_item->set_draw_as_radio(true);
+                menu_item = radio_item;
+                break;
+            }
+        } else {
             menu_item = new Gtk::SeparatorMenuItem();
+        }
 
         levels[entry->level]->append(*menu_item);
+
+        main_menu_items[entry->id] = menu_item;
 
         ++entry;
     }
 }
 
+void EnableMenuById(int id, bool enabled) {
+    static_cast<Gtk::MenuItem*>(main_menu_items[id])->set_sensitive(enabled);
+}
+
 void CheckMenuById(int id, bool checked) {
-    // oops();
+    static_cast<Gtk::CheckMenuItem*>(main_menu_items[id])->
+        set_state_flags(checked ? Gtk::STATE_FLAG_CHECKED : Gtk::STATE_FLAG_NORMAL);
 }
 
 void RadioMenuById(int id, bool selected) {
-    // oops();
-}
-
-void EnableMenuById(int id, bool enabled) {
-    // oops();
+    CheckMenuById(id, selected);
 }
 
 /* Save/load */
