@@ -598,7 +598,13 @@ protected:
     virtual void on_hide() {
         CnfFreezeWindowPos(this, "GraphicsWindow");
 
+        Gtk::Window::on_hide();
+    }
+
+    virtual bool on_delete_event(GdkEventAny *event) {
         SS.Exit();
+
+        return true;
     }
 
     virtual bool on_window_state_event(GdkEventWindowState *event) {
@@ -1077,7 +1083,8 @@ void LoadAllFontFiles(void) {
 }
 
 void ExitNow(void) {
-    GtkTW->close();
+    GtkGW->hide();
+    GtkTW->hide();
 }
 
 /* Application lifecycle */
