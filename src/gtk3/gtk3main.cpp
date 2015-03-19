@@ -15,9 +15,19 @@
 
 #include <glibmm/main.h>
 #include <giomm/file.h>
-#include <gtkmm/application.h>
+#include <gtkmm/drawingarea.h>
+#include <gtkmm/scrollbar.h>
+#include <gtkmm/entry.h>
+#include <gtkmm/hvbox.h>
+#include <gtkmm/eventbox.h>
+#include <gtkmm/fixed.h>
+#include <gtkmm/adjustment.h>
 #include <gtkmm/applicationwindow.h>
-#include <gtkmm/label.h>
+#include <gtkmm/scrolledwindow.h>
+#include <gtkmm/messagedialog.h>
+#include <gtkmm/application.h>
+#include <cairomm/xlib_surface.h>
+#include <pangomm/fontdescription.h>
 #include <gdk/gdkx.h>
 #undef HAVE_STDINT_H /* no thanks, we have our own config.h */
 
@@ -204,25 +214,21 @@ void SetTimerFor(int milliseconds) {
     Glib::signal_timeout().connect(&TimerCallback, milliseconds);
 }
 
-/* Graphics window */
+static bool LaterCallback() {
+    SS.DoLater();
+    return false;
+}
 
-class GtkGraphicsWindow : public Gtk::ApplicationWindow {
+void ScheduleLater() {
+    Glib::signal_idle().connect(&LaterCallback);
+}
+
+/* GL wrapper */
+
+/* Replace this with GLArea when GTK 3.16 is old enough */
+class GtkGlWidget : public Gtk::DrawingArea {
 public:
-    GtkGraphicsWindow() {
-        set_reallocate_redraws(true);
-        set_events(Gdk::POINTER_MOTION_MASK |
-                   Gdk::BUTTON_PRESS_MASK | Gdk::BUTTON_RELEASE_MASK | Gdk::BUTTON_MOTION_MASK |
-                   Gdk::SCROLL_MASK);
-        set_sensitive(true);
-        set_double_buffered(false);
-
-        /* Without this, Gtk will eat the left button presses when
-           the window-dragging style property is on (and the window will
-           get dragged around). */
-        add(_dummy);
-
-        CnfThawWindowPos(this, "GraphicsWindow");
-
+    GtkGlWidget() : _xpixmap(0), _glpixmap(0) {
         int attrlist[] = {
             GLX_RGBA,
             GLX_RED_SIZE, 8,
@@ -230,7 +236,7 @@ public:
             GLX_BLUE_SIZE, 8,
             GLX_DEPTH_SIZE, 24,
             GLX_DOUBLEBUFFER,
-            0
+            None
         };
 
         _xdisplay = gdk_x11_get_default_xdisplay();
@@ -239,58 +245,176 @@ public:
             oops();
         }
 
-        XVisualInfo *xvinfo = glXChooseVisual(_xdisplay, gdk_x11_get_default_screen(), attrlist);
-        if(!xvinfo) {
+        _xvisual = XDefaultVisual(_xdisplay, gdk_x11_get_default_screen());
+
+        _xvinfo = glXChooseVisual(_xdisplay, gdk_x11_get_default_screen(), attrlist);
+        if(!_xvinfo) {
             dbp("cannot create glx visual");
             oops();
         }
 
-        _gl = glXCreateContext(_xdisplay, xvinfo, NULL, true);
+        _gl = glXCreateContext(_xdisplay, _xvinfo, NULL, true);
     }
 
-    bool is_fullscreen() const {
-        return _is_fullscreen;
-    }
-
-    void set_cursor_hand(bool is_hand) {
-        Glib::RefPtr<Gdk::Window> gdkwin = get_window();
-        if(gdkwin) { // returns NULL if not realized
-            Gdk::CursorType type = is_hand ? Gdk::HAND1 : Gdk::ARROW;
-            gdkwin->set_cursor(Gdk::Cursor::create(type));
-        }
+    ~GtkGlWidget() {
+        XFree(_xvinfo);
     }
 
 protected:
-    virtual void on_hide() {
-        CnfFreezeWindowPos(this, "GraphicsWindow");
-    }
+    /* Draw on a GLX pixmap, then read pixels out and draw them on
+       the Cairo context. Slower, but you get to overlay nice widgets. */
+    virtual bool on_draw(const Cairo::RefPtr<Cairo::Context> &cr) {
+        allocate_buffer(get_allocation());
 
-    virtual bool on_window_state_event(GdkEventWindowState *event) {
-        _is_fullscreen = event->new_window_state & GDK_WINDOW_STATE_FULLSCREEN;
+        if(!glXMakeCurrent(_xdisplay, _glpixmap, _gl))
+            oops();
+
+        glDrawBuffer(GL_FRONT);
+        on_gl_draw();
+        GL_CHECK();
+
+        Cairo::RefPtr<Cairo::XlibSurface> surface =
+                Cairo::XlibSurface::create(_xdisplay, _xpixmap, _xvisual,
+                                           get_allocated_width(), get_allocated_height());
+        cr->set_source(surface, 0, 0);
+        cr->paint();
+
+        if(!glXMakeCurrent(_xdisplay, None, NULL))
+            oops();
 
         return true;
     }
 
-    virtual bool on_configure_event(GdkEventConfigure *event) {
-        Gtk::ApplicationWindow::on_configure_event(event);
+    virtual void on_size_allocate (Gtk::Allocation& allocation) {
+        destroy_buffer();
 
+        Gtk::DrawingArea::on_size_allocate(allocation);
+    }
+
+    virtual void on_gl_draw() = 0;
+
+private:
+    Display *_xdisplay;
+    Visual *_xvisual;
+    XVisualInfo *_xvinfo;
+    GLXContext _gl;
+    Pixmap _xpixmap;
+    GLXDrawable _glpixmap;
+
+    void destroy_buffer() {
+        if(_glpixmap) {
+            glXDestroyGLXPixmap(_xdisplay, _glpixmap);
+            _glpixmap = 0;
+        }
+
+        if(_xpixmap) {
+            XFreePixmap(_xdisplay, _xpixmap);
+            _xpixmap = 0;
+        }
+    }
+
+    void allocate_buffer(Gtk::Allocation allocation) {
+        if(!_xpixmap) {
+            _xpixmap = XCreatePixmap(_xdisplay,
+                XRootWindow(_xdisplay, gdk_x11_get_default_screen()),
+                allocation.get_width(), allocation.get_height(), 24);
+        }
+
+        if(!_glpixmap) {
+            _glpixmap = glXCreateGLXPixmap(_xdisplay, _xvinfo, _xpixmap);
+        }
+    }
+};
+
+/* Editor overlay */
+
+class GtkEditorOverlay : public Gtk::Fixed {
+public:
+    GtkEditorOverlay(Gtk::Widget &underlay) : _underlay(underlay) {
+        add(_underlay);
+
+        Pango::FontDescription desc;
+        desc.set_family("monospace");
+        desc.set_size(7000);
+        _entry.override_font(desc);
+        _entry.set_width_chars(30);
+        _entry.set_no_show_all(true);
+        add(_entry);
+
+        _entry.signal_activate().
+            connect(sigc::mem_fun(this, &GtkEditorOverlay::on_activate));
+    }
+
+    void start_editing(int x, int y, const char *val) {
+        move(_entry, x, y - 4);
+        _entry.set_text(val);
+        _entry.show();
+        _entry.grab_focus();
+    }
+
+    void stop_editing() {
+        _entry.hide();
+    }
+
+    bool is_editing() const {
+        return _entry.is_visible();
+    }
+
+    sigc::signal<void, Glib::ustring> signal_editing_done() {
+        return _signal_editing_done;
+    }
+
+protected:
+    virtual bool on_key_press_event(GdkEventKey *event) {
+        if(event->keyval == GDK_KEY_Escape) {
+            stop_editing();
+            return true;
+        }
+
+        return false;
+    }
+
+    virtual void on_size_allocate(Gtk::Allocation& allocation) {
+        Gtk::Fixed::on_size_allocate(allocation);
+
+        _underlay.size_allocate(allocation);
+    }
+
+    virtual void on_activate() {
+        _signal_editing_done(_entry.get_text());
+    }
+
+private:
+    Gtk::Widget &_underlay;
+    Gtk::Entry _entry;
+    sigc::signal<void, Glib::ustring> _signal_editing_done;
+};
+
+/* Graphics window */
+
+class GtkGraphicsWidget : public GtkGlWidget {
+public:
+    GtkGraphicsWidget() {
+        set_events(Gdk::POINTER_MOTION_MASK |
+                   Gdk::BUTTON_PRESS_MASK | Gdk::BUTTON_RELEASE_MASK | Gdk::BUTTON_MOTION_MASK |
+                   Gdk::SCROLL_MASK);
+        set_double_buffered(true);
+    }
+
+    void emulate_key_press(GdkEventKey *event) {
+        on_key_press_event(event);
+    }
+
+protected:
+    virtual bool on_configure_event(GdkEventConfigure *event) {
         _w = event->width;
         _h = event->height;
 
-        return true;
+        return GtkGlWidget::on_configure_event(event);;
     }
 
-    virtual bool on_draw(const Cairo::RefPtr<Cairo::Context> &cr) {
-        unsigned long xwindow = gdk_x11_window_get_xid(get_window()->gobj());
-        if(!glXMakeCurrent(_xdisplay, xwindow, _gl))
-            return false;
-
+    virtual void on_gl_draw() {
         SS.GW.Paint();
-        GL_CHECK();
-
-        glXSwapBuffers(_xdisplay, xwindow);
-
-        return true;
     }
 
     virtual bool on_motion_notify_event(GdkEventMotion *event) {
@@ -349,7 +473,24 @@ protected:
         int x, y;
         ij_to_xy(event->x, event->y, x, y);
 
-        SS.GW.MouseScroll(x, y, event->delta_y);
+        int delta_y = event->delta_y;
+        if(delta_y == 0) {
+            switch(event->direction) {
+                case GDK_SCROLL_UP:
+                delta_y = -1;
+                break;
+
+                case GDK_SCROLL_DOWN:
+                delta_y = 1;
+                break;
+
+                default:
+                /* do nothing */
+                return false;
+            }
+        }
+
+        SS.GW.MouseScroll(x, y, delta_y);
 
         return true;
     }
@@ -400,13 +541,6 @@ protected:
     }
 
 private:
-    Gtk::Label _dummy;
-
-    Display *_xdisplay;
-    GLXContext _gl;
-
-    bool _is_fullscreen;
-
     int _w, _h;
     void ij_to_xy(int i, int j, int &x, int &y) {
         // Convert to xy (vs. ij) style coordinates,
@@ -416,26 +550,69 @@ private:
     }
 };
 
-GtkGraphicsWindow *GtkGW;
+class GtkGraphicsWindow : public Gtk::ApplicationWindow {
+public:
+    GtkGraphicsWindow() : _overlay(_widget) {
+        CnfThawWindowPos(this, "GraphicsWindow");
+
+        add(_overlay);
+
+        _overlay.signal_editing_done().
+            connect(sigc::mem_fun(this, &GtkGraphicsWindow::on_editing_done));
+    }
+
+    GtkGraphicsWidget &get_widget() {
+        return _widget;
+    }
+
+    GtkEditorOverlay &get_overlay() {
+        return _overlay;
+    }
+
+    bool is_fullscreen() const {
+        return _is_fullscreen;
+    }
+
+protected:
+    virtual void on_hide() {
+        CnfFreezeWindowPos(this, "GraphicsWindow");
+
+        SS.Exit();
+    }
+
+    virtual bool on_window_state_event(GdkEventWindowState *event) {
+        _is_fullscreen = event->new_window_state & GDK_WINDOW_STATE_FULLSCREEN;
+
+        return Gtk::ApplicationWindow::on_window_state_event(event);
+    }
+
+    virtual void on_editing_done(Glib::ustring value) {
+        SS.GW.EditControlDone(value.c_str());
+    }
+
+private:
+    GtkGraphicsWidget _widget;
+    GtkEditorOverlay _overlay;
+
+    bool _is_fullscreen;
+};
+
+GtkGraphicsWindow *GtkGW = NULL;
 
 void GetGraphicsWindowSize(int *w, int *h) {
     GtkGW->get_size(*w, *h);
 }
 
 void InvalidateGraphics(void) {
-    GtkGW->get_window()->invalidate(true);
+    GtkGW->get_widget().get_window()->invalidate(true);
 }
 
 void PaintGraphics(void) {
-    GtkGW->queue_draw();
+    GtkGW->get_widget().queue_draw();
 }
 
 void SetWindowTitle(const char *str) {
     GtkGW->set_title(str);
-}
-
-void SetMousePointerToHand(bool is_hand) {
-    GtkGW->set_cursor_hand(is_hand);
 }
 
 void ToggleFullScreen(void) {
@@ -449,17 +626,24 @@ bool FullScreenIsActive(void) {
     return GtkGW->is_fullscreen();
 }
 
-void ShowGraphicsEditControl(int x, int y, char *s) {
-    oops();
+void ShowGraphicsEditControl(int x, int y, char *val) {
+    Gdk::Rectangle rect = GtkGW->get_widget().get_allocation();
+
+    // Convert to ij (vs. xy) style coordinates,
+    // and compensate for the input widget height due to inverse coord
+    int i, j;
+    i = x + rect.get_width() / 2;
+    j = -y + rect.get_height() / 2 - 24;
+
+    GtkGW->get_overlay().start_editing(i, j, val);
 }
 
 void HideGraphicsEditControl(void) {
-    // oops();
+    GtkGW->get_overlay().stop_editing();
 }
 
 bool GraphicsEditControlIsVisible(void) {
-    // oops();
-    return false;
+    return GtkGW->get_overlay().is_editing();
 }
 
 /* Main menu */
@@ -518,42 +702,189 @@ int ShowContextMenu(void) {
 
 /* Text window */
 
+class GtkTextWidget : public GtkGlWidget {
+public:
+    GtkTextWidget(Glib::RefPtr<Gtk::Adjustment> adjustment) : _adjustment(adjustment) {
+        set_events(Gdk::POINTER_MOTION_MASK | Gdk::BUTTON_PRESS_MASK | Gdk::SCROLL_MASK);
+    }
+
+    void set_cursor_hand(bool is_hand) {
+        Glib::RefPtr<Gdk::Window> gdkwin = get_window();
+        if(gdkwin) { // returns NULL if not realized
+            Gdk::CursorType type = is_hand ? Gdk::HAND1 : Gdk::ARROW;
+            gdkwin->set_cursor(Gdk::Cursor::create(type));
+        }
+    }
+
+protected:
+    virtual void on_gl_draw() {
+        SS.TW.Paint();
+    }
+
+    virtual bool on_motion_notify_event(GdkEventMotion *event) {
+        SS.TW.MouseEvent(false, event->state & Gdk::BUTTON1_MASK,
+                         event->x, event->y);
+
+        return true;
+    }
+
+    virtual bool on_button_press_event(GdkEventButton *event) {
+        SS.TW.MouseEvent(event->type == Gdk::BUTTON_PRESS,
+                         event->state & Gdk::BUTTON1_MASK,
+                         event->x, event->y);
+
+        return true;
+    }
+
+    virtual bool on_scroll_event(GdkEventScroll *event) {
+        int delta_y = event->delta_y;
+        if(delta_y == 0) {
+            switch(event->direction) {
+                case GDK_SCROLL_UP:
+                delta_y = -1;
+                break;
+
+                case GDK_SCROLL_DOWN:
+                delta_y = 1;
+                break;
+
+                default:
+                /* do nothing */
+                return false;
+            }
+        }
+
+        _adjustment->set_value(_adjustment->get_value() +
+                               delta_y * _adjustment->get_page_increment());
+
+        return true;
+    }
+
+    virtual bool on_leave_notify_event (GdkEventCrossing*event) {
+        SS.TW.MouseLeave();
+
+        return true;
+    }
+
+private:
+    Glib::RefPtr<Gtk::Adjustment> _adjustment;
+};
+
+class GtkTextWindow : public Gtk::Window {
+public:
+    GtkTextWindow() : _scrollbar(), _widget(_scrollbar.get_adjustment()),
+                      _box(), _editor(_widget) {
+        set_keep_above(true);
+        set_type_hint(Gdk::WINDOW_TYPE_HINT_UTILITY);
+        set_skip_taskbar_hint(true);
+        set_skip_pager_hint(true);
+        set_title("SolveSpace - Browser");
+
+        CnfThawWindowPos(this, "TextWindow");
+
+        _box.pack_start(_editor, true, true);
+        _box.pack_start(_scrollbar, false, true);
+        add(_box);
+
+        _scrollbar.get_adjustment()->signal_value_changed().
+            connect(sigc::mem_fun(this, &GtkTextWindow::on_scrollbar_value_changed));
+
+        _editor.signal_editing_done().
+            connect(sigc::mem_fun(this, &GtkTextWindow::on_editing_done));
+    }
+
+    Gtk::VScrollbar &get_scrollbar() {
+        return _scrollbar;
+    }
+
+    GtkTextWidget &get_widget() {
+        return _widget;
+    }
+
+    GtkEditorOverlay &get_editor() {
+        return _editor;
+    }
+
+protected:
+    virtual void on_hide() {
+        CnfFreezeWindowPos(this, "TextWindow");
+
+        Gtk::Window::on_hide();
+    }
+
+    virtual void on_scrollbar_value_changed() {
+        SS.TW.ScrollbarEvent(_scrollbar.get_adjustment()->get_value());
+    }
+
+    virtual void on_editing_done(Glib::ustring value) {
+        SS.TW.EditControlDone(value.c_str());
+    }
+
+private:
+    Gtk::VScrollbar _scrollbar;
+    GtkTextWidget _widget;
+    GtkEditorOverlay _editor;
+    Gtk::HBox _box;
+};
+
+GtkTextWindow *GtkTW = NULL;
+
 void ShowTextWindow(bool visible) {
-    // oops();
-}
-
-void InvalidateText(void) {
-    // oops();
-}
-
-void MoveTextScrollbarTo(int pos, int maxPos, int page) {
-    oops();
+    if(visible)
+        GtkTW->show();
+    else
+        GtkTW->hide();
 }
 
 void GetTextWindowSize(int *w, int *h) {
-    oops();
+    *w = GtkTW->get_widget().get_allocated_width();
+    *h = GtkTW->get_widget().get_allocated_height();
 }
 
-void ShowTextEditControl(int x, int y, char *s) {
-    oops();
+void InvalidateText(void) {
+    if(GtkTW->get_window())
+        GtkTW->get_window()->invalidate(true);
+}
+
+void MoveTextScrollbarTo(int pos, int maxPos, int page) {
+    GtkTW->get_scrollbar().get_adjustment()->configure(pos, 0, maxPos, 1, 10, page);
+}
+
+void SetMousePointerToHand(bool is_hand) {
+    GtkTW->get_widget().set_cursor_hand(is_hand);
+}
+
+void ShowTextEditControl(int x, int y, char *val) {
+    GtkTW->get_editor().start_editing(x, y, val);
 }
 
 void HideTextEditControl(void) {
-    // oops();
+    GtkTW->get_editor().stop_editing();
+    GtkGW->raise();
 }
 
 bool TextEditControlIsVisible(void) {
-    oops();
+    return GtkTW->get_editor().is_editing();
 }
 
 /* Miscellanea */
 
+
 void DoMessageBox(const char *str, int rows, int cols, bool error) {
-    oops();
+    Glib::ustring message;
+    message += "<tt>";
+    message += str;
+    message += "</tt>";
+
+    Gtk::MessageDialog dialog(message, /*use_markup*/ true,
+                              error ? Gtk::MESSAGE_INFO : Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK,
+                              /*is_modal*/ true);
+    dialog.set_transient_for(*GtkGW);
+    dialog.run();
 }
 
 void OpenWebsite(const char *url) {
-    oops();
+    gtk_show_uri(Gdk::Screen::get_default()->gobj(), url, GDK_CURRENT_TIME, NULL);
 }
 
 void LoadAllFontFiles(void) {
@@ -561,7 +892,7 @@ void LoadAllFontFiles(void) {
 }
 
 void ExitNow(void) {
-    GtkGW->close();
+    GtkTW->close();
 }
 
 /* Application lifecycle */
@@ -573,6 +904,7 @@ public:
 
     ~Application() {
         delete GtkGW;
+        delete GtkTW;
     }
 
 protected:
@@ -581,8 +913,13 @@ protected:
 
         CnfLoad();
 
+        GtkTW = new GtkTextWindow;
         GtkGW = new GtkGraphicsWindow;
+
+        add_window(*GtkTW);
         add_window(*GtkGW);
+
+        GtkTW->show_all();
         GtkGW->show_all();
     }
 

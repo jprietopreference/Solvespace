@@ -165,6 +165,10 @@ void SetTimerFor(int milliseconds)
     Fl::add_timeout((double)milliseconds / 1000.0, TimerCallback);
 }
 
+void ScheduleLater()
+{
+}
+
 void OpenWebsite(const char *url)
 {
     fl_open_uri(url, NULL, 0);

@@ -231,6 +231,7 @@ void SetWindowTitle(const char *str);
 void SetMousePointerToHand(bool yes);
 void DoMessageBox(const char *str, int rows, int cols, bool error);
 void SetTimerFor(int milliseconds);
+void ScheduleLater();
 void ExitNow(void);
 
 void CnfFreezeString(const char *str, const char *name);
@@ -904,9 +905,12 @@ public:
     bool allConsistent;
 
     struct {
+        bool    scheduled;
         bool    showTW;
         bool    generateAll;
     } later;
+    void ScheduleShowTW();
+    void ScheduleGenerateAll();
     void DoLater(void);
 
     static void MenuHelp(int id);

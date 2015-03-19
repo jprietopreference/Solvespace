@@ -187,6 +187,18 @@ void SolveSpace::Exit(void) {
     ExitNow();
 }
 
+void SolveSpace::ScheduleGenerateAll() {
+    if(!later.scheduled) ScheduleLater();
+    later.scheduled = true;
+    later.generateAll = true;
+}
+
+void SolveSpace::ScheduleShowTW() {
+    if(!later.scheduled) ScheduleLater();
+    later.scheduled = true;
+    later.showTW = true;
+}
+
 void SolveSpace::DoLater(void) {
     if(later.generateAll) GenerateAll();
     if(later.showTW) TW.Show();
@@ -504,7 +516,7 @@ void SolveSpace::MenuAnalyze(int id) {
                     // so force that to be shown.
                     SS.GW.ForceTextWindowShown();
 
-                    SS.later.showTW = true;
+                    SS.ScheduleShowTW();
                     SS.GW.ClearSelection();
                 } else {
                     Error("Constraint must have a label, and must not be "

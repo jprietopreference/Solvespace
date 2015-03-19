@@ -288,7 +288,7 @@ void GraphicsWindow::AnimateOnto(Quaternion quatf, Vector offsetf) {
     offset = offsetf;
     InvalidateGraphics();
     // If the view screen is open, then we need to refresh it.
-    SS.later.showTW = true;
+    SS.ScheduleShowTW();
 }
 
 void GraphicsWindow::HandlePointForZoomToFit(Vector p,
@@ -399,17 +399,17 @@ void GraphicsWindow::MenuView(int id) {
     switch(id) {
         case MNU_ZOOM_IN:
             SS.GW.scale *= 1.2;
-            SS.later.showTW = true;
+            SS.ScheduleShowTW();
             break;
 
         case MNU_ZOOM_OUT:
             SS.GW.scale /= 1.2;
-            SS.later.showTW = true;
+            SS.ScheduleShowTW();
             break;
 
         case MNU_ZOOM_TO_FIT:
             SS.GW.ZoomToFit(false);
-            SS.later.showTW = true;
+            SS.ScheduleShowTW();
             break;
 
         case MNU_SHOW_GRID:
@@ -442,7 +442,7 @@ void GraphicsWindow::MenuView(int id) {
             }
             SS.GW.AnimateOntoWorkplane();
             SS.GW.ClearSuper();
-            SS.later.showTW = true;
+            SS.ScheduleShowTW();
             break;
 
         case MNU_NEAREST_ORTHO:
@@ -534,13 +534,13 @@ void GraphicsWindow::MenuView(int id) {
 
         case MNU_UNITS_INCHES:
             SS.viewUnits = SolveSpace::UNIT_INCHES;
-            SS.later.showTW = true;
+            SS.ScheduleShowTW();
             SS.GW.EnsureValidActives();
             break;
 
         case MNU_UNITS_MM:
             SS.viewUnits = SolveSpace::UNIT_MM;
-            SS.later.showTW = true;
+            SS.ScheduleShowTW();
             SS.GW.EnsureValidActives();
             break;
 
@@ -628,7 +628,7 @@ void GraphicsWindow::EnsureValidActives(void) {
     CheckMenuById(MNU_FULL_SCREEN, FullScreenIsActive());
 #endif
 
-    if(change) SS.later.showTW = true;
+    if(change) SS.ScheduleShowTW();
 }
 
 void GraphicsWindow::SetWorkplaneFreeIn3d(void) {
@@ -675,7 +675,7 @@ void GraphicsWindow::DeleteTaggedRequests(void) {
     // that references it (since the regen code checks for that).
     SS.GenerateAll(0, INT_MAX);
     EnsureValidActives();
-    SS.later.showTW = true;
+    SS.ScheduleShowTW();
 }
 
 Vector GraphicsWindow::SnapToGrid(Vector p) {
@@ -739,7 +739,7 @@ void GraphicsWindow::MenuEdit(int id) {
                 SS.GW.MakeSelected(e->h);
             }
             InvalidateGraphics();
-            SS.later.showTW = true;
+            SS.ScheduleShowTW();
             break;
         }
 
@@ -789,7 +789,7 @@ void GraphicsWindow::MenuEdit(int id) {
                       "selected entities.");
             }
             InvalidateGraphics();
-            SS.later.showTW = true;
+            SS.ScheduleShowTW();
             break;
         }
 
@@ -882,7 +882,7 @@ void GraphicsWindow::MenuEdit(int id) {
         case MNU_REGEN_ALL:
             SS.ReloadAllImported();
             SS.GenerateAll(0, INT_MAX);
-            SS.later.showTW = true;
+            SS.ScheduleShowTW();
             break;
 
         default: oops();
@@ -916,13 +916,13 @@ void GraphicsWindow::MenuRequest(int id) {
             // Align the view with the selected workplane
             SS.GW.AnimateOntoWorkplane();
             SS.GW.ClearSuper();
-            SS.later.showTW = true;
+            SS.ScheduleShowTW();
             break;
         }
         case MNU_FREE_IN_3D:
             SS.GW.SetWorkplaneFreeIn3d();
             SS.GW.EnsureValidActives();
-            SS.later.showTW = true;
+            SS.ScheduleShowTW();
             InvalidateGraphics();
             break;
 
@@ -937,7 +937,7 @@ void GraphicsWindow::MenuRequest(int id) {
             } else {
                 SS.TW.GoToScreen(TextWindow::SCREEN_TANGENT_ARC);
                 SS.GW.ForceTextWindowShown();
-                SS.later.showTW = true;
+                SS.ScheduleShowTW();
             }
             break;
 
@@ -952,7 +952,7 @@ void GraphicsWindow::MenuRequest(int id) {
 c:
             SS.GW.pending.operation = id;
             SS.GW.pending.description = s;
-            SS.later.showTW = true;
+            SS.ScheduleShowTW();
             break;
 
         case MNU_CONSTRUCTION: {
@@ -1004,6 +1004,6 @@ void GraphicsWindow::ToggleBool(bool *v) {
 
     SS.GenerateAll();
     InvalidateGraphics();
-    SS.later.showTW = true;
+    SS.ScheduleShowTW();
 }
 
