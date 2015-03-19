@@ -31,6 +31,7 @@
 #include <gtkmm/menubar.h>
 #include <gtkmm/applicationwindow.h>
 #include <gtkmm/scrolledwindow.h>
+#include <gtkmm/filechooserdialog.h>
 #include <gtkmm/messagedialog.h>
 #include <gtkmm/application.h>
 #include <cairomm/xlib_surface.h>
@@ -897,16 +898,108 @@ void RadioMenuById(int id, bool selected) {
 
 /* Save/load */
 
-bool GetOpenFile(char *file, const char *defExtension, const char *selPattern) {
-    oops();
+static void FiltersFromPattern(const char *active, const char *patterns,
+                               Gtk::FileChooser &chooser) {
+    Glib::ustring uactive = "*." + Glib::ustring(active);
+    Glib::ustring upatterns = patterns;
+
+    Glib::RefPtr<Gtk::FileFilter> filter = Gtk::FileFilter::create();
+    Glib::ustring desc = "";
+    bool has_name = false, is_active = false;
+    int last = 0;
+    for(int i = 0; i <= upatterns.length(); i++) {
+        if(upatterns[i] == '\t' || upatterns[i] == '\n' || upatterns[i] == '\0') {
+            Glib::ustring frag = upatterns.substr(last, i - last);
+            if(!has_name) {
+                filter->set_name(frag);
+                has_name = true;
+            } else {
+                filter->add_pattern(frag);
+                if(uactive == frag)
+                    is_active = true;
+                if(desc == "")
+                    desc = frag;
+                else
+                    desc += ", " + frag;
+            }
+        } else continue;
+
+        if(upatterns[i] == '\n' || upatterns[i] == '\0') {
+            filter->set_name(filter->get_name() + " (" + desc + ")");
+            chooser.add_filter(filter);
+            if(is_active)
+                chooser.set_filter(filter);
+
+            filter = Gtk::FileFilter::create();
+            has_name = false;
+            is_active = false;
+            desc = "";
+        }
+
+        last = i + 1;
+    }
 }
 
-bool GetSaveFile(char *file, const char *defExtension, const char *selPattern) {
-    oops();
+bool GetOpenFile(char *file, const char *active, const char *patterns) {
+    Gtk::FileChooserDialog chooser(*GtkGW, "SolveSpace - Open File");
+    chooser.set_filename(file);
+    chooser.add_button("_Cancel", Gtk::RESPONSE_CANCEL);
+    chooser.add_button("_Open", Gtk::RESPONSE_OK);
+
+    FiltersFromPattern(active, patterns, chooser);
+
+    if(chooser.run() == Gtk::RESPONSE_OK) {
+        strcpy(file, chooser.get_filename().c_str());
+        return true;
+    } else {
+        return false;
+    }
+}
+
+bool GetSaveFile(char *file, const char *active, const char *patterns) {
+    Gtk::FileChooserDialog chooser(*GtkGW, "SolveSpace - Save File",
+                                   Gtk::FILE_CHOOSER_ACTION_SAVE);
+    chooser.set_do_overwrite_confirmation(true);
+    chooser.add_button("_Cancel", Gtk::RESPONSE_CANCEL);
+    chooser.add_button("_Save", Gtk::RESPONSE_OK);
+
+    chooser.set_filename(file);
+    if(chooser.get_current_name() == "")
+        chooser.set_current_name(Glib::ustring("untitled.") + active);
+
+    FiltersFromPattern(active, patterns, chooser);
+
+    if(chooser.run() == Gtk::RESPONSE_OK) {
+        strcpy(file, chooser.get_filename().c_str());
+        return true;
+    } else {
+        dbp("i");
+        return false;
+    }
 }
 
 int SaveFileYesNoCancel(void) {
-    oops();
+    Glib::ustring message =
+        "The file has changed since it was last saved.\n"
+        "Do you want to save the changes?";
+    Gtk::MessageDialog dialog(*GtkGW, message, /*use_markup*/ true, Gtk::MESSAGE_QUESTION,
+                              Gtk::BUTTONS_NONE, /*is_modal*/ true);
+    dialog.set_title("SolveSpace - Modified File");
+    dialog.add_button("_Save", Gtk::RESPONSE_YES);
+    dialog.add_button("Do_n't save", Gtk::RESPONSE_NO);
+    dialog.add_button("_Cancel", Gtk::RESPONSE_CANCEL);
+
+    switch(dialog.run()) {
+        case Gtk::RESPONSE_YES:
+        return SAVE_YES;
+
+        case Gtk::RESPONSE_NO:
+        return SAVE_NO;
+
+        case Gtk::RESPONSE_CANCEL:
+        default:
+        return SAVE_CANCEL;
+    }
 }
 
 void RefreshRecentMenus(void) {
@@ -1083,17 +1176,11 @@ bool TextEditControlIsVisible(void) {
 /* Miscellanea */
 
 
-void DoMessageBox(const char *str, int rows, int cols, bool error) {
-    Glib::ustring message;
-    message += "<tt>";
-    message += str;
-    message += "</tt>";
-
-    Gtk::MessageDialog dialog(message, /*use_markup*/ true,
+void DoMessageBox(const char *message, int rows, int cols, bool error) {
+    Gtk::MessageDialog dialog(*GtkGW, message, /*use_markup*/ true,
                               error ? Gtk::MESSAGE_INFO : Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK,
                               /*is_modal*/ true);
     dialog.set_title(error ? "SolveSpace - Error" : "SolveSpace - Message");
-    dialog.set_transient_for(*GtkGW);
     dialog.run();
 }
 

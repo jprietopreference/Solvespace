@@ -23,8 +23,9 @@ if(SPACEWARE_FOUND)
         "${SPACEWARE_INCLUDE_DIR}")
 endif()
 
-set(HAVE_FLTK ${FLTK_FOUND})
 set(HAVE_SPACEWARE ${SPACEWARE_FOUND})
+set(HAVE_FLTK ${FLTK_FOUND})
+set(HAVE_GTK3 ${GTKMM3_FOUND})
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/config.h.in"
                "${CMAKE_CURRENT_BINARY_DIR}/config.h")
 

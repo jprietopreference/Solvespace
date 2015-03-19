@@ -9,6 +9,8 @@
 /* Do we have the si library on win32, or libspnav on *nix? */
 #cmakedefine HAVE_SPACEWARE
 
+#cmakedefine HAVE_GTK3
+
 #cmakedefine HAVE_FLTK
 
 /* Only relevant for FLTK port. */
