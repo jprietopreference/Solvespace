@@ -825,7 +825,7 @@ public:
 
 protected:
     virtual void on_activate() {
-        if(_entry.fn)
+        if(!MenuItem::has_submenu() && _entry.fn)
             _entry.fn(_entry.id);
     }
 
@@ -894,6 +894,54 @@ void CheckMenuById(int id, bool checked) {
 
 void RadioMenuById(int id, bool selected) {
     CheckMenuById(id, selected);
+}
+
+class RecentMenuItem : public Gtk::MenuItem {
+public:
+    RecentMenuItem(const Glib::ustring& label, int id) :
+            MenuItem(label), _id(id) {
+    }
+
+protected:
+    virtual void on_activate() {
+        if(_id >= RECENT_OPEN && _id < (RECENT_OPEN + MAX_RECENT))
+            SolveSpace::MenuFile(_id);
+        else if(_id >= RECENT_IMPORT && _id < (RECENT_IMPORT + MAX_RECENT))
+            Group::MenuGroup(_id);
+    }
+
+private:
+    int _id;
+};
+
+
+static void RefreshRecentMenu(int id, int base) {
+    Gtk::MenuItem *recent = static_cast<Gtk::MenuItem*>(main_menu_items[id]);
+    recent->unset_submenu();
+
+    Gtk::Menu *menu = new Gtk::Menu;
+    recent->set_submenu(*menu);
+
+    if(std::string(RecentFile[0]).empty()) {
+        Gtk::MenuItem *placeholder = new Gtk::MenuItem("(no recent files)");
+        placeholder->set_sensitive(false);
+        menu->append(*placeholder);
+    } else {
+        for(int i = 0; i < MAX_RECENT; i++) {
+            if(std::string(RecentFile[i]).empty())
+                break;
+
+            RecentMenuItem *item = new RecentMenuItem(RecentFile[i], base + i);
+            menu->append(*item);
+        }
+    }
+
+    menu->show_all();
+}
+
+void RefreshRecentMenus(void) {
+    RefreshRecentMenu(GraphicsWindow::MNU_OPEN_RECENT, RECENT_OPEN);
+    RefreshRecentMenu(GraphicsWindow::MNU_GROUP_RECENT, RECENT_IMPORT);
 }
 
 /* Save/load */
@@ -1000,10 +1048,6 @@ int SaveFileYesNoCancel(void) {
         default:
         return SAVE_CANCEL;
     }
-}
-
-void RefreshRecentMenus(void) {
-    // oops();
 }
 
 /* Text window */
