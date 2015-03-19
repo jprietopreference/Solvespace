@@ -25,6 +25,7 @@
 #include <gtkmm/separatormenuitem.h>
 #include <gtkmm/menuitem.h>
 #include <gtkmm/menu.h>
+#include <gtkmm/menubar.h>
 #include <gtkmm/applicationwindow.h>
 #include <gtkmm/scrolledwindow.h>
 #include <gtkmm/messagedialog.h>
@@ -355,11 +356,16 @@ public:
     void start_editing(int x, int y, const char *val) {
         move(_entry, x, y - 4);
         _entry.set_text(val);
-        _entry.show();
-        _entry.grab_focus();
+        if(!_entry.is_visible()) {
+            _entry.show();
+            _entry.grab_focus();
+            _entry.add_modal_grab();
+        }
     }
 
     void stop_editing() {
+        if(_entry.is_visible())
+            _entry.remove_modal_grab();
         _entry.hide();
     }
 
@@ -557,12 +563,15 @@ private:
     }
 };
 
-class GtkGraphicsWindow : public Gtk::ApplicationWindow {
+class GtkGraphicsWindow : public Gtk::Window {
 public:
     GtkGraphicsWindow() : _overlay(_widget) {
         CnfThawWindowPos(this, "GraphicsWindow");
 
-        add(_overlay);
+        _box.pack_start(_menubar, false, true);
+        _box.pack_start(_overlay, true, true);
+
+        add(_box);
 
         _overlay.signal_editing_done().
             connect(sigc::mem_fun(this, &GtkGraphicsWindow::on_editing_done));
@@ -574,6 +583,10 @@ public:
 
     GtkEditorOverlay &get_overlay() {
         return _overlay;
+    }
+
+    Gtk::MenuBar &get_menubar() {
+        return _menubar;
     }
 
     bool is_fullscreen() const {
@@ -590,7 +603,7 @@ protected:
     virtual bool on_window_state_event(GdkEventWindowState *event) {
         _is_fullscreen = event->new_window_state & GDK_WINDOW_STATE_FULLSCREEN;
 
-        return Gtk::ApplicationWindow::on_window_state_event(event);
+        return Gtk::Window::on_window_state_event(event);
     }
 
     virtual void on_editing_done(Glib::ustring value) {
@@ -600,6 +613,8 @@ protected:
 private:
     GtkGraphicsWidget _widget;
     GtkEditorOverlay _overlay;
+    Gtk::MenuBar _menubar;
+    Gtk::VBox _box;
 
     bool _is_fullscreen;
 };
@@ -607,7 +622,8 @@ private:
 GtkGraphicsWindow *GtkGW = NULL;
 
 void GetGraphicsWindowSize(int *w, int *h) {
-    GtkGW->get_size(*w, *h);
+    *w = GtkGW->get_widget().get_allocated_width();
+    *h = GtkGW->get_widget().get_allocated_height();
 }
 
 void InvalidateGraphics(void) {
@@ -651,6 +667,14 @@ void HideGraphicsEditControl(void) {
 
 bool GraphicsEditControlIsVisible(void) {
     return GtkGW->get_overlay().is_editing();
+}
+
+void ToggleMenuBar(void) {
+    GtkGW->get_menubar().set_visible(GtkGW->get_menubar().is_visible());
+}
+
+bool MenuBarIsVisible(void) {
+    return GtkGW->get_menubar().is_visible();
 }
 
 /* Context menus */
@@ -745,12 +769,86 @@ int ShowContextMenu(void) {
 
 /* Main menu */
 
-void ToggleMenuBar(void) {
-    GtkGW->set_show_menubar(!GtkGW->get_show_menubar());
-}
+class MainMenuItem : public Gtk::MenuItem {
+public:
+    MainMenuItem(const GraphicsWindow::MenuEntry &entry) : _entry(entry) {
+        Glib::ustring label(_entry.label);
+        for(int i = 0; i < label.length(); i++) {
+            if(label[i] == '&')
+                label.replace(i, 1, "_");
+        }
 
-bool MenuBarIsVisible(void) {
-    return GtkGW->get_show_menubar();
+        guint accel_key = 0;
+        Gdk::ModifierType accel_mods = Gdk::ModifierType();
+        switch(entry.accel) {
+            case GraphicsWindow::DELETE_KEY:
+            accel_key = GDK_KEY_Delete;
+            break;
+
+            case GraphicsWindow::ESCAPE_KEY:
+            accel_key = GDK_KEY_Escape;
+            break;
+
+            default:
+            accel_key = entry.accel & ~(GraphicsWindow::SHIFT_MASK | GraphicsWindow::CTRL_MASK);
+            if(accel_key > GraphicsWindow::FUNCTION_KEY_BASE &&
+                    accel_key <= GraphicsWindow::FUNCTION_KEY_BASE + 12)
+                accel_key = GDK_KEY_F1 + (accel_key - GraphicsWindow::FUNCTION_KEY_BASE - 1);
+            else
+                accel_key = gdk_unicode_to_keyval(accel_key);
+
+            if(entry.accel & GraphicsWindow::SHIFT_MASK)
+                accel_mods |= Gdk::SHIFT_MASK;
+            if(entry.accel & GraphicsWindow::CTRL_MASK)
+                accel_mods |= Gdk::CONTROL_MASK;
+        }
+
+        set_label(label);
+        set_use_underline(true);
+        if(!(accel_key & 0x01000000))
+            set_accel_key(Gtk::AccelKey(accel_key, accel_mods));
+    }
+
+protected:
+    virtual void on_activate() {
+        Gtk::MenuItem::on_activate();
+
+        if(_entry.fn)
+            _entry.fn(_entry.id);
+    }
+
+private:
+    const GraphicsWindow::MenuEntry &_entry;
+};
+
+static void InitMainMenu(Gtk::MenuShell *menu_shell) {
+    Gtk::MenuItem *menu_item = NULL;
+    Gtk::MenuShell *levels[5] = {menu_shell, 0};
+
+    const GraphicsWindow::MenuEntry *entry = &GraphicsWindow::menu[0];
+    int current_level = 0;
+    while(entry->level >= 0) {
+        if(entry->level > current_level) {
+            Gtk::Menu *menu = new Gtk::Menu;
+            menu_item->set_submenu(*menu);
+
+            if(entry->level >= sizeof(levels) / sizeof(levels[0]))
+                oops();
+
+            levels[entry->level] = menu;
+        }
+
+        current_level = entry->level;
+
+        if(entry->label)
+            menu_item = new MainMenuItem(*entry);
+        else
+            menu_item = new Gtk::SeparatorMenuItem();
+
+        levels[entry->level]->append(*menu_item);
+
+        ++entry;
+    }
 }
 
 void CheckMenuById(int id, bool checked) {
@@ -1002,6 +1100,7 @@ protected:
 
         GtkTW = new GtkTextWindow;
         GtkGW = new GtkGraphicsWindow;
+        InitMainMenu(&GtkGW->get_menubar());
 
         add_window(*GtkTW);
         add_window(*GtkGW);
