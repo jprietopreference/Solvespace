@@ -614,6 +614,11 @@ protected:
     virtual bool on_window_state_event(GdkEventWindowState *event) {
         _is_fullscreen = event->new_window_state & GDK_WINDOW_STATE_FULLSCREEN;
 
+        /* The event arrives too late for the caller of ToggleFullScreen
+           to notice state change; and it's possible that the WM will
+           refuse our request, so we can't just toggle the saved state */
+        SS.GW.EnsureValidActives();
+
         return Gtk::Window::on_window_state_event(event);
     }
 
@@ -682,8 +687,9 @@ bool GraphicsEditControlIsVisible(void) {
     return GtkGW->get_overlay().is_editing();
 }
 
+/* TODO: removing menubar breaks accelerators. */
 void ToggleMenuBar(void) {
-    GtkGW->get_menubar().set_visible(GtkGW->get_menubar().is_visible());
+    GtkGW->get_menubar().set_visible(!GtkGW->get_menubar().is_visible());
 }
 
 bool MenuBarIsVisible(void) {
