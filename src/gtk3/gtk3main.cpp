@@ -22,6 +22,9 @@
 #include <gtkmm/eventbox.h>
 #include <gtkmm/fixed.h>
 #include <gtkmm/adjustment.h>
+#include <gtkmm/separatormenuitem.h>
+#include <gtkmm/menuitem.h>
+#include <gtkmm/menu.h>
 #include <gtkmm/applicationwindow.h>
 #include <gtkmm/scrolledwindow.h>
 #include <gtkmm/messagedialog.h>
@@ -257,6 +260,10 @@ public:
     }
 
     ~GtkGlWidget() {
+        destroy_buffer();
+
+        glXDestroyContext(_xdisplay, _gl);
+
         XFree(_xvinfo);
     }
 
@@ -646,6 +653,96 @@ bool GraphicsEditControlIsVisible(void) {
     return GtkGW->get_overlay().is_editing();
 }
 
+/* Context menus */
+
+static int context_menu_choice;
+
+class ContextMenuItem : public Gtk::MenuItem {
+public:
+    ContextMenuItem(const Glib::ustring &label, int id, bool mnemonic=false) :
+            Gtk::MenuItem(label, mnemonic), _id(id) {
+    }
+
+protected:
+    virtual void on_activate() {
+        Gtk::MenuItem::on_activate();
+
+        if(has_submenu())
+            return;
+
+        context_menu_choice = _id;
+    }
+
+    /* Workaround for https://bugzilla.gnome.org/show_bug.cgi?id=695488.
+       This is used in addition to on_activate() to catch mouse events.
+       Without on_activate(), it would be impossible to select a menu item
+       via keyboard.
+       This selects the item twice in some cases, but we are idempotent.
+     */
+    virtual bool on_button_press_event(GdkEventButton *event) {
+        if(event->button == 1 && event->type == Gdk::BUTTON_PRESS) {
+            on_activate();
+            return true;
+        }
+
+        return Gtk::MenuItem::on_button_press_event(event);
+    }
+
+private:
+    int _id;
+};
+
+static Gtk::Menu *context_menu = NULL, *context_submenu = NULL;
+
+void AddContextMenuItem(const char *label, int id) {
+    Gtk::MenuItem *menu_item;
+    if(label)
+        menu_item = new ContextMenuItem(label, id);
+    else
+        menu_item = new Gtk::SeparatorMenuItem();
+
+    if(id == CONTEXT_SUBMENU) {
+        menu_item->set_submenu(*context_submenu);
+        context_submenu = NULL;
+    }
+
+    if(context_submenu) {
+        context_submenu->append(*menu_item);
+    } else {
+        if(!context_menu)
+            context_menu = new Gtk::Menu;
+
+        context_menu->append(*menu_item);
+    }
+}
+
+void CreateContextSubmenu(void) {
+    if(context_submenu) oops();
+
+    context_submenu = new Gtk::Menu;
+}
+
+int ShowContextMenu(void) {
+    if(!context_menu)
+        return -1;
+
+    Glib::RefPtr<Glib::MainLoop> loop = Glib::MainLoop::create();
+    context_menu->signal_deactivate().
+        connect(sigc::mem_fun(loop.operator->(), &Glib::MainLoop::quit));
+
+    context_menu_choice = -1;
+
+    context_menu->show_all();
+    context_menu->popup(3, GDK_CURRENT_TIME);
+
+    loop->run();
+
+    delete context_menu;
+    context_menu = NULL;
+
+    return context_menu_choice;
+}
+
 /* Main menu */
 
 void ToggleMenuBar(void) {
@@ -684,20 +781,6 @@ int SaveFileYesNoCancel(void) {
 
 void RefreshRecentMenus(void) {
     // oops();
-}
-
-/* Context menus */
-
-void AddContextMenuItem(const char *label, int id) {
-    oops();
-}
-
-void CreateContextSubmenu(void) {
-    oops();
-}
-
-int ShowContextMenu(void) {
-    oops();
 }
 
 /* Text window */
@@ -879,6 +962,7 @@ void DoMessageBox(const char *str, int rows, int cols, bool error) {
     Gtk::MessageDialog dialog(message, /*use_markup*/ true,
                               error ? Gtk::MESSAGE_INFO : Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK,
                               /*is_modal*/ true);
+    dialog.set_title(error ? "SolveSpace - Error" : "SolveSpace - Message");
     dialog.set_transient_for(*GtkGW);
     dialog.run();
 }
@@ -905,6 +989,9 @@ public:
     ~Application() {
         delete GtkGW;
         delete GtkTW;
+
+        SK.Clear();
+        SS.Clear();
     }
 
 protected:
@@ -936,5 +1023,6 @@ protected:
 
 int main(int argc, char** argv) {
     Application app;
+
     return app.run(argc, argv);
 }
