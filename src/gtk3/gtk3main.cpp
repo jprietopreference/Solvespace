@@ -410,7 +410,8 @@ public:
     GtkGraphicsWidget() {
         set_events(Gdk::POINTER_MOTION_MASK |
                    Gdk::BUTTON_PRESS_MASK | Gdk::BUTTON_RELEASE_MASK | Gdk::BUTTON_MOTION_MASK |
-                   Gdk::SCROLL_MASK);
+                   Gdk::SCROLL_MASK |
+                   Gdk::LEAVE_NOTIFY_MASK);
         set_double_buffered(true);
     }
 
@@ -886,7 +887,8 @@ void RefreshRecentMenus(void) {
 class GtkTextWidget : public GtkGlWidget {
 public:
     GtkTextWidget(Glib::RefPtr<Gtk::Adjustment> adjustment) : _adjustment(adjustment) {
-        set_events(Gdk::POINTER_MOTION_MASK | Gdk::BUTTON_PRESS_MASK | Gdk::SCROLL_MASK);
+        set_events(Gdk::POINTER_MOTION_MASK | Gdk::BUTTON_PRESS_MASK | Gdk::SCROLL_MASK |
+                   Gdk::LEAVE_NOTIFY_MASK);
     }
 
     void set_cursor_hand(bool is_hand) {
