@@ -51,15 +51,17 @@
 
 #include <GL/glx.h>
 
-#include "solvespace.h"
 #include <config.h>
+#include "solvespace.h"
+#include "../unix/gloffscreen.h"
 
 char RecentFile[MAX_RECENT][MAX_PATH];
 
 #define GL_CHECK() \
     do { \
         int err = (int)glGetError(); \
-        if(err) dbp("%s:%d: glGetError() == 0x%X\n", __FILE__, __LINE__, err); \
+        if(err) dbp("%s:%d: glGetError() == 0x%X %s", \
+                    __FILE__, __LINE__, err, gluErrorString(err)); \
     } while (0)
 
 /* Settings */
@@ -244,67 +246,113 @@ void ScheduleLater() {
 /* GL wrapper */
 
 namespace SolveSpacePlatf {
-/* Replace this with GLArea when GTK 3.16 is old enough */
 class GlWidget : public Gtk::DrawingArea {
 public:
-    GlWidget() : _xpixmap(0), _glpixmap(0) {
-        int attrlist[] = {
-            GLX_RGBA,
-            GLX_RED_SIZE, 8,
-            GLX_GREEN_SIZE, 8,
-            GLX_BLUE_SIZE, 8,
-            GLX_DEPTH_SIZE, 24,
-            GLX_DOUBLEBUFFER,
-            None
-        };
-
+    GlWidget() : _offscreen(NULL) {
         _xdisplay = gdk_x11_get_default_xdisplay();
-        if(!glXQueryExtension(_xdisplay, NULL, NULL)) {
+
+        int glxmajor, glxminor;
+        if(!glXQueryVersion(_xdisplay, &glxmajor, &glxminor)) {
             dbp("OpenGL is not supported");
             oops();
         }
 
-        _xvisual = XDefaultVisual(_xdisplay, gdk_x11_get_default_screen());
-
-        _xvinfo = glXChooseVisual(_xdisplay, gdk_x11_get_default_screen(), attrlist);
-        if(!_xvinfo) {
-            dbp("cannot create glx visual");
+        if(glxmajor < 1 || (glxmajor == 1 && glxminor < 3)) {
+            dbp("GLX version %d.%d is too old; 1.3 required", glxmajor, glxminor);
             oops();
         }
 
-        _gl = glXCreateContext(_xdisplay, _xvinfo, NULL, true);
+        static int fbconfig_attrs[] = {
+            GLX_RENDER_TYPE, GLX_RGBA_BIT,
+            GLX_RED_SIZE, 8,
+            GLX_GREEN_SIZE, 8,
+            GLX_BLUE_SIZE, 8,
+            GLX_DEPTH_SIZE, 24,
+            None
+        };
+        int fbconfig_num = 0;
+        GLXFBConfig *fbconfigs = glXChooseFBConfig(_xdisplay, DefaultScreen(_xdisplay),
+                fbconfig_attrs, &fbconfig_num);
+        if(!fbconfigs || fbconfig_num == 0)
+            oops();
+
+        /* prefer FBConfigs with depth of 32;
+            * Mesa software rasterizer explodes with a BadMatch without this;
+            * without this, Intel on Mesa flickers horribly for some reason.
+           this does not seem to affect other rasterizers (ie NVidia).
+
+           see this Mesa bug:
+           http://lists.freedesktop.org/archives/mesa-dev/2015-January/074693.html */
+        GLXFBConfig fbconfig = fbconfigs[0];
+        for(int i = 0; i < fbconfig_num; i++) {
+            XVisualInfo *visual_info = glXGetVisualFromFBConfig(_xdisplay, fbconfigs[i]);
+            /* some GL visuals, notably on Chromium GL, do not have an associated
+               X visual; this is not an obstacle as we always render offscreen. */
+            if(!visual_info) continue;
+            int depth = visual_info->depth;
+            XFree(visual_info);
+
+            if(depth == 32) {
+                fbconfig = fbconfigs[i];
+                break;
+            }
+        }
+
+        _glcontext = glXCreateNewContext(_xdisplay,
+                fbconfig, GLX_RGBA_TYPE, 0, True);
+        if(!_glcontext) {
+            dbp("cannot create OpenGL context");
+            oops();
+        }
+
+        XFree(fbconfigs);
+
+        /* create a dummy X window to create a rendering context against.
+           we could use a Pbuffer, but some implementations (Chromium GL)
+           don't support these. we could use an existing window, but
+           some implementations (Chromium GL... do you see a pattern?)
+           do really strange things, i.e. draw a black rectangle on
+           the very front of the desktop if you do this. */
+        _xwindow = XCreateSimpleWindow(_xdisplay,
+                XRootWindow(_xdisplay, gdk_x11_get_default_screen()),
+                /*x*/ 0, /*y*/ 0, /*width*/ 1, /*height*/ 1,
+                /*border_width*/ 0, /*border*/ 0, /*background*/ 0);
     }
 
     ~GlWidget() {
-        destroy_buffer();
+        glXMakeCurrent(_xdisplay, None, NULL);
 
-        glXDestroyContext(_xdisplay, _gl);
+        XDestroyWindow(_xdisplay, _xwindow);
 
-        XFree(_xvinfo);
+        delete _offscreen;
+
+        glXDestroyContext(_xdisplay, _glcontext);
     }
 
 protected:
-    /* Draw on a GLX pixmap, then read pixels out and draw them on
+    /* Draw on a GLX framebuffer object, then read pixels out and draw them on
        the Cairo context. Slower, but you get to overlay nice widgets. */
     virtual bool on_draw(const Cairo::RefPtr<Cairo::Context> &cr) {
-        allocate_buffer(get_allocation());
-
-        if(!glXMakeCurrent(_xdisplay, _glpixmap, _gl))
+        if(!glXMakeCurrent(_xdisplay, _xwindow, _glcontext))
             oops();
 
-        glDrawBuffer(GL_FRONT);
-        on_gl_draw();
-        GL_CHECK();
+        if(!_offscreen)
+            _offscreen = new GLOffscreen;
 
         Gdk::Rectangle allocation = get_allocation();
-        Cairo::RefPtr<Cairo::XlibSurface> surface =
-                Cairo::XlibSurface::create(_xdisplay, _xpixmap, _xvisual,
-                                           allocation.get_width(), allocation.get_height());
+        if(!_offscreen->begin(allocation.get_width(), allocation.get_height()))
+            oops();
+
+        on_gl_draw();
+        glFlush();
+        GL_CHECK();
+
+        Cairo::RefPtr<Cairo::ImageSurface> surface = Cairo::ImageSurface::create(
+                _offscreen->end(), Cairo::FORMAT_RGB24,
+                allocation.get_width(), allocation.get_height(), allocation.get_width() * 4);
         cr->set_source(surface, 0, 0);
         cr->paint();
-
-        if(!glXMakeCurrent(_xdisplay, None, NULL))
-            oops();
+        surface->finish();
 
         return true;
     }
@@ -315,45 +363,13 @@ protected:
     }
 #endif
 
-    virtual void on_size_allocate (Gtk::Allocation& allocation) {
-        destroy_buffer();
-
-        Gtk::DrawingArea::on_size_allocate(allocation);
-    }
-
     virtual void on_gl_draw() = 0;
 
 private:
     Display *_xdisplay;
-    Visual *_xvisual;
-    XVisualInfo *_xvinfo;
-    GLXContext _gl;
-    Pixmap _xpixmap;
-    GLXDrawable _glpixmap;
-
-    void destroy_buffer() {
-        if(_glpixmap) {
-            glXDestroyGLXPixmap(_xdisplay, _glpixmap);
-            _glpixmap = 0;
-        }
-
-        if(_xpixmap) {
-            XFreePixmap(_xdisplay, _xpixmap);
-            _xpixmap = 0;
-        }
-    }
-
-    void allocate_buffer(Gtk::Allocation allocation) {
-        if(!_xpixmap) {
-            _xpixmap = XCreatePixmap(_xdisplay,
-                XRootWindow(_xdisplay, gdk_x11_get_default_screen()),
-                allocation.get_width(), allocation.get_height(), 24);
-        }
-
-        if(!_glpixmap) {
-            _glpixmap = glXCreateGLXPixmap(_xdisplay, _xvinfo, _xpixmap);
-        }
-    }
+    GLXContext _glcontext;
+    GLOffscreen *_offscreen;
+    ::Window _xwindow;
 };
 };
 
