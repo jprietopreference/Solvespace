@@ -444,11 +444,11 @@ int DeltaYOfScrollEvent(GdkEventScroll *event) {
     if(delta_y == 0) {
         switch(event->direction) {
             case GDK_SCROLL_UP:
-            delta_y = -1;
+            delta_y = 1;
             break;
 
             case GDK_SCROLL_DOWN:
-            delta_y = 1;
+            delta_y = -1;
             break;
 
             default:
