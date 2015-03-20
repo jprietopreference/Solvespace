@@ -18,6 +18,10 @@ project(solvespace)
 set(solvespace_VERSION_MAJOR 2)
 set(solvespace_VERSION_MINOR 1)
 
+if(NOT WIN32)
+    set(GUI gtk2 CACHE STRING "GUI toolkit to use (one of: fltk gtk2 gtk3)")
+endif()
+
 # compiler
 
 if(WIN32)
@@ -29,6 +33,10 @@ if(WIN32)
         -DISOLATION_AWARE_ENABLED=1
         -DWIN32=1
         -DWIN32_LEAN_AND_MEAN=1)
+endif()
+
+if((CMAKE_CXX_PLATFORM_ID STREQUAL "Linux") AND CMAKE_COMPILER_IS_GNUCC)
+    set(CMAKE_EXE_LINKER_FLAGS "-Wl,--as-needed ${CMAKE_EXE_LINKER_FLAGS}")
 endif()
 
 # dependencies
@@ -75,12 +83,34 @@ if(WIN32)
     set(SPACEWARE_LIBRARIES
         "${CMAKE_SOURCE_DIR}/extlib/si/siapp.lib")
 else()
-    find_package(PNG REQUIRED)
-    find_package(ZLIB REQUIRED)
     find_package(SpaceWare)
 
-    find_package(FLTK REQUIRED)
-    CHECK_INCLUDE_FILE("fontconfig/fontconfig.h" HAVE_FONTCONFIG)
+    if(GUI STREQUAL "fltk")
+        # Find the packages the old-fashioned way. Doesn't require
+        # the system to follow freedesktop standards.
+        find_package(PNG REQUIRED)
+        find_package(ZLIB REQUIRED)
+        find_package(FLTK REQUIRED)
+        CHECK_INCLUDE_FILE("fontconfig/fontconfig.h" HAVE_FONTCONFIG)
+    elseif(GUI STREQUAL "gtk3" OR GUI STREQUAL "gtk2")
+        # Use freedesktop's pkg-config to locate everything.
+        find_package(PkgConfig REQUIRED)
+        pkg_check_modules(PNG REQUIRED libpng)
+        pkg_check_modules(ZLIB REQUIRED zlib)
+        pkg_check_modules(FONTCONFIG REQUIRED fontconfig)
+        pkg_check_modules(JSONC REQUIRED json-c)
+
+        set(HAVE_GTK TRUE)
+        if(GUI STREQUAL "gtk3")
+            set(HAVE_GTK3 TRUE)
+            pkg_check_modules(GTKMM REQUIRED gtkmm-3.0 pangomm-1.4)
+        else()
+            set(HAVE_GTK2 TRUE)
+            pkg_check_modules(GTKMM REQUIRED gtkmm-2.4 pangomm-1.4)
+        endif()
+    else()
+        message(FATAL_ERROR "GUI unrecognized: ${GUI}")
+    endif()
 endif()
 
 # components
