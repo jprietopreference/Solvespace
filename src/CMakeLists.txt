@@ -25,7 +25,7 @@ endif()
 
 set(HAVE_SPACEWARE ${SPACEWARE_FOUND})
 set(HAVE_FLTK ${FLTK_FOUND})
-set(HAVE_GTK3 ${GTKMM3_FOUND})
+set(HAVE_GTK ${GTKMM_FOUND})
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/config.h.in"
                "${CMAKE_CURRENT_BINARY_DIR}/config.h")
 
@@ -122,7 +122,7 @@ if(WIN32)
         win32/freeze.cpp
         win32/w32main.cpp
         win32/resource.rc)
-elseif(GUI STREQUAL "fltk")
+elseif(HAVE_FLTK)
     include_directories(${FLTK_INCLUDE_DIR})
 
     set(platform_SOURCES
@@ -131,27 +131,27 @@ elseif(GUI STREQUAL "fltk")
     set(platform_LIBRARIES
         ${CMAKE_DL_LIBS}
         ${FLTK_LIBRARIES})
-elseif(GUI STREQUAL "gtk3")
+elseif(HAVE_GTK)
     include_directories(
-        ${GTKMM3_INCLUDE_DIRS}
+        ${GTKMM_INCLUDE_DIRS}
         ${JSONC_INCLUDE_DIRS}
         ${FONTCONFIG_INCLUDE_DIRS})
 
     link_directories(
-        ${GTKMM3_LIBRARY_DIRS}
+        ${GTKMM_LIBRARY_DIRS}
         ${JSONC_LIBRARY_DIRS}
         ${FONTCONFIG_LIBRARY_DIRS})
 
     add_definitions(
-        ${GTKMM3_CFLAGS_OTHER}
+        ${GTKMM_CFLAGS_OTHER}
         ${JSONC_CFLAGS_OTHER}
         ${FONTCONFIG_CFLAGS_OTHER})
 
     set(platform_SOURCES
-        gtk3/gtk3main.cpp)
+        gtk/gtkmain.cpp)
 
     set(platform_LIBRARIES
-        ${GTKMM3_LIBRARIES}
+        ${GTKMM_LIBRARIES}
         ${JSONC_LIBRARIES}
         ${FONTCONFIG_LIBRARIES})
 endif()

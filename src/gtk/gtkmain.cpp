@@ -10,15 +10,17 @@
 #include <unistd.h>
 #include <time.h>
 
+#include <iostream>
+
 #include <json-c/json_object.h>
 #include <json-c/json_util.h>
 
 #include <glibmm/main.h>
 #include <giomm/file.h>
+#include <gdkmm/cursor.h>
 #include <gtkmm/drawingarea.h>
 #include <gtkmm/scrollbar.h>
 #include <gtkmm/entry.h>
-#include <gtkmm/hvbox.h>
 #include <gtkmm/eventbox.h>
 #include <gtkmm/fixed.h>
 #include <gtkmm/adjustment.h>
@@ -29,15 +31,22 @@
 #include <gtkmm/radiobuttongroup.h>
 #include <gtkmm/menu.h>
 #include <gtkmm/menubar.h>
-#include <gtkmm/applicationwindow.h>
 #include <gtkmm/scrolledwindow.h>
 #include <gtkmm/filechooserdialog.h>
 #include <gtkmm/messagedialog.h>
-#include <gtkmm/application.h>
+#include <gtkmm/main.h>
+
+#if HAVE_GTK3
+#include <gtkmm/hvbox.h>
+#else
+#include <gtkmm/box.h>
+#endif
+
 #include <cairomm/xlib_surface.h>
 #include <pangomm/fontdescription.h>
 #include <gdk/gdkx.h>
 #include <fontconfig/fontconfig.h>
+
 #undef HAVE_STDINT_H /* no thanks, we have our own config.h */
 
 #include <GL/glx.h>
@@ -234,10 +243,11 @@ void ScheduleLater() {
 
 /* GL wrapper */
 
+namespace SolveSpacePlatf {
 /* Replace this with GLArea when GTK 3.16 is old enough */
-class GtkGlWidget : public Gtk::DrawingArea {
+class GlWidget : public Gtk::DrawingArea {
 public:
-    GtkGlWidget() : _xpixmap(0), _glpixmap(0) {
+    GlWidget() : _xpixmap(0), _glpixmap(0) {
         int attrlist[] = {
             GLX_RGBA,
             GLX_RED_SIZE, 8,
@@ -265,7 +275,7 @@ public:
         _gl = glXCreateContext(_xdisplay, _xvinfo, NULL, true);
     }
 
-    ~GtkGlWidget() {
+    ~GlWidget() {
         destroy_buffer();
 
         glXDestroyContext(_xdisplay, _gl);
@@ -286,9 +296,10 @@ protected:
         on_gl_draw();
         GL_CHECK();
 
+        Gdk::Rectangle allocation = get_allocation();
         Cairo::RefPtr<Cairo::XlibSurface> surface =
                 Cairo::XlibSurface::create(_xdisplay, _xpixmap, _xvisual,
-                                           get_allocated_width(), get_allocated_height());
+                                           allocation.get_width(), allocation.get_height());
         cr->set_source(surface, 0, 0);
         cr->paint();
 
@@ -297,6 +308,12 @@ protected:
 
         return true;
     }
+
+#ifdef HAVE_GTK2
+    virtual bool on_expose_event(GdkEventExpose *event) {
+        return on_draw(get_window()->create_cairo_context());
+    }
+#endif
 
     virtual void on_size_allocate (Gtk::Allocation& allocation) {
         destroy_buffer();
@@ -338,24 +355,30 @@ private:
         }
     }
 };
+};
 
 /* Editor overlay */
 
-class GtkEditorOverlay : public Gtk::Fixed {
+namespace SolveSpacePlatf {
+class EditorOverlay : public Gtk::Fixed {
 public:
-    GtkEditorOverlay(Gtk::Widget &underlay) : _underlay(underlay) {
+    EditorOverlay(Gtk::Widget &underlay) : _underlay(underlay) {
         add(_underlay);
 
         Pango::FontDescription desc;
         desc.set_family("monospace");
         desc.set_size(7000);
+#ifdef HAVE_GTK3
         _entry.override_font(desc);
+#else
+        _entry.modify_font(desc);
+#endif
         _entry.set_width_chars(30);
         _entry.set_no_show_all(true);
         add(_entry);
 
         _entry.signal_activate().
-            connect(sigc::mem_fun(this, &GtkEditorOverlay::on_activate));
+            connect(sigc::mem_fun(this, &EditorOverlay::on_activate));
     }
 
     void start_editing(int x, int y, const char *val) {
@@ -407,12 +430,39 @@ private:
     Gtk::Entry _entry;
     sigc::signal<void, Glib::ustring> _signal_editing_done;
 };
+};
 
 /* Graphics window */
 
-class GtkGraphicsWidget : public GtkGlWidget {
+namespace SolveSpacePlatf {
+int DeltaYOfScrollEvent(GdkEventScroll *event) {
+#ifdef HAVE_GTK3
+    int delta_y = event->delta_y;
+#else
+    int delta_y = 0;
+#endif
+    if(delta_y == 0) {
+        switch(event->direction) {
+            case GDK_SCROLL_UP:
+            delta_y = -1;
+            break;
+
+            case GDK_SCROLL_DOWN:
+            delta_y = 1;
+            break;
+
+            default:
+            /* do nothing */
+            return false;
+        }
+    }
+
+    return delta_y;
+}
+
+class GraphicsWidget : public GlWidget {
 public:
-    GtkGraphicsWidget() {
+    GraphicsWidget() {
         set_events(Gdk::POINTER_MOTION_MASK |
                    Gdk::BUTTON_PRESS_MASK | Gdk::BUTTON_RELEASE_MASK | Gdk::BUTTON_MOTION_MASK |
                    Gdk::SCROLL_MASK |
@@ -429,7 +479,7 @@ protected:
         _w = event->width;
         _h = event->height;
 
-        return GtkGlWidget::on_configure_event(event);;
+        return GlWidget::on_configure_event(event);;
     }
 
     virtual void on_gl_draw() {
@@ -492,24 +542,7 @@ protected:
         int x, y;
         ij_to_xy(event->x, event->y, x, y);
 
-        int delta_y = event->delta_y;
-        if(delta_y == 0) {
-            switch(event->direction) {
-                case GDK_SCROLL_UP:
-                delta_y = -1;
-                break;
-
-                case GDK_SCROLL_DOWN:
-                delta_y = 1;
-                break;
-
-                default:
-                /* do nothing */
-                return false;
-            }
-        }
-
-        SS.GW.MouseScroll(x, y, delta_y);
+        SS.GW.MouseScroll(x, y, DeltaYOfScrollEvent(event));
 
         return true;
     }
@@ -569,9 +602,9 @@ private:
     }
 };
 
-class GtkGraphicsWindow : public Gtk::Window {
+class GraphicsWindow : public Gtk::Window {
 public:
-    GtkGraphicsWindow() : _overlay(_widget) {
+    GraphicsWindow() : _overlay(_widget) {
         CnfThawWindowPos(this, "GraphicsWindow");
 
         _box.pack_start(_menubar, false, true);
@@ -580,14 +613,14 @@ public:
         add(_box);
 
         _overlay.signal_editing_done().
-            connect(sigc::mem_fun(this, &GtkGraphicsWindow::on_editing_done));
+            connect(sigc::mem_fun(this, &GraphicsWindow::on_editing_done));
     }
 
-    GtkGraphicsWidget &get_widget() {
+    GraphicsWidget &get_widget() {
         return _widget;
     }
 
-    GtkEditorOverlay &get_overlay() {
+    EditorOverlay &get_overlay() {
         return _overlay;
     }
 
@@ -628,48 +661,50 @@ protected:
     }
 
 private:
-    GtkGraphicsWidget _widget;
-    GtkEditorOverlay _overlay;
+    GraphicsWidget _widget;
+    EditorOverlay _overlay;
     Gtk::MenuBar _menubar;
     Gtk::VBox _box;
 
     bool _is_fullscreen;
 };
+};
 
-GtkGraphicsWindow *GtkGW = NULL;
+SolveSpacePlatf::GraphicsWindow *GW = NULL;
 
 void GetGraphicsWindowSize(int *w, int *h) {
-    *w = GtkGW->get_widget().get_allocated_width();
-    *h = GtkGW->get_widget().get_allocated_height();
+    Gdk::Rectangle allocation = GW->get_widget().get_allocation();
+    *w = allocation.get_width();
+    *h = allocation.get_height();
 }
 
 void InvalidateGraphics(void) {
-    GtkGW->get_widget().queue_draw();
+    GW->get_widget().queue_draw();
 }
 
 void PaintGraphics(void) {
-    GtkGW->get_widget().queue_draw();
+    GW->get_widget().queue_draw();
     /* Process animation */
     Glib::MainContext::get_default()->iteration(false);
 }
 
 void SetWindowTitle(const char *str) {
-    GtkGW->set_title(str);
+    GW->set_title(str);
 }
 
 void ToggleFullScreen(void) {
-    if(GtkGW->is_fullscreen())
-        GtkGW->unfullscreen();
+    if(GW->is_fullscreen())
+        GW->unfullscreen();
     else
-        GtkGW->fullscreen();
+        GW->fullscreen();
 }
 
 bool FullScreenIsActive(void) {
-    return GtkGW->is_fullscreen();
+    return GW->is_fullscreen();
 }
 
 void ShowGraphicsEditControl(int x, int y, char *val) {
-    Gdk::Rectangle rect = GtkGW->get_widget().get_allocation();
+    Gdk::Rectangle rect = GW->get_widget().get_allocation();
 
     // Convert to ij (vs. xy) style coordinates,
     // and compensate for the input widget height due to inverse coord
@@ -677,32 +712,33 @@ void ShowGraphicsEditControl(int x, int y, char *val) {
     i = x + rect.get_width() / 2;
     j = -y + rect.get_height() / 2 - 24;
 
-    GtkGW->get_overlay().start_editing(i, j, val);
+    GW->get_overlay().start_editing(i, j, val);
 }
 
 void HideGraphicsEditControl(void) {
-    GtkGW->get_overlay().stop_editing();
+    GW->get_overlay().stop_editing();
 }
 
 bool GraphicsEditControlIsVisible(void) {
-    return GtkGW->get_overlay().is_editing();
+    return GW->get_overlay().is_editing();
 }
 
 /* TODO: removing menubar breaks accelerators. */
 void ToggleMenuBar(void) {
-    GtkGW->get_menubar().set_visible(!GtkGW->get_menubar().is_visible());
+    GW->get_menubar().set_visible(!GW->get_menubar().is_visible());
 }
 
 bool MenuBarIsVisible(void) {
-    return GtkGW->get_menubar().is_visible();
+    return GW->get_menubar().is_visible();
 }
 
 /* Context menus */
 
-static int context_menu_choice;
-
+namespace SolveSpacePlatf {
 class ContextMenuItem : public Gtk::MenuItem {
 public:
+    static int choice;
+
     ContextMenuItem(const Glib::ustring &label, int id, bool mnemonic=false) :
             Gtk::MenuItem(label, mnemonic), _id(id) {
     }
@@ -714,7 +750,7 @@ protected:
         if(has_submenu())
             return;
 
-        context_menu_choice = _id;
+        choice = _id;
     }
 
     /* Workaround for https://bugzilla.gnome.org/show_bug.cgi?id=695488.
@@ -736,12 +772,15 @@ private:
     int _id;
 };
 
+int ContextMenuItem::choice = 0;
+};
+
 static Gtk::Menu *context_menu = NULL, *context_submenu = NULL;
 
 void AddContextMenuItem(const char *label, int id) {
     Gtk::MenuItem *menu_item;
     if(label)
-        menu_item = new ContextMenuItem(label, id);
+        menu_item = new SolveSpacePlatf::ContextMenuItem(label, id);
     else
         menu_item = new Gtk::SeparatorMenuItem();
 
@@ -774,7 +813,7 @@ int ShowContextMenu(void) {
     context_menu->signal_deactivate().
         connect(sigc::mem_fun(loop.operator->(), &Glib::MainLoop::quit));
 
-    context_menu_choice = -1;
+    SolveSpacePlatf::ContextMenuItem::choice = -1;
 
     context_menu->show_all();
     context_menu->popup(3, GDK_CURRENT_TIME);
@@ -784,14 +823,15 @@ int ShowContextMenu(void) {
     delete context_menu;
     context_menu = NULL;
 
-    return context_menu_choice;
+    return SolveSpacePlatf::ContextMenuItem::choice;
 }
 
 /* Main menu */
 
+namespace SolveSpacePlatf {
 template<class MenuItem> class MainMenuItem : public MenuItem {
 public:
-    MainMenuItem(const GraphicsWindow::MenuEntry &entry) :
+    MainMenuItem(const ::GraphicsWindow::MenuEntry &entry) :
             MenuItem(), _entry(entry) {
         Glib::ustring label(_entry.label);
         for(int i = 0; i < label.length(); i++) {
@@ -802,25 +842,25 @@ public:
         guint accel_key = 0;
         Gdk::ModifierType accel_mods = Gdk::ModifierType();
         switch(_entry.accel) {
-            case GraphicsWindow::DELETE_KEY:
+            case ::GraphicsWindow::DELETE_KEY:
             accel_key = GDK_KEY_Delete;
             break;
 
-            case GraphicsWindow::ESCAPE_KEY:
+            case ::GraphicsWindow::ESCAPE_KEY:
             accel_key = GDK_KEY_Escape;
             break;
 
             default:
-            accel_key = _entry.accel & ~(GraphicsWindow::SHIFT_MASK | GraphicsWindow::CTRL_MASK);
-            if(accel_key > GraphicsWindow::FUNCTION_KEY_BASE &&
-                    accel_key <= GraphicsWindow::FUNCTION_KEY_BASE + 12)
-                accel_key = GDK_KEY_F1 + (accel_key - GraphicsWindow::FUNCTION_KEY_BASE - 1);
+            accel_key = _entry.accel & ~(::GraphicsWindow::SHIFT_MASK | ::GraphicsWindow::CTRL_MASK);
+            if(accel_key > ::GraphicsWindow::FUNCTION_KEY_BASE &&
+                    accel_key <= ::GraphicsWindow::FUNCTION_KEY_BASE + 12)
+                accel_key = GDK_KEY_F1 + (accel_key - ::GraphicsWindow::FUNCTION_KEY_BASE - 1);
             else
                 accel_key = gdk_unicode_to_keyval(accel_key);
 
-            if(_entry.accel & GraphicsWindow::SHIFT_MASK)
+            if(_entry.accel & ::GraphicsWindow::SHIFT_MASK)
                 accel_mods |= Gdk::SHIFT_MASK;
-            if(_entry.accel & GraphicsWindow::CTRL_MASK)
+            if(_entry.accel & ::GraphicsWindow::CTRL_MASK)
                 accel_mods |= Gdk::CONTROL_MASK;
         }
 
@@ -837,7 +877,8 @@ protected:
     }
 
 private:
-    const GraphicsWindow::MenuEntry &_entry;
+    const ::GraphicsWindow::MenuEntry &_entry;
+};
 };
 
 static std::map<int, Gtk::MenuItem *> main_menu_items;
@@ -864,16 +905,16 @@ static void InitMainMenu(Gtk::MenuShell *menu_shell) {
         if(entry->label) {
             switch(entry->kind) {
                 case GraphicsWindow::MENU_ITEM_NORMAL:
-                menu_item = new MainMenuItem<Gtk::MenuItem>(*entry);
+                menu_item = new SolveSpacePlatf::MainMenuItem<Gtk::MenuItem>(*entry);
                 break;
 
                 case GraphicsWindow::MENU_ITEM_CHECK:
-                menu_item = new MainMenuItem<Gtk::CheckMenuItem>(*entry);
+                menu_item = new SolveSpacePlatf::MainMenuItem<Gtk::CheckMenuItem>(*entry);
                 break;
 
                 case GraphicsWindow::MENU_ITEM_RADIO:
-                MainMenuItem<Gtk::CheckMenuItem> *radio_item =
-                        new MainMenuItem<Gtk::CheckMenuItem>(*entry);
+                SolveSpacePlatf::MainMenuItem<Gtk::CheckMenuItem> *radio_item =
+                        new SolveSpacePlatf::MainMenuItem<Gtk::CheckMenuItem>(*entry);
                 radio_item->set_draw_as_radio(true);
                 menu_item = radio_item;
                 break;
@@ -896,13 +937,14 @@ void EnableMenuById(int id, bool enabled) {
 
 void CheckMenuById(int id, bool checked) {
     static_cast<Gtk::CheckMenuItem*>(main_menu_items[id])->
-        set_state_flags(checked ? Gtk::STATE_FLAG_CHECKED : Gtk::STATE_FLAG_NORMAL);
+        set_state(checked ? Gtk::STATE_ACTIVE : Gtk::STATE_NORMAL);
 }
 
 void RadioMenuById(int id, bool selected) {
     CheckMenuById(id, selected);
 }
 
+namespace SolveSpacePlatf {
 class RecentMenuItem : public Gtk::MenuItem {
 public:
     RecentMenuItem(const Glib::ustring& label, int id) :
@@ -920,7 +962,7 @@ protected:
 private:
     int _id;
 };
-
+};
 
 static void RefreshRecentMenu(int id, int base) {
     Gtk::MenuItem *recent = static_cast<Gtk::MenuItem*>(main_menu_items[id]);
@@ -938,7 +980,8 @@ static void RefreshRecentMenu(int id, int base) {
             if(std::string(RecentFile[i]).empty())
                 break;
 
-            RecentMenuItem *item = new RecentMenuItem(RecentFile[i], base + i);
+            SolveSpacePlatf::RecentMenuItem *item =
+                    new SolveSpacePlatf::RecentMenuItem(RecentFile[i], base + i);
             menu->append(*item);
         }
     }
@@ -958,7 +1001,11 @@ static void FiltersFromPattern(const char *active, const char *patterns,
     Glib::ustring uactive = "*." + Glib::ustring(active);
     Glib::ustring upatterns = patterns;
 
+#ifdef HAVE_GTK3
     Glib::RefPtr<Gtk::FileFilter> filter = Gtk::FileFilter::create();
+#else
+    Gtk::FileFilter *filter = new Gtk::FileFilter;
+#endif
     Glib::ustring desc = "";
     bool has_name = false, is_active = false;
     int last = 0;
@@ -981,11 +1028,19 @@ static void FiltersFromPattern(const char *active, const char *patterns,
 
         if(upatterns[i] == '\n' || upatterns[i] == '\0') {
             filter->set_name(filter->get_name() + " (" + desc + ")");
+#ifdef HAVE_GTK3
             chooser.add_filter(filter);
             if(is_active)
                 chooser.set_filter(filter);
 
             filter = Gtk::FileFilter::create();
+#else
+            chooser.add_filter(*filter);
+            if(is_active)
+                chooser.set_filter(*filter);
+
+            filter = new Gtk::FileFilter();
+#endif
             has_name = false;
             is_active = false;
             desc = "";
@@ -996,7 +1051,7 @@ static void FiltersFromPattern(const char *active, const char *patterns,
 }
 
 bool GetOpenFile(char *file, const char *active, const char *patterns) {
-    Gtk::FileChooserDialog chooser(*GtkGW, "SolveSpace - Open File");
+    Gtk::FileChooserDialog chooser(*GW, "SolveSpace - Open File");
     chooser.set_filename(file);
     chooser.add_button("_Cancel", Gtk::RESPONSE_CANCEL);
     chooser.add_button("_Open", Gtk::RESPONSE_OK);
@@ -1011,24 +1066,66 @@ bool GetOpenFile(char *file, const char *active, const char *patterns) {
     }
 }
 
+/* Glib::path_get_basename got /removed/ in 3.0?! Come on */
+static std::string Basename(std::string filename) {
+    int slash = filename.rfind('/');
+    if(slash >= 0)
+        return filename.substr(slash + 1, filename.length());
+    return "";
+}
+
+static void ChooserFilterChanged(Gtk::FileChooserDialog *chooser)
+{
+    /* Extract the pattern from the filter. GtkFileFilter doesn't provide
+       any way to list the patterns, so we extract it from the filter name.
+       Gross. */
+    std::string filter_name = chooser->get_filter()->get_name();
+    int lparen = filter_name.find('(') + 1;
+    int rdelim = filter_name.find(',', lparen);
+    if(rdelim < 0)
+        rdelim = filter_name.find(')', lparen);
+    if(lparen < 0 || rdelim < 0)
+        oops();
+
+    std::string extension = filter_name.substr(lparen, rdelim - lparen);
+    if(extension == "*")
+        return;
+
+    if(extension.length() > 2 && extension.substr(0, 2) == "*.")
+        extension = extension.substr(2, extension.length() - 2);
+
+    std::string basename = Basename(chooser->get_filename());
+    int dot = basename.rfind('.');
+    if(dot >= 0) {
+        basename.replace(dot + 1, basename.length() - dot - 1, extension);
+        chooser->set_current_name(basename);
+    } else {
+        chooser->set_current_name(basename + "." + extension);
+    }
+}
+
 bool GetSaveFile(char *file, const char *active, const char *patterns) {
-    Gtk::FileChooserDialog chooser(*GtkGW, "SolveSpace - Save File",
+    Gtk::FileChooserDialog chooser(*GW, "SolveSpace - Save File",
                                    Gtk::FILE_CHOOSER_ACTION_SAVE);
     chooser.set_do_overwrite_confirmation(true);
     chooser.add_button("_Cancel", Gtk::RESPONSE_CANCEL);
     chooser.add_button("_Save", Gtk::RESPONSE_OK);
 
-    chooser.set_filename(file);
-    if(chooser.get_current_name() == "")
-        chooser.set_current_name(Glib::ustring("untitled.") + active);
-
     FiltersFromPattern(active, patterns, chooser);
+
+    chooser.set_filename(file);
+    if(chooser.get_filename() == "")
+        chooser.set_current_name(std::string("untitled.") + active);
+
+    /* Gtk's dialog doesn't change the extension when you change the filter,
+       and makes it extremely hard to do so. Gtk is garbage. */
+    chooser.property_filter().signal_changed().
+       connect(sigc::bind(sigc::ptr_fun(&ChooserFilterChanged), &chooser));
 
     if(chooser.run() == Gtk::RESPONSE_OK) {
         strcpy(file, chooser.get_filename().c_str());
         return true;
     } else {
-        dbp("i");
         return false;
     }
 }
@@ -1037,7 +1134,7 @@ int SaveFileYesNoCancel(void) {
     Glib::ustring message =
         "The file has changed since it was last saved.\n"
         "Do you want to save the changes?";
-    Gtk::MessageDialog dialog(*GtkGW, message, /*use_markup*/ true, Gtk::MESSAGE_QUESTION,
+    Gtk::MessageDialog dialog(*GW, message, /*use_markup*/ true, Gtk::MESSAGE_QUESTION,
                               Gtk::BUTTONS_NONE, /*is_modal*/ true);
     dialog.set_title("SolveSpace - Modified File");
     dialog.add_button("_Save", Gtk::RESPONSE_YES);
@@ -1059,9 +1156,14 @@ int SaveFileYesNoCancel(void) {
 
 /* Text window */
 
-class GtkTextWidget : public GtkGlWidget {
+namespace SolveSpacePlatf {
+class TextWidget : public GlWidget {
 public:
-    GtkTextWidget(Glib::RefPtr<Gtk::Adjustment> adjustment) : _adjustment(adjustment) {
+#ifdef HAVE_GTK3
+    TextWidget(Glib::RefPtr<Gtk::Adjustment> adjustment) : _adjustment(adjustment) {
+#else
+    TextWidget(Gtk::Adjustment* adjustment) : _adjustment(adjustment) {
+#endif
         set_events(Gdk::POINTER_MOTION_MASK | Gdk::BUTTON_PRESS_MASK | Gdk::SCROLL_MASK |
                    Gdk::LEAVE_NOTIFY_MASK);
     }
@@ -1070,7 +1172,11 @@ public:
         Glib::RefPtr<Gdk::Window> gdkwin = get_window();
         if(gdkwin) { // returns NULL if not realized
             Gdk::CursorType type = is_hand ? Gdk::HAND1 : Gdk::ARROW;
+#ifdef HAVE_GTK3
             gdkwin->set_cursor(Gdk::Cursor::create(type));
+#else
+            gdkwin->set_cursor(Gdk::Cursor(type));
+#endif
         }
     }
 
@@ -1095,25 +1201,8 @@ protected:
     }
 
     virtual bool on_scroll_event(GdkEventScroll *event) {
-        int delta_y = event->delta_y;
-        if(delta_y == 0) {
-            switch(event->direction) {
-                case GDK_SCROLL_UP:
-                delta_y = -1;
-                break;
-
-                case GDK_SCROLL_DOWN:
-                delta_y = 1;
-                break;
-
-                default:
-                /* do nothing */
-                return false;
-            }
-        }
-
         _adjustment->set_value(_adjustment->get_value() +
-                               delta_y * _adjustment->get_page_increment());
+                DeltaYOfScrollEvent(event) * _adjustment->get_page_increment());
 
         return true;
     }
@@ -1125,13 +1214,17 @@ protected:
     }
 
 private:
+#ifdef HAVE_GTK3
     Glib::RefPtr<Gtk::Adjustment> _adjustment;
+#else
+    Gtk::Adjustment *_adjustment;
+#endif
 };
 
-class GtkTextWindow : public Gtk::Window {
+class TextWindow : public Gtk::Window {
 public:
-    GtkTextWindow() : _scrollbar(), _widget(_scrollbar.get_adjustment()),
-                      _box(), _editor(_widget) {
+    TextWindow() : _scrollbar(), _widget(_scrollbar.get_adjustment()),
+                   _box(), _editor(_widget) {
         set_keep_above(true);
         set_type_hint(Gdk::WINDOW_TYPE_HINT_UTILITY);
         set_skip_taskbar_hint(true);
@@ -1145,21 +1238,21 @@ public:
         add(_box);
 
         _scrollbar.get_adjustment()->signal_value_changed().
-            connect(sigc::mem_fun(this, &GtkTextWindow::on_scrollbar_value_changed));
+            connect(sigc::mem_fun(this, &TextWindow::on_scrollbar_value_changed));
 
         _editor.signal_editing_done().
-            connect(sigc::mem_fun(this, &GtkTextWindow::on_editing_done));
+            connect(sigc::mem_fun(this, &TextWindow::on_editing_done));
     }
 
     Gtk::VScrollbar &get_scrollbar() {
         return _scrollbar;
     }
 
-    GtkTextWidget &get_widget() {
+    TextWidget &get_widget() {
         return _widget;
     }
 
-    GtkEditorOverlay &get_editor() {
+    EditorOverlay &get_editor() {
         return _editor;
     }
 
@@ -1180,56 +1273,58 @@ protected:
 
 private:
     Gtk::VScrollbar _scrollbar;
-    GtkTextWidget _widget;
-    GtkEditorOverlay _editor;
+    TextWidget _widget;
+    EditorOverlay _editor;
     Gtk::HBox _box;
 };
+};
 
-GtkTextWindow *GtkTW = NULL;
+SolveSpacePlatf::TextWindow *TW = NULL;
 
 void ShowTextWindow(bool visible) {
     if(visible)
-        GtkTW->show();
+        TW->show();
     else
-        GtkTW->hide();
+        TW->hide();
 }
 
 void GetTextWindowSize(int *w, int *h) {
-    *w = GtkTW->get_widget().get_allocated_width();
-    *h = GtkTW->get_widget().get_allocated_height();
+    Gdk::Rectangle allocation = TW->get_widget().get_allocation();
+    *w = allocation.get_width();
+    *h = allocation.get_height();
 }
 
 void InvalidateText(void) {
-    GtkTW->get_widget().queue_draw();
+    TW->get_widget().queue_draw();
 }
 
 void MoveTextScrollbarTo(int pos, int maxPos, int page) {
-    GtkTW->get_scrollbar().get_adjustment()->configure(pos, 0, maxPos, 1, 10, page);
+    TW->get_scrollbar().get_adjustment()->configure(pos, 0, maxPos, 1, 10, page);
 }
 
 void SetMousePointerToHand(bool is_hand) {
-    GtkTW->get_widget().set_cursor_hand(is_hand);
+    TW->get_widget().set_cursor_hand(is_hand);
 }
 
 void ShowTextEditControl(int x, int y, char *val) {
-    GtkTW->get_editor().start_editing(x, y, val);
+    TW->get_editor().start_editing(x, y, val);
 }
 
 void HideTextEditControl(void) {
-    GtkTW->get_editor().stop_editing();
-    GtkGW->raise();
+    TW->get_editor().stop_editing();
+    GW->raise();
 }
 
 bool TextEditControlIsVisible(void) {
-    return GtkTW->get_editor().is_editing();
+    return TW->get_editor().is_editing();
 }
 
 /* Miscellanea */
 
 
 void DoMessageBox(const char *message, int rows, int cols, bool error) {
-    Gtk::MessageDialog dialog(*GtkGW, message, /*use_markup*/ true,
-                              error ? Gtk::MESSAGE_INFO : Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK,
+    Gtk::MessageDialog dialog(*GW, message, /*use_markup*/ true,
+                              error ? Gtk::MESSAGE_ERROR : Gtk::MESSAGE_INFO, Gtk::BUTTONS_OK,
                               /*is_modal*/ true);
     dialog.set_title(error ? "SolveSpace - Error" : "SolveSpace - Message");
     dialog.run();
@@ -1263,56 +1358,43 @@ void LoadAllFontFiles(void) {
     FcPatternDestroy(pat);
 }
 
-void ExitNow(void) {
-    GtkGW->hide();
-    GtkTW->hide();
-}
-
 /* Application lifecycle */
 
-class Application : public Gtk::Application {
-public:
-    Application() : Gtk::Application("com.solvespace", Gio::APPLICATION_HANDLES_OPEN) {
-    }
-
-    ~Application() {
-        delete GtkGW;
-        delete GtkTW;
-
-        SK.Clear();
-        SS.Clear();
-    }
-
-protected:
-    virtual void on_startup() {
-        Gtk::Application::on_startup();
-
-        CnfLoad();
-
-        GtkTW = new GtkTextWindow;
-        GtkGW = new GtkGraphicsWindow;
-        InitMainMenu(&GtkGW->get_menubar());
-
-        add_window(*GtkTW);
-        add_window(*GtkGW);
-
-        GtkTW->show_all();
-        GtkGW->show_all();
-    }
-
-    virtual void on_open(const std::vector< Glib::RefPtr<Gio::File> > &files,
-                         const Glib::ustring &hint) {
-        Glib::RefPtr<Gio::File> last = files.back();
-        SS.Init(last->get_path().c_str());
-    }
-
-    virtual void on_activate() {
-        SS.Init("");
-    }
-};
+void ExitNow(void) {
+    GW->hide();
+    TW->hide();
+}
 
 int main(int argc, char** argv) {
-    Application app;
+    Gtk::Main main(argc, argv);
 
-    return app.run(argc, argv);
+    CnfLoad();
+
+    TW = new SolveSpacePlatf::TextWindow;
+    GW = new SolveSpacePlatf::GraphicsWindow;
+    InitMainMenu(&GW->get_menubar());
+
+    TW->show_all();
+    GW->show_all();
+
+    if(argc >= 2) {
+        if(argc > 2) {
+            std::cerr << "Only the first file passed on command line will be opened."
+                      << std::endl;
+        }
+
+        SS.Init(argv[1]);
+    } else {
+        SS.Init("");
+    }
+
+    main.run(*GW);
+
+    delete GW;
+    delete TW;
+
+    SK.Clear();
+    SS.Clear();
+
+    return 0;
 }
