@@ -19,7 +19,7 @@ set(solvespace_VERSION_MAJOR 2)
 set(solvespace_VERSION_MINOR 1)
 
 if(NOT WIN32)
-    set(GUI gtk3 CACHE STRING "GUI toolkit to use (one of: fltk gtk3)")
+    set(GUI gtk2 CACHE STRING "GUI toolkit to use (one of: fltk gtk2 gtk3)")
 endif()
 
 # compiler
