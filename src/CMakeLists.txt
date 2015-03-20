@@ -64,8 +64,10 @@ target_compile_definitions(slvs
 target_include_directories(slvs
     PUBLIC "${CMAKE_SOURCE_DIR}/include")
 
-set_property(TARGET slvs PROPERTY
-    PUBLIC_HEADER "${CMAKE_SOURCE_DIR}/include/slvs.h")
+set_target_properties(slvs PROPERTIES
+    PUBLIC_HEADER "${CMAKE_SOURCE_DIR}/include/slvs.h"
+    VERSION ${solvespace_VERSION_MAJOR}.${solvespace_VERSION_MINOR}
+    SOVERSION 1)
 
 if(NOT WIN32)
     install(TARGETS slvs
@@ -241,6 +243,13 @@ endif()
 
 install(TARGETS solvespace
     RUNTIME DESTINATION bin)
+
+install(FILES
+    unix/solvespace-16x16.xpm
+    unix/solvespace-24x24.xpm
+    unix/solvespace-32x32.xpm
+    unix/solvespace-48x48.xpm
+    DESTINATION share/pixmaps)
 
 # valgrind
 
