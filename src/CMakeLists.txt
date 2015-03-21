@@ -249,12 +249,16 @@ endif()
 install(TARGETS solvespace
     RUNTIME DESTINATION bin)
 
-install(FILES
-    unix/solvespace-16x16.xpm
-    unix/solvespace-24x24.xpm
-    unix/solvespace-32x32.xpm
-    unix/solvespace-48x48.xpm
-    DESTINATION share/pixmaps)
+install(FILES unix/solvespace.desktop
+        DESTINATION share/applications)
+foreach(SIZE 16x16 24x24 32x32 48x48)
+    install(FILES unix/solvespace-${SIZE}.png
+            DESTINATION share/icons/hicolor/${SIZE}/apps
+            RENAME solvespace.png)
+    install(FILES unix/solvespace-${SIZE}.png
+            DESTINATION share/icons/hicolor/${SIZE}/mimetypes
+            RENAME application.x-solvespace.png)
+endforeach()
 
 # valgrind
 
