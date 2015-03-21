@@ -104,8 +104,8 @@ const GraphicsWindow::MenuEntry GraphicsWindow::menu[] = {
 { 1, "Import Recent",               MNU_GROUP_RECENT,   0,       IN, mGrp  },
 
 { 0, "&Sketch",                     0,                  0,       IN, NULL  },
-{ 1, "In &Workplane",               MNU_SEL_WORKPLANE,  '2',     IN, mReq  },
-{ 1, "Anywhere In &3d",             MNU_FREE_IN_3D,     '3',     IN, mReq  },
+{ 1, "In &Workplane",               MNU_SEL_WORKPLANE,  '2',     IR, mReq  },
+{ 1, "Anywhere In &3d",             MNU_FREE_IN_3D,     '3',     IR, mReq  },
 { 1, NULL,                          0,                  0,       IN, NULL  },
 { 1, "Datum &Point",                MNU_DATUM_POINT,    'P',     IN, mReq  },
 { 1, "&Workplane",                  MNU_WORKPLANE,      0,       IN, mReq  },
