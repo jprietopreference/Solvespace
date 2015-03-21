@@ -848,7 +848,7 @@ namespace SolveSpacePlatf {
 template<class MenuItem> class MainMenuItem : public MenuItem {
 public:
     MainMenuItem(const ::GraphicsWindow::MenuEntry &entry) :
-            MenuItem(), _entry(entry) {
+            MenuItem(), _entry(entry), _synthetic(false) {
         Glib::ustring label(_entry.label);
         for(int i = 0; i < label.length(); i++) {
             if(label[i] == '&')
@@ -886,14 +886,27 @@ public:
             MenuItem::set_accel_key(Gtk::AccelKey(accel_key, accel_mods));
     }
 
+    void set_active(bool checked) {
+        if(MenuItem::get_active() == checked)
+            return;
+
+       _synthetic = true;
+        MenuItem::set_active(checked);
+    }
+
 protected:
     virtual void on_activate() {
-        if(!MenuItem::has_submenu() && _entry.fn)
+        MenuItem::on_activate();
+
+        if(_synthetic)
+            _synthetic = false;
+        else if(!MenuItem::has_submenu() && _entry.fn)
             _entry.fn(_entry.id);
     }
 
 private:
     const ::GraphicsWindow::MenuEntry &_entry;
+    bool _synthetic;
 };
 };
 
@@ -952,8 +965,8 @@ void EnableMenuById(int id, bool enabled) {
 }
 
 void CheckMenuById(int id, bool checked) {
-    static_cast<Gtk::CheckMenuItem*>(main_menu_items[id])->
-        set_state(checked ? Gtk::STATE_ACTIVE : Gtk::STATE_NORMAL);
+    ((SolveSpacePlatf::MainMenuItem<Gtk::CheckMenuItem>*)main_menu_items[id])->
+        set_active(checked);
 }
 
 void RadioMenuById(int id, bool selected) {
