@@ -1389,6 +1389,7 @@ int main(int argc, char** argv) {
     TW = new SolveSpacePlatf::TextWindow;
     GW = new SolveSpacePlatf::GraphicsWindow;
     InitMainMenu(&GW->get_menubar());
+    GW->get_menubar().accelerate(*TW);
 
     TW->show_all();
     GW->show_all();
