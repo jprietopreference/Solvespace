@@ -85,7 +85,7 @@ const GraphicsWindow::MenuEntry GraphicsWindow::menu[] = {
 { 1,  NULL,                         0,                  0,       IN, NULL  },
 { 1, "Dimensions in &Inches",       MNU_UNITS_INCHES,   0,       IR, mView },
 { 1, "Dimensions in &Millimeters",  MNU_UNITS_MM,       0,       IR, mView },
-#if defined(HAVE_FLTK_FULLSCREEN) || defined(HAVE_GTK3)
+#if defined(HAVE_FLTK_FULLSCREEN) || defined(HAVE_GTK)
 { 1,  NULL,                         0,                  0,       IN, NULL  },
 { 1, "&Full Screen",                MNU_FULL_SCREEN,    F(11),   IC, mView },
 #endif
@@ -630,7 +630,7 @@ void GraphicsWindow::EnsureValidActives(void) {
     CheckMenuById(MNU_SHOW_TOOLBAR, SS.showToolbar);
     CheckMenuById(MNU_PERSPECTIVE_PROJ, SS.usePerspectiveProj);
     CheckMenuById(MNU_SHOW_GRID, SS.GW.showSnapGrid);
-#if defined(HAVE_FLTK_FULLSCREEN) || defined(HAVE_GTK3)
+#if defined(HAVE_FLTK_FULLSCREEN) || defined(HAVE_GTK)
     CheckMenuById(MNU_FULL_SCREEN, FullScreenIsActive());
 #endif
 
