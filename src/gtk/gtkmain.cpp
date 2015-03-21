@@ -621,8 +621,6 @@ private:
 class GraphicsWindow : public Gtk::Window {
 public:
     GraphicsWindow() : _overlay(_widget) {
-        CnfThawWindowPos(this, "GraphicsWindow");
-
         _box.pack_start(_menubar, false, true);
         _box.pack_start(_overlay, true, true);
 
@@ -649,6 +647,12 @@ public:
     }
 
 protected:
+    virtual void on_show() {
+        Gtk::Window::on_show();
+
+        CnfThawWindowPos(this, "GraphicsWindow");
+    }
+
     virtual void on_hide() {
         CnfFreezeWindowPos(this, "GraphicsWindow");
 
@@ -961,7 +965,11 @@ static void InitMainMenu(Gtk::MenuShell *menu_shell) {
 }
 
 void EnableMenuById(int id, bool enabled) {
-    static_cast<Gtk::MenuItem*>(main_menu_items[id])->set_sensitive(enabled);
+    main_menu_items[id]->set_sensitive(enabled);
+}
+
+static void ActivateMenuById(int id) {
+    main_menu_items[id]->activate();
 }
 
 void CheckMenuById(int id, bool checked) {
@@ -1260,8 +1268,6 @@ public:
         set_skip_pager_hint(true);
         set_title("SolveSpace - Browser");
 
-        CnfThawWindowPos(this, "TextWindow");
-
         _box.pack_start(_editor, true, true);
         _box.pack_start(_scrollbar, false, true);
         add(_box);
@@ -1286,10 +1292,23 @@ public:
     }
 
 protected:
+    virtual void on_show() {
+        Gtk::Window::on_show();
+
+        CnfThawWindowPos(this, "TextWindow");
+    }
+
     virtual void on_hide() {
         CnfFreezeWindowPos(this, "TextWindow");
 
         Gtk::Window::on_hide();
+    }
+
+    virtual bool on_delete_event(GdkEventAny *event) {
+        /* trigger the action and ignore the request */
+        ::GraphicsWindow::MenuView(::GraphicsWindow::MNU_SHOW_TEXT_WND);
+
+        return false;
     }
 
     virtual void on_scrollbar_value_changed() {
