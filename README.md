@@ -44,7 +44,7 @@ but not recommended for use due to bugs in these toolkits.
 Troubleshooting
 ---------------
 
-### My sketches look barely readable
+### My sketches are barely readable
 
 Do they look like this?
 
@@ -52,7 +52,7 @@ Do they look like this?
 
 If yes, this is a [bug][linesbug] in the Intel OpenGL rasterizer. As a workaround,
 you can run SolveSpace as `LIBGL_ALWAYS_SOFTWARE=1 solvespace`; it will be slower
-but usually a lot.
+but usually not by a lot.
 
 [linesbug]: https://github.com/whitequark/solvespace/issues/18
 
