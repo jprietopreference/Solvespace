@@ -619,7 +619,6 @@ public:
     struct {
         Vector      offset;
         hStyle      style;
-        bool        toggleA;
     } disp;
 
     // State for drawing or getting distance (for hit testing).
