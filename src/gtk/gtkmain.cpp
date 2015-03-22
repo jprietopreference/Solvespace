@@ -621,6 +621,8 @@ private:
 class GraphicsWindow : public Gtk::Window {
 public:
     GraphicsWindow() : _overlay(_widget) {
+        set_default_size(900, 600);
+
         _box.pack_start(_menubar, false, true);
         _box.pack_start(_overlay, true, true);
 
@@ -1267,6 +1269,7 @@ public:
         set_skip_taskbar_hint(true);
         set_skip_pager_hint(true);
         set_title("SolveSpace - Browser");
+        set_default_size(420, 300);
 
         _box.pack_start(_editor, true, true);
         _box.pack_start(_scrollbar, false, true);
