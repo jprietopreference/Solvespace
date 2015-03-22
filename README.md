@@ -2,9 +2,18 @@ SolveSpace
 ==========
 
 This repository includes an unofficial fork of [SolveSpace][]
-with enhancened Linux support and, in future, other improvements.
+with enhancened Linux support and other improvements.
 
 [solvespace]: http://solvespace.com
+
+Improvements
+------------
+
+This fork of SolveSpace includes a number of improvements over
+SolveSpace 2.0. It can read all SolveSpace 2.0 files, but
+**not** the other way around.
+
+  * Diameter constraints can be displayed and edited as radius.
 
 Installation
 ------------
