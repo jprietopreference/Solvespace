@@ -54,21 +54,6 @@ After that, build SolveSpace as following:
 Fully functional ports to other UI toolkits (GTK3 and FLTK) are available,
 but not recommended for use due to bugs in these toolkits.
 
-Troubleshooting
----------------
-
-### My sketches are barely readable
-
-Do they look like this?
-
-![](https://i.imgur.com/mb8b5JL.png)
-
-If yes, this is a [bug][linesbug] in the Intel OpenGL rasterizer. As a workaround,
-you can run SolveSpace as `LIBGL_ALWAYS_SOFTWARE=1 solvespace`; it will be slower
-but usually not by a lot.
-
-[linesbug]: https://github.com/whitequark/solvespace/issues/18
-
 License
 -------
 
