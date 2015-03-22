@@ -621,6 +621,8 @@ private:
 class GraphicsWindow : public Gtk::Window {
 public:
     GraphicsWindow() : _overlay(_widget) {
+        set_default_size(900, 600);
+
         _box.pack_start(_menubar, false, true);
         _box.pack_start(_overlay, true, true);
 
@@ -1093,9 +1095,14 @@ bool GetOpenFile(char *file, const char *active, const char *patterns) {
     chooser.add_button("_Cancel", Gtk::RESPONSE_CANCEL);
     chooser.add_button("_Open", Gtk::RESPONSE_OK);
 
+    char current_folder[MAX_PATH];
+    CnfThawString(current_folder, sizeof(current_folder), "FileChooserPath");
+    chooser.set_current_folder(current_folder);
+
     FiltersFromPattern(active, patterns, chooser);
 
     if(chooser.run() == Gtk::RESPONSE_OK) {
+        CnfFreezeString(chooser.get_current_folder().c_str(), "FileChooserPath");
         strcpy(file, chooser.get_filename().c_str());
         return true;
     } else {
@@ -1150,9 +1157,10 @@ bool GetSaveFile(char *file, const char *active, const char *patterns) {
 
     FiltersFromPattern(active, patterns, chooser);
 
-    chooser.set_filename(file);
-    if(chooser.get_filename() == "")
-        chooser.set_current_name(std::string("untitled.") + active);
+    char current_folder[MAX_PATH];
+    CnfThawString(current_folder, sizeof(current_folder), "FileChooserPath");
+    chooser.set_current_folder(current_folder);
+    chooser.set_current_name(std::string("untitled.") + active);
 
     /* Gtk's dialog doesn't change the extension when you change the filter,
        and makes it extremely hard to do so. Gtk is garbage. */
@@ -1160,6 +1168,7 @@ bool GetSaveFile(char *file, const char *active, const char *patterns) {
        connect(sigc::bind(sigc::ptr_fun(&ChooserFilterChanged), &chooser));
 
     if(chooser.run() == Gtk::RESPONSE_OK) {
+        CnfFreezeString(chooser.get_current_folder().c_str(), "FileChooserPath");
         strcpy(file, chooser.get_filename().c_str());
         return true;
     } else {
@@ -1267,6 +1276,7 @@ public:
         set_skip_taskbar_hint(true);
         set_skip_pager_hint(true);
         set_title("SolveSpace - Browser");
+        set_default_size(420, 300);
 
         _box.pack_start(_editor, true, true);
         _box.pack_start(_scrollbar, false, true);
@@ -1414,6 +1424,8 @@ void ExitNow(void) {
 }
 
 int main(int argc, char** argv) {
+    gtk_disable_setlocale();
+
     Gtk::Main main(argc, argv);
 
     CnfLoad();
