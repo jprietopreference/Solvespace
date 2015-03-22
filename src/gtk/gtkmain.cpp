@@ -1414,6 +1414,8 @@ void ExitNow(void) {
 }
 
 int main(int argc, char** argv) {
+    gtk_disable_setlocale();
+
     Gtk::Main main(argc, argv);
 
     CnfLoad();
