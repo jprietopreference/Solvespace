@@ -386,7 +386,7 @@ void TextWindow::DrawOrHitTestIcons(int how, double mx, double my)
             }
             if(!*(hsi->var)) {
                 glColor4d(1, 0, 0, 0.6);
-                glLineWidth(2);
+                ssglLineWidth(2);
                 int s = 0, f = 24;
                 glBegin(GL_LINES);
                     glVertex2d(x+s, y-s);
@@ -444,7 +444,7 @@ void TextWindow::DrawOrHitTestIcons(int how, double mx, double my)
             oy = max(oy, 5);
 
             ssglCreateBitmapFont();
-            glLineWidth(1);
+            ssglLineWidth(1);
             glColor4d(1.0, 1.0, 0.6, 1.0);
             ssglAxisAlignedQuad(ox, ox+tw, oy, oy+LINE_HEIGHT);
             glColor4d(0.0, 0.0, 0.0, 1.0);
@@ -702,7 +702,7 @@ bool TextWindow::DrawOrHitTestColorPicker(int how, bool leftDown,
 
         double cx = hx+(hxm-hx)*(1 - editControl.colorPicker.v);
         glColor4d(0, 0, 0, 1);
-        glLineWidth(1);
+        ssglLineWidth(1);
         glBegin(GL_LINES);
             glVertex2d(cx, hy);
             glVertex2d(cx, hym);
@@ -756,7 +756,7 @@ bool TextWindow::DrawOrHitTestColorPicker(int how, bool leftDown,
         glDisable(GL_TEXTURE_2D);
 
         glColor4d(1, 1, 1, 1);
-        glLineWidth(1);
+        ssglLineWidth(1);
         double cx = hx+(hxm-hx)*editControl.colorPicker.h,
                cy = hy+(hym-hy)*editControl.colorPicker.s;
         glBegin(GL_LINES);
@@ -902,7 +902,7 @@ void TextWindow::Paint(void) {
                         fg = meta[r][cf-1].fg;
                         glColor3fv(&(fgColorTable[fg*3]));
                         glDisable(GL_TEXTURE_2D);
-                        glLineWidth(1);
+                        ssglLineWidth(1);
                         glBegin(GL_LINES);
                             int yp = y + CHAR_HEIGHT;
                             glVertex2d(LEFT_MARGIN + cs*CHAR_WIDTH, yp);
@@ -930,7 +930,7 @@ void TextWindow::Paint(void) {
         int x = 29, y = 70 + LINE_HEIGHT;
         y -= scrollPos*(LINE_HEIGHT/2);
 
-        glLineWidth(1);
+        ssglLineWidth(1);
         glColor3fv(&(fgColorTable['t'*3]));
         glBegin(GL_LINES);
             glVertex2d(x, y);
