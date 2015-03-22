@@ -15,13 +15,17 @@ SolveSpace 2.0. It can read all SolveSpace 2.0 files, but
 
   * Diameter constraints can be displayed and edited as radius.
 
+The `compat` branch contains all improvements except those
+creating incompatibility with original SolveSpace.
+
 Installation
 ------------
 
 ### Debian and Ubuntu
 
 Binary packages for Ubuntu trusty and later versions are available
-in [~whitequark/solvespace PPA][ppa].
+in [~whitequark/solvespace PPA][ppa]. The packages are built from
+the `compat` branch.
 
 [ppa]: https://launchpad.net/~whitequark/+archive/ubuntu/solvespace
 
