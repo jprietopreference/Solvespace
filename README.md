@@ -42,7 +42,7 @@ You will need cmake, libpng, zlib, json-c, fontconfig, gtkmm 2.4, pangomm 1.4,
 OpenGL and OpenGL GLU.
 On a Debian derivative (e.g. Ubuntu) these packages can be installed with:
 
-    apt-get install libpng12-dev zlib1g-dev libjson-c-dev libfontconfig1-dev \
+    apt-get install libpng12-dev libjson-c-dev libfontconfig1-dev \
                     libgtkmm-2.4-dev libpangomm-1.4-dev libgl-dev libglu-dev \
                     libglew-dev
 

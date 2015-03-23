@@ -2,16 +2,13 @@
 
 include_directories(
     ${OPENGL_INCLUDE_DIR}
-    ${PNG_INCLUDE_DIRS}
-    ${ZLIB_INCLUDE_DIRS})
+    ${PNG_INCLUDE_DIRS})
 
 link_directories(
-    ${PNG_LIBRARY_DIRS}
-    ${ZLIB_LIBRARY_DIRS})
+    ${PNG_LIBRARY_DIRS})
 
 add_definitions(
-    ${PNG_CFLAGS_OTHER}
-    ${ZLIB_CFLAGS_OTHER})
+    ${PNG_CFLAGS_OTHER})
 
 include_directories(
     "${CMAKE_CURRENT_SOURCE_DIR}"
@@ -234,7 +231,6 @@ add_executable(solvespace WIN32
 target_link_libraries(solvespace
     "${OPENGL_LIBRARIES}"
     "${PNG_LIBRARIES}"
-    "${ZLIB_LIBRARIES}"
     "${platform_LIBRARIES}")
 
 if(WIN32)

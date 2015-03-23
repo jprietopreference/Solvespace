@@ -59,24 +59,13 @@ if(WIN32)
 
         set(PNG_FOUND TRUE)
         set(PNG_LIBRARIES
-            "${CMAKE_SOURCE_DIR}/extlib/libpng/libpng.lib")
+            "${CMAKE_SOURCE_DIR}/extlib/libpng/libpng.lib"
+            "${CMAKE_SOURCE_DIR}/extlib/zlib/zlib.lib")
         set(PNG_INCLUDE_DIRS
             "${CMAKE_SOURCE_DIR}/extlib/libpng")
     endif()
 
-    find_package(ZLIB)
-
-    if(NOT ZLIB_FOUND)
-        message(STATUS "Using prebuilt zlib")
-
-        set(ZLIB_FOUND TRUE)
-        set(ZLIB_LIBRARIES
-            "${CMAKE_SOURCE_DIR}/extlib/zlib/zlib.lib")
-        set(ZLIB_INCLUDE_DIRS
-            "${CMAKE_SOURCE_DIR}/extlib/zlib")
-    endif()
-
-    message(STATUS "Using prebuild SpaceWare")
+    message(STATUS "Using prebuilt SpaceWare")
     set(SPACEWARE_FOUND TRUE)
     set(SPACEWARE_INCLUDE_DIR
         "${CMAKE_SOURCE_DIR}/extlib/si")
@@ -89,14 +78,12 @@ else()
         # Find the packages the old-fashioned way. Doesn't require
         # the system to follow freedesktop standards.
         find_package(PNG REQUIRED)
-        find_package(ZLIB REQUIRED)
         find_package(FLTK REQUIRED)
         CHECK_INCLUDE_FILE("fontconfig/fontconfig.h" HAVE_FONTCONFIG)
     elseif(GUI STREQUAL "gtk3" OR GUI STREQUAL "gtk2")
         # Use freedesktop's pkg-config to locate everything.
         find_package(PkgConfig REQUIRED)
         pkg_check_modules(PNG REQUIRED libpng)
-        pkg_check_modules(ZLIB REQUIRED zlib)
         pkg_check_modules(FONTCONFIG REQUIRED fontconfig)
         pkg_check_modules(JSONC REQUIRED json-c)
         pkg_check_modules(GLEW REQUIRED glew)
