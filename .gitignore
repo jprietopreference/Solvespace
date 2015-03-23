@@ -8,3 +8,4 @@
 /debian/libslvs1/
 /debian/libslvs1-dev/
 /obj-*/
+*.trace # OpenGL apitrace files
