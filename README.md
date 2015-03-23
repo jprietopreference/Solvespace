@@ -46,8 +46,8 @@ On a Debian derivative (e.g. Ubuntu) these packages can be installed with:
 
 After that, build SolveSpace as following:
 
-    mkdir build
-    cd build
+    mkdir cbuild
+    cd cbuild
     cmake ..
     make
     sudo make install
