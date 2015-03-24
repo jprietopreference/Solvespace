@@ -61,8 +61,8 @@ After that, build SolveSpace as following:
     make
     sudo make install
 
-Fully functional ports to other UI toolkits (GTK3 and FLTK) are available,
-but not recommended for use due to bugs in these toolkits.
+A fully functional port to GTK3 is available, but not recommended
+for use due to bugs in this toolkit.
 
 Building on Mac OS X
 --------------------
