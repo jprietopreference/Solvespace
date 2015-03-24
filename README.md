@@ -23,20 +23,27 @@ creating incompatibility with original SolveSpace.
 Installation
 ------------
 
-### Debian and Ubuntu
+All binary packages are built from the `compat` branch.
+
+### Debian (>=jessie) and Ubuntu (>=trusty)
 
 Binary packages for Ubuntu trusty and later versions are available
-in [~whitequark/solvespace PPA][ppa]. The packages are built from
-the `compat` branch.
+in [~whitequark/solvespace PPA][ppa].
 
 [ppa]: https://launchpad.net/~whitequark/+archive/ubuntu/solvespace
+
+### Mac OS X (>=10.6+ 64-bit)
+
+Binary packages for Mac OS X are available via [GitHub releases][rel].
+
+[rel]: https://github.com/whitequark/solvespace/releases
 
 ### Other systems
 
 See below.
 
-Building
---------
+Building on Linux
+-----------------
 
 You will need cmake, libpng, zlib, json-c, fontconfig, gtkmm 2.4, pangomm 1.4,
 OpenGL and OpenGL GLU.
@@ -56,6 +63,27 @@ After that, build SolveSpace as following:
 
 Fully functional ports to other UI toolkits (GTK3 and FLTK) are available,
 but not recommended for use due to bugs in these toolkits.
+
+Building on Mac OS X
+--------------------
+
+You will need XCode tools, cmake and libpng. Assuming you use [homebrew][],
+these can be installed with:
+
+    brew install cmake libpng
+
+XCode has to be installed via AppStore; it requires a free Apple ID.
+
+After that, build SolveSpace as following:
+
+    mkdir cbuild
+    cd cbuild
+    cmake ..
+    make
+
+The app bundle is built in `cbuild/src/solvespace.app`.
+
+[homebrew]: http://brew.sh/
 
 License
 -------

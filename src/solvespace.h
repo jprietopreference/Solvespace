@@ -12,6 +12,7 @@
 #include <ctype.h>
 #include <string.h>
 #include <stdio.h>
+#include <stddef.h>
 #include <stdarg.h>
 #include <math.h>
 #include <limits.h>
@@ -60,6 +61,8 @@
 #ifndef isnan
 #   define isnan(x) (((x) != (x)) || (x > 1e11) || (x < -1e11))
 #endif
+
+namespace SolveSpace {
 
 inline int WRAP(int v, int n) {
     // Clamp it to the range [0, n)
@@ -146,6 +149,14 @@ int SaveFileYesNoCancel(void);
     //   "All Files\t*"
 #   define PAT1(desc,e1)    desc "\t*." e1 "\n"
 #   define PAT2(desc,e1,e2) desc "\t*." e1 "\t*." e2 "\n"
+#   define ENDPAT "All Files\t*"
+#elif defined(__APPLE__)
+    // Selection pattern format to be parsed by Cocoa glue code:
+    //   "PNG File\tpng\n"
+    //   "JPEG file\tjpg,jpeg\n"
+    //   "All Files\t*"
+#   define PAT1(desc,e1)    desc "\t" e1 "\n"
+#   define PAT2(desc,e1,e2) desc "\t" e1 "," e2 "\n"
 #   define ENDPAT "All Files\t*"
 #else
     // Selection pattern format for Win32's OPENFILENAME.lpstrFilter:
@@ -235,7 +246,7 @@ void dbp(const char *str, ...);
     dbp("tri: (%.3f %.3f %.3f) (%.3f %.3f %.3f) (%.3f %.3f %.3f)", \
         CO((tri).a), CO((tri).b), CO((tri).c))
 
-void SetWindowTitle(const char *str);
+void SetCurrentFilename(const char *filename);
 void SetMousePointerToHand(bool yes);
 void DoMessageBox(const char *str, int rows, int cols, bool error);
 void SetTimerFor(int milliseconds);
@@ -680,7 +691,7 @@ public:
 #undef ENTITY
 #undef CONSTRAINT
 
-class SolveSpace {
+class SolveSpaceUI {
 public:
     TextWindow                  TW;
     GraphicsWindow              GW;
@@ -784,7 +795,8 @@ public:
     bool tangentArcDeleteOld;
 
     // The platform-dependent code calls this before entering the msg loop
-    void Init(const char *cmdLine);
+    void Init(void);
+    bool OpenFile(const char *filename);
     void Exit(void);
 
     // File load/save routines, including the additional files that get
@@ -927,7 +939,13 @@ public:
     void Clear(void);
 };
 
-extern SolveSpace SS;
+extern SolveSpaceUI SS;
 extern Sketch SK;
+
+};
+
+#ifndef __OBJC__
+using namespace SolveSpace;
+#endif
 
 #endif
