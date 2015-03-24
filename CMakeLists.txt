@@ -1,6 +1,7 @@
 # cmake configuration
 
 cmake_minimum_required(VERSION 2.8.12)
+cmake_policy(VERSION 3.0.0)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH}
     "${CMAKE_SOURCE_DIR}/cmake/")
 
@@ -71,7 +72,10 @@ if(WIN32)
         "${CMAKE_SOURCE_DIR}/extlib/si")
     set(SPACEWARE_LIBRARIES
         "${CMAKE_SOURCE_DIR}/extlib/si/siapp.lib")
-else()
+elseif(APPLE)
+    find_package(PNG REQUIRED)
+    find_library(APPKIT_LIBRARY AppKit REQUIRED)
+else() # Linux and compatible systems
     find_package(SpaceWare)
 
     if(GUI STREQUAL "fltk")

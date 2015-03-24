@@ -705,8 +705,12 @@ void PaintGraphics(void) {
     Glib::MainContext::get_default()->iteration(false);
 }
 
-void SetWindowTitle(const char *str) {
-    GW->set_title(str);
+void SetCurrentFilename(const char *filename) {
+    if(filename) {
+        GW->set_title(std::string("SolveSpace - ") + filename);
+    } else {
+        GW->set_title("SolveSpace - (not yet saved)");
+    }
 }
 
 void ToggleFullScreen(void) {
@@ -1218,16 +1222,18 @@ protected:
     }
 
     virtual bool on_motion_notify_event(GdkEventMotion *event) {
-        SS.TW.MouseEvent(false, event->state & Gdk::BUTTON1_MASK,
+        SS.TW.MouseEvent(/*leftClick*/ false,
+                         /*leftDown*/ event->state & Gdk::BUTTON1_MASK,
                          event->x, event->y);
 
         return true;
     }
 
     virtual bool on_button_press_event(GdkEventButton *event) {
-        SS.TW.MouseEvent(event->type == Gdk::BUTTON_PRESS,
-                         event->state & Gdk::BUTTON1_MASK,
-                         event->x, event->y);
+        if(!(event->state & Gdk::BUTTON1_MASK))
+            return false;
+
+        SS.TW.MouseEvent(/*leftClick*/ true, /*leftDown*/ true, event->x, event->y);
 
         return true;
     }
@@ -1424,15 +1430,15 @@ int main(int argc, char** argv) {
     TW->show_all();
     GW->show_all();
 
+    SS.Init();
+
     if(argc >= 2) {
         if(argc > 2) {
             std::cerr << "Only the first file passed on command line will be opened."
                       << std::endl;
         }
 
-        SS.Init(argv[1]);
-    } else {
-        SS.Init("");
+        SS.OpenFile(argv[1]);
     }
 
     main.run(*GW);
