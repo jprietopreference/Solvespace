@@ -935,7 +935,7 @@ void InvalidateText(void) {
     NSSize size = [TWView frame].size;
     size.height = (SS.TW.top[SS.TW.rows - 1] + 1) * TextWindow::LINE_HEIGHT / 2;
     [TWView setFrameSize:size];
-    [[TW contentView] setNeedsDisplay:YES];
+    [TWView setNeedsDisplay:YES];
 }
 
 void MoveTextScrollbarTo(int pos, int maxPos, int page) {
