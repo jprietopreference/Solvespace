@@ -139,6 +139,9 @@ elseif(APPLE)
     set(platform_RESOURCES
         unix/solvespace-48x48.png)
 
+    set(platform_BUNDLED_LIBS
+        ${PNG_LIBRARY})
+
     set(platform_LIBRARIES
         ${APPKIT_LIBRARY})
 elseif(HAVE_GTK)
@@ -215,6 +218,19 @@ foreach(res ${platform_RESOURCES})
         COMMAND ${CMAKE_COMMAND} -E copy ${source} ${target}
         COMMENT "Copying resource file ${res}"
         DEPENDS ${res})
+endforeach()
+
+foreach(lib ${platform_BUNDLED_LIBS})
+    get_filename_component(name ${lib} NAME)
+    set(target ${CMAKE_CURRENT_BINARY_DIR}/solvespace.app/Contents/MacOS/${name})
+    list(APPEND platform_BUNDLED_RESOURCES ${target})
+
+    add_custom_command(
+        OUTPUT ${target}
+        COMMAND mkdir -p ${CMAKE_CURRENT_BINARY_DIR}/solvespace.app/Contents/Resources
+        COMMAND ${CMAKE_COMMAND} -E copy ${lib} ${target}
+        COMMENT "Bundling shared library ${lib}"
+        DEPENDS ${lib})
 endforeach()
 
 # solvespace executable
@@ -298,6 +314,31 @@ endif()
 if(SPACEWARE_FOUND)
     target_link_libraries(solvespace
         "${SPACEWARE_LIBRARIES}")
+endif()
+
+if(APPLE)
+    set_target_properties(solvespace PROPERTIES INSTALL_RPATH ON)
+
+    set(fixups)
+    foreach(lib ${platform_BUNDLED_LIBS})
+        execute_process(COMMAND otool -XD ${lib}
+            OUTPUT_VARIABLE canonical_lib OUTPUT_STRIP_TRAILING_WHITESPACE)
+        add_custom_command(TARGET solvespace POST_BUILD
+            COMMAND install_name_tool -change "${canonical_lib}" "@executable_path/${name}"
+                    $<TARGET_FILE:solvespace>
+            COMMENT "Fixing up rpath for dylib ${name}")
+    endforeach()
+
+    set(bundle solvespace)
+    add_custom_command(OUTPUT ${CMAKE_BINARY_DIR}/${bundle}.dmg
+        COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_BINARY_DIR}/${bundle}.dmg
+        COMMAND hdiutil create -srcfolder ${CMAKE_CURRENT_BINARY_DIR}/${bundle}.app
+                ${CMAKE_BINARY_DIR}/${bundle}.dmg
+        DEPENDS $<TARGET_FILE:${bundle}>
+        COMMENT "Building ${bundle}.dmg")
+
+    add_custom_target(${bundle}-dmg ALL
+        DEPENDS ${CMAKE_BINARY_DIR}/${bundle}.dmg)
 endif()
 
 install(TARGETS solvespace
