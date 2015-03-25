@@ -135,6 +135,7 @@ void SolveSpace::ScheduleLater() {
 
 - initWithFrame:(NSRect)frameRect {
     self = [super initWithFrame:frameRect];
+    [self setWantsLayer:YES];
 
     NSOpenGLPixelFormatAttribute attrs[] = {
         NSOpenGLPFAColorSize, 24,
