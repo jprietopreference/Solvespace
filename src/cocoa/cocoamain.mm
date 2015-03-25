@@ -775,8 +775,6 @@ int SolveSpace::SaveFileYesNoCancel(void) {
 {
     NSTrackingArea *trackingArea;
 }
-
-@property NSScrollView *scrollView;
 @end
 
 @implementation TextWindowView
@@ -826,10 +824,6 @@ int SolveSpace::SaveFileYesNoCancel(void) {
         [self convertPoint:[event locationInWindow] fromView:nil]];
     SolveSpace::SS.TW.MouseEvent(/*leftClick*/ false, /*leftDown*/ true,
                                  point.x, -point.y);
-}
-
-- (void)scrollWheel:(NSEvent*)event {
-    [[self scrollView] scrollWheel:event];
 }
 
 - (void)mouseExited:(NSEvent*)event {
@@ -909,7 +903,6 @@ void InitTextWindow() {
     [[scrollView contentView] setCopiesOnScroll:YES];
 
     TWView = [[TextWindowView alloc] init];
-    [TWView setScrollView:scrollView];
     [scrollView setDocumentView:TWView];
 
     [TW setDelegate:TWDelegate];
