@@ -32,7 +32,7 @@ in [~whitequark/solvespace PPA][ppa].
 
 [ppa]: https://launchpad.net/~whitequark/+archive/ubuntu/solvespace
 
-### Mac OS X (>=10.6+ 64-bit)
+### Mac OS X (>=10.6 64-bit)
 
 Binary packages for Mac OS X are available via [GitHub releases][rel].
 
