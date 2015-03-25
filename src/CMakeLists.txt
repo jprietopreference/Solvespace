@@ -2,16 +2,13 @@
 
 include_directories(
     ${OPENGL_INCLUDE_DIR}
-    ${PNG_INCLUDE_DIRS}
-    ${ZLIB_INCLUDE_DIRS})
+    ${PNG_INCLUDE_DIRS})
 
 link_directories(
-    ${PNG_LIBRARY_DIRS}
-    ${ZLIB_LIBRARY_DIRS})
+    ${PNG_LIBRARY_DIRS})
 
 add_definitions(
-    ${PNG_CFLAGS_OTHER}
-    ${ZLIB_CFLAGS_OTHER})
+    ${PNG_CFLAGS_OTHER})
 
 include_directories(
     "${CMAKE_CURRENT_SOURCE_DIR}"
@@ -24,7 +21,6 @@ if(SPACEWARE_FOUND)
 endif()
 
 set(HAVE_SPACEWARE ${SPACEWARE_FOUND})
-set(HAVE_FLTK ${FLTK_FOUND})
 set(HAVE_GTK ${GTKMM_FOUND})
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/config.h.in"
                "${CMAKE_CURRENT_BINARY_DIR}/config.h")
@@ -124,15 +120,30 @@ if(WIN32)
         win32/freeze.cpp
         win32/w32main.cpp
         win32/resource.rc)
-elseif(HAVE_FLTK)
-    include_directories(${FLTK_INCLUDE_DIR})
+elseif(APPLE)
+    add_definitions(
+        -mmacosx-version-min=10.6
+        -fobjc-arc)
 
     set(platform_SOURCES
-        fltk/fltkmain.cpp)
+        cocoa/cocoamain.mm
+        unix/gloffscreen.cpp)
+
+    set(platform_XIBS
+        cocoa/MainMenu.xib
+        cocoa/SaveFormatAccessory.xib)
+
+    set(platform_ICONS
+        cocoa/AppIcon.iconset)
+
+    set(platform_RESOURCES
+        unix/solvespace-48x48.png)
+
+    set(platform_BUNDLED_LIBS
+        ${PNG_LIBRARY})
 
     set(platform_LIBRARIES
-        ${CMAKE_DL_LIBS}
-        ${FLTK_LIBRARIES})
+        ${APPKIT_LIBRARY})
 elseif(HAVE_GTK)
     include_directories(
         ${GTKMM_INCLUDE_DIRS}
@@ -162,6 +173,65 @@ elseif(HAVE_GTK)
         ${FONTCONFIG_LIBRARIES}
         ${GLEW_LIBRARIES})
 endif()
+
+set(platform_BUNDLED_RESOURCES)
+
+foreach(xib ${platform_XIBS})
+    get_filename_component(nib ${xib} NAME_WE)
+    set(source ${CMAKE_CURRENT_SOURCE_DIR}/${xib})
+    set(target ${CMAKE_CURRENT_BINARY_DIR}/solvespace.app/Contents/Resources/${nib}.nib)
+    list(APPEND platform_BUNDLED_RESOURCES ${target})
+
+    add_custom_command(
+        OUTPUT ${target}
+        COMMAND mkdir -p ${CMAKE_CURRENT_BINARY_DIR}/solvespace.app/Contents/Resources
+        COMMAND ibtool --errors --warnings --notices
+            --output-format human-readable-text --compile
+            ${target} ${source}
+        COMMENT "Building Interface Builder file ${xib}"
+        DEPENDS ${xib})
+endforeach()
+
+foreach(icon ${platform_ICONS})
+    get_filename_component(name ${icon} NAME_WE)
+    set(source ${CMAKE_CURRENT_SOURCE_DIR}/${icon})
+    set(target ${CMAKE_CURRENT_BINARY_DIR}/solvespace.app/Contents/Resources/${name}.icns)
+    list(APPEND platform_BUNDLED_RESOURCES ${target})
+
+    add_custom_command(
+        OUTPUT ${target}
+        COMMAND mkdir -p ${CMAKE_CURRENT_BINARY_DIR}/solvespace.app/Contents/Resources
+        COMMAND iconutil -c icns -o ${target} ${source}
+        COMMENT "Building icon set ${icon}"
+        DEPENDS ${source})
+endforeach()
+
+foreach(res ${platform_RESOURCES})
+    get_filename_component(name ${res} NAME)
+    set(source ${CMAKE_CURRENT_SOURCE_DIR}/${res})
+    set(target ${CMAKE_CURRENT_BINARY_DIR}/solvespace.app/Contents/Resources/${name})
+    list(APPEND platform_BUNDLED_RESOURCES ${target})
+
+    add_custom_command(
+        OUTPUT ${target}
+        COMMAND mkdir -p ${CMAKE_CURRENT_BINARY_DIR}/solvespace.app/Contents/Resources
+        COMMAND ${CMAKE_COMMAND} -E copy ${source} ${target}
+        COMMENT "Copying resource file ${res}"
+        DEPENDS ${res})
+endforeach()
+
+foreach(lib ${platform_BUNDLED_LIBS})
+    get_filename_component(name ${lib} NAME)
+    set(target ${CMAKE_CURRENT_BINARY_DIR}/solvespace.app/Contents/MacOS/${name})
+    list(APPEND platform_BUNDLED_RESOURCES ${target})
+
+    add_custom_command(
+        OUTPUT ${target}
+        COMMAND mkdir -p ${CMAKE_CURRENT_BINARY_DIR}/solvespace.app/Contents/Resources
+        COMMAND ${CMAKE_COMMAND} -E copy ${lib} ${target}
+        COMMENT "Bundling shared library ${lib}"
+        DEPENDS ${lib})
+endforeach()
 
 # solvespace executable
 
@@ -221,12 +291,13 @@ set(solvespace_SOURCES
     srf/surfinter.cpp
     srf/triangulate.cpp)
 
-add_executable(solvespace WIN32
+add_executable(solvespace WIN32 MACOSX_BUNDLE
     ${libslvs_HEADERS}
     ${libslvs_SOURCES}
     ${util_SOURCES}
     ${platform_HEADERS}
     ${platform_SOURCES}
+    ${platform_BUNDLED_RESOURCES}
     ${generated_HEADERS}
     ${solvespace_HEADERS}
     ${solvespace_SOURCES})
@@ -234,7 +305,6 @@ add_executable(solvespace WIN32
 target_link_libraries(solvespace
     "${OPENGL_LIBRARIES}"
     "${PNG_LIBRARIES}"
-    "${ZLIB_LIBRARIES}"
     "${platform_LIBRARIES}")
 
 if(WIN32)
@@ -246,8 +316,34 @@ if(SPACEWARE_FOUND)
         "${SPACEWARE_LIBRARIES}")
 endif()
 
+if(APPLE)
+    set_target_properties(solvespace PROPERTIES INSTALL_RPATH ON)
+
+    set(fixups)
+    foreach(lib ${platform_BUNDLED_LIBS})
+        execute_process(COMMAND otool -XD ${lib}
+            OUTPUT_VARIABLE canonical_lib OUTPUT_STRIP_TRAILING_WHITESPACE)
+        add_custom_command(TARGET solvespace POST_BUILD
+            COMMAND install_name_tool -change "${canonical_lib}" "@executable_path/${name}"
+                    $<TARGET_FILE:solvespace>
+            COMMENT "Fixing up rpath for dylib ${name}")
+    endforeach()
+
+    set(bundle solvespace)
+    add_custom_command(OUTPUT ${CMAKE_BINARY_DIR}/${bundle}.dmg
+        COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_BINARY_DIR}/${bundle}.dmg
+        COMMAND hdiutil create -srcfolder ${CMAKE_CURRENT_BINARY_DIR}/${bundle}.app
+                ${CMAKE_BINARY_DIR}/${bundle}.dmg
+        DEPENDS $<TARGET_FILE:${bundle}>
+        COMMENT "Building ${bundle}.dmg")
+
+    add_custom_target(${bundle}-dmg ALL
+        DEPENDS ${CMAKE_BINARY_DIR}/${bundle}.dmg)
+endif()
+
 install(TARGETS solvespace
-    RUNTIME DESTINATION bin)
+    RUNTIME DESTINATION bin
+    BUNDLE DESTINATION .)
 
 install(FILES unix/solvespace.desktop
         DESTINATION share/applications)

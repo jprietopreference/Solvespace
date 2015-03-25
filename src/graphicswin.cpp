@@ -11,10 +11,10 @@
 #define mClip (&GraphicsWindow::MenuClipboard)
 #define mReq  (&GraphicsWindow::MenuRequest)
 #define mCon  (&Constraint::MenuConstrain)
-#define mFile (&SolveSpace::MenuFile)
+#define mFile (&SolveSpaceUI::MenuFile)
 #define mGrp  (&Group::MenuGroup)
-#define mAna  (&SolveSpace::MenuAnalyze)
-#define mHelp (&SolveSpace::MenuHelp)
+#define mAna  (&SolveSpaceUI::MenuAnalyze)
+#define mHelp (&SolveSpaceUI::MenuHelp)
 #define DEL   DELETE_KEY
 #define ESC   ESCAPE_KEY
 #define S     SHIFT_MASK
@@ -39,8 +39,10 @@ const GraphicsWindow::MenuEntry GraphicsWindow::menu[] = {
 { 1, "Export 3d &Wireframe...",     MNU_EXPORT_WIREFRAME, 0,     IN, mFile },
 { 1, "Export Triangle &Mesh...",    MNU_EXPORT_MESH,    0,       IN, mFile },
 { 1, "Export &Surfaces...",         MNU_EXPORT_SURFACES,0,       IN, mFile },
+#ifndef __APPLE__
 { 1,  NULL,                         0,                  0,       IN, NULL  },
 { 1, "E&xit",                       MNU_EXIT,           C|'Q',   IN, mFile },
+#endif
 
 { 0, "&Edit",                       0,                  0,       IN, NULL  },
 { 1, "&Undo",                       MNU_UNDO,           C|'Z',   IN, mEdit },
@@ -77,17 +79,17 @@ const GraphicsWindow::MenuEntry GraphicsWindow::menu[] = {
 { 1, "Show Snap &Grid",             MNU_SHOW_GRID,      '>',     IC, mView },
 { 1, "Use &Perspective Projection", MNU_PERSPECTIVE_PROJ,'`',    IC, mView },
 { 1,  NULL,                         0,                  0,       IN, NULL  },
-#if defined(HAVE_FLTK)
-{ 1, "Show Menu &Bar",              MNU_SHOW_MENU_BAR,  F(12),   IC, mView },
+#if defined(__APPLE__)
+{ 1, "Show Menu &Bar",              MNU_SHOW_MENU_BAR,  C|F(12), IC, mView },
 #endif
 { 1, "Show &Toolbar",               MNU_SHOW_TOOLBAR,   0,       IC, mView },
 { 1, "Show Text &Window",           MNU_SHOW_TEXT_WND,  '\t',    IC, mView },
 { 1,  NULL,                         0,                  0,       IN, NULL  },
 { 1, "Dimensions in &Inches",       MNU_UNITS_INCHES,   0,       IR, mView },
 { 1, "Dimensions in &Millimeters",  MNU_UNITS_MM,       0,       IR, mView },
-#if defined(HAVE_FLTK_FULLSCREEN) || defined(HAVE_GTK)
+#if defined(HAVE_GTK) || defined(__APPLE__)
 { 1,  NULL,                         0,                  0,       IN, NULL  },
-{ 1, "&Full Screen",                MNU_FULL_SCREEN,    F(11),   IC, mView },
+{ 1, "&Full Screen",                MNU_FULL_SCREEN,    C|F(11), IC, mView },
 #endif
 
 { 0, "&New Group",                  0,                  0,       IN, NULL  },
@@ -157,7 +159,9 @@ const GraphicsWindow::MenuEntry GraphicsWindow::menu[] = {
 
 { 0, "&Help",                       0,                  0,       IN, NULL  },
 { 1, "&Website / Manual",           MNU_WEBSITE,        0,       IN, mHelp },
+#ifndef __APPLE__
 { 1, "&About",                      MNU_ABOUT,          0,       IN, mHelp },
+#endif
 
 { -1, 0, 0, 0, IN, 0 }
 };
@@ -171,7 +175,7 @@ const GraphicsWindow::MenuEntry GraphicsWindow::menu[] = {
 #undef IC
 #undef IR
 
-bool MakeAcceleratorLabel(int accel, char *out) {
+bool SolveSpace::MakeAcceleratorLabel(int accel, char *out) {
     if(!accel) {
         out[0] = '\0';
         return false;
@@ -536,13 +540,13 @@ void GraphicsWindow::MenuView(int id) {
             break;
 
         case MNU_UNITS_INCHES:
-            SS.viewUnits = SolveSpace::UNIT_INCHES;
+            SS.viewUnits = SolveSpaceUI::UNIT_INCHES;
             SS.ScheduleShowTW();
             SS.GW.EnsureValidActives();
             break;
 
         case MNU_UNITS_MM:
-            SS.viewUnits = SolveSpace::UNIT_MM;
+            SS.viewUnits = SolveSpaceUI::UNIT_MM;
             SS.ScheduleShowTW();
             SS.GW.EnsureValidActives();
             break;
@@ -608,26 +612,26 @@ void GraphicsWindow::EnsureValidActives(void) {
     SS.UndoEnableMenus();
 
     switch(SS.viewUnits) {
-        case SolveSpace::UNIT_MM:
-        case SolveSpace::UNIT_INCHES:
+        case SolveSpaceUI::UNIT_MM:
+        case SolveSpaceUI::UNIT_INCHES:
             break;
         default:
-            SS.viewUnits = SolveSpace::UNIT_MM;
+            SS.viewUnits = SolveSpaceUI::UNIT_MM;
             break;
     }
-    RadioMenuById(MNU_UNITS_MM, SS.viewUnits == SolveSpace::UNIT_MM);
-    RadioMenuById(MNU_UNITS_INCHES, SS.viewUnits == SolveSpace::UNIT_INCHES);
+    RadioMenuById(MNU_UNITS_MM, SS.viewUnits == SolveSpaceUI::UNIT_MM);
+    RadioMenuById(MNU_UNITS_INCHES, SS.viewUnits == SolveSpaceUI::UNIT_INCHES);
 
     ShowTextWindow(SS.GW.showTextWindow);
     CheckMenuById(MNU_SHOW_TEXT_WND, SS.GW.showTextWindow);
 
-#if defined(HAVE_FLTK)
+#if defined(__APPLE__)
     CheckMenuById(MNU_SHOW_MENU_BAR, MenuBarIsVisible());
 #endif
     CheckMenuById(MNU_SHOW_TOOLBAR, SS.showToolbar);
     CheckMenuById(MNU_PERSPECTIVE_PROJ, SS.usePerspectiveProj);
     CheckMenuById(MNU_SHOW_GRID, SS.GW.showSnapGrid);
-#if defined(HAVE_FLTK_FULLSCREEN) || defined(HAVE_GTK)
+#if defined(HAVE_GTK) || defined(__APPLE__)
     CheckMenuById(MNU_FULL_SCREEN, FullScreenIsActive());
 #endif
 

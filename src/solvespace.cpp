@@ -7,10 +7,10 @@
 #include "solvespace.h"
 #include <string>
 
-SolveSpace SS;
-Sketch SK;
+SolveSpaceUI SolveSpace::SS;
+Sketch SolveSpace::SK;
 
-void SolveSpace::Init(const char *cmdLine) {
+void SolveSpaceUI::Init() {
     SS.tangentArcRadius = 10.0;
 
     // Then, load the registry settings.
@@ -96,21 +96,23 @@ void SolveSpace::Init(const char *cmdLine) {
     // configuration file, but we will automatically load those as we need
     // them.
 
-    // Start with either an empty file, or the file specified on the
-    // command line.
     NewFile();
-    AfterNewFile();
-    if(strlen(cmdLine) != 0) {
-        if(LoadFromFile(cmdLine)) {
-            strcpy(saveFile, cmdLine);
-        } else {
-            NewFile();
-        }
-    }
     AfterNewFile();
 }
 
-void SolveSpace::Exit(void) {
+bool SolveSpaceUI::OpenFile(const char *filename) {
+    bool success = LoadFromFile(filename);
+    if(success) {
+        AddToRecentList(filename);
+        strcpy(saveFile, filename);
+    } else {
+        NewFile();
+    }
+    AfterNewFile();
+    return success;
+}
+
+void SolveSpaceUI::Exit(void) {
     int i;
     char name[100];
     // Recent files
@@ -188,39 +190,39 @@ void SolveSpace::Exit(void) {
     ExitNow();
 }
 
-void SolveSpace::ScheduleGenerateAll() {
+void SolveSpaceUI::ScheduleGenerateAll() {
     if(!later.scheduled) ScheduleLater();
     later.scheduled = true;
     later.generateAll = true;
 }
 
-void SolveSpace::ScheduleShowTW() {
+void SolveSpaceUI::ScheduleShowTW() {
     if(!later.scheduled) ScheduleLater();
     later.scheduled = true;
     later.showTW = true;
 }
 
-void SolveSpace::DoLater(void) {
+void SolveSpaceUI::DoLater(void) {
     if(later.generateAll) GenerateAll();
     if(later.showTW) TW.Show();
     ZERO(&later);
 }
 
-double SolveSpace::MmPerUnit(void) {
+double SolveSpaceUI::MmPerUnit(void) {
     if(viewUnits == UNIT_INCHES) {
         return 25.4;
     } else {
         return 1.0;
     }
 }
-const char *SolveSpace::UnitName(void) {
+const char *SolveSpaceUI::UnitName(void) {
     if(viewUnits == UNIT_INCHES) {
         return "inch";
     } else {
         return "mm";
     }
 }
-char *SolveSpace::MmToString(double v) {
+char *SolveSpaceUI::MmToString(double v) {
     static int WhichBuf;
     static char Bufs[8][128];
 
@@ -235,19 +237,19 @@ char *SolveSpace::MmToString(double v) {
     }
     return s;
 }
-double SolveSpace::ExprToMm(Expr *e) {
+double SolveSpaceUI::ExprToMm(Expr *e) {
     return (e->Eval()) * MmPerUnit();
 }
-double SolveSpace::StringToMm(const char *str) {
+double SolveSpaceUI::StringToMm(const char *str) {
     return atof(str) * MmPerUnit();
 }
-double SolveSpace::ChordTolMm(void) {
+double SolveSpaceUI::ChordTolMm(void) {
     return SS.chordTol / SS.GW.scale;
 }
-int SolveSpace::UnitDigitsAfterDecimal(void) {
+int SolveSpaceUI::UnitDigitsAfterDecimal(void) {
     return (viewUnits == UNIT_INCHES) ? afterDecimalInch : afterDecimalMm;
 }
-void SolveSpace::SetUnitDigitsAfterDecimal(int v) {
+void SolveSpaceUI::SetUnitDigitsAfterDecimal(int v) {
     if(viewUnits == UNIT_INCHES) {
         afterDecimalInch = v;
     } else {
@@ -255,7 +257,7 @@ void SolveSpace::SetUnitDigitsAfterDecimal(int v) {
     }
 }
 
-double SolveSpace::CameraTangent(void) {
+double SolveSpaceUI::CameraTangent(void) {
     if(!usePerspectiveProj) {
         return 0;
     } else {
@@ -263,7 +265,7 @@ double SolveSpace::CameraTangent(void) {
     }
 }
 
-void SolveSpace::AfterNewFile(void) {
+void SolveSpaceUI::AfterNewFile(void) {
     // Clear out the traced point, which is no longer valid
     traced.point = Entity::NO_ENTITY;
     traced.path.l.Clear();
@@ -308,7 +310,7 @@ void SolveSpace::AfterNewFile(void) {
     UpdateWindowTitle();
 }
 
-void SolveSpace::RemoveFromRecentList(const char *file) {
+void SolveSpaceUI::RemoveFromRecentList(const char *file) {
     int src, dest;
     dest = 0;
     for(src = 0; src < MAX_RECENT; src++) {
@@ -320,7 +322,7 @@ void SolveSpace::RemoveFromRecentList(const char *file) {
     while(dest < MAX_RECENT) strcpy(RecentFile[dest++], "");
     RefreshRecentMenus();
 }
-void SolveSpace::AddToRecentList(const char *file) {
+void SolveSpaceUI::AddToRecentList(const char *file) {
     RemoveFromRecentList(file);
 
     int src;
@@ -331,7 +333,7 @@ void SolveSpace::AddToRecentList(const char *file) {
     RefreshRecentMenus();
 }
 
-bool SolveSpace::GetFilenameAndSave(bool saveAs) {
+bool SolveSpaceUI::GetFilenameAndSave(bool saveAs) {
 
     char newFile[MAX_PATH];
     strcpy(newFile, saveFile);
@@ -349,7 +351,7 @@ bool SolveSpace::GetFilenameAndSave(bool saveAs) {
     }
 }
 
-bool SolveSpace::OkayToStartNewFile(void) {
+bool SolveSpaceUI::OkayToStartNewFile(void) {
     if(!unsaved) return true;
 
     switch(SaveFileYesNoCancel()) {
@@ -366,13 +368,11 @@ bool SolveSpace::OkayToStartNewFile(void) {
     }
 }
 
-void SolveSpace::UpdateWindowTitle(void) {
+void SolveSpaceUI::UpdateWindowTitle(void) {
     if(strlen(saveFile) == 0) {
-        SetWindowTitle("SolveSpace - (not yet saved)");
+        SetCurrentFilename(NULL);
     } else {
-        char buf[MAX_PATH+100];
-        sprintf(buf, "SolveSpace - %s", saveFile);
-        SetWindowTitle(buf);
+        SetCurrentFilename(saveFile);
     }
 }
 
@@ -383,7 +383,7 @@ static std::string Extname(std::string filename) {
     return "";
 }
 
-void SolveSpace::MenuFile(int id) {
+void SolveSpaceUI::MenuFile(int id) {
     if(id >= RECENT_OPEN && id < (RECENT_OPEN+MAX_RECENT)) {
         if(!SS.OkayToStartNewFile()) return;
 
@@ -505,7 +505,7 @@ void SolveSpace::MenuFile(int id) {
     SS.UpdateWindowTitle();
 }
 
-void SolveSpace::MenuAnalyze(int id) {
+void SolveSpaceUI::MenuAnalyze(int id) {
     SS.GW.GroupSelection();
 #define gs (SS.GW.gs)
 
@@ -653,7 +653,7 @@ void SolveSpace::MenuAnalyze(int id) {
                 vol / pow(SS.MmPerUnit(), 3),
                 SS.UnitName());
 
-            if(SS.viewUnits == SolveSpace::UNIT_MM) {
+            if(SS.viewUnits == SolveSpaceUI::UNIT_MM) {
                 sprintf(msg+strlen(msg), "\n    %.2f mL", vol/(10*10*10));
             }
             strcpy(msg+strlen(msg),
@@ -736,7 +736,7 @@ void SolveSpace::MenuAnalyze(int id) {
     }
 }
 
-void SolveSpace::MenuHelp(int id) {
+void SolveSpaceUI::MenuHelp(int id) {
     switch(id) {
         case GraphicsWindow::MNU_WEBSITE:
             OpenWebsite("http://solvespace.com/helpmenu");
@@ -770,7 +770,7 @@ void SolveSpace::MenuHelp(int id) {
     }
 }
 
-void SolveSpace::Clear(void) {
+void SolveSpaceUI::Clear(void) {
     sys.Clear();
     for(int i = 0; i < MAX_UNDO; i++) {
         if(i < undo.cnt) undo.d[i].Clear();
