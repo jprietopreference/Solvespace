@@ -1230,10 +1230,9 @@ protected:
     }
 
     virtual bool on_button_press_event(GdkEventButton *event) {
-        if(!(event->state & Gdk::BUTTON1_MASK))
-            return false;
-
-        SS.TW.MouseEvent(/*leftClick*/ true, /*leftDown*/ true, event->x, event->y);
+        SS.TW.MouseEvent(/*leftClick*/ event->type == Gdk::BUTTON_PRESS,
+                         /*leftDown*/ event->state & Gdk::BUTTON1_MASK,
+                         event->x, event->y);
 
         return true;
     }
