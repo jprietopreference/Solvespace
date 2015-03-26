@@ -135,6 +135,7 @@ void SolveSpace::ScheduleLater() {
 
 - initWithFrame:(NSRect)frameRect {
     self = [super initWithFrame:frameRect];
+    [self setWantsLayer:YES];
 
     NSOpenGLPixelFormatAttribute attrs[] = {
         NSOpenGLPFAColorSize, 24,
@@ -774,8 +775,6 @@ int SolveSpace::SaveFileYesNoCancel(void) {
 {
     NSTrackingArea *trackingArea;
 }
-
-@property NSScrollView *scrollView;
 @end
 
 @implementation TextWindowView
@@ -825,10 +824,6 @@ int SolveSpace::SaveFileYesNoCancel(void) {
         [self convertPoint:[event locationInWindow] fromView:nil]];
     SolveSpace::SS.TW.MouseEvent(/*leftClick*/ false, /*leftDown*/ true,
                                  point.x, -point.y);
-}
-
-- (void)scrollWheel:(NSEvent*)event {
-    [[self scrollView] scrollWheel:event];
 }
 
 - (void)mouseExited:(NSEvent*)event {
@@ -899,7 +894,7 @@ void InitTextWindow() {
     [TW setFrameAutosaveName:@"TextWindow"];
     [TW setFloatingPanel:YES];
     [TW setBecomesKeyOnlyIfNeeded:YES];
-    [TW setParentWindow:GW];
+    [GW addChildWindow:TW ordered:NSWindowAbove];
 
     NSScrollView *scrollView = [[NSScrollView alloc] init];
     [TW setContentView:scrollView];
@@ -908,7 +903,6 @@ void InitTextWindow() {
     [[scrollView contentView] setCopiesOnScroll:YES];
 
     TWView = [[TextWindowView alloc] init];
-    [TWView setScrollView:scrollView];
     [scrollView setDocumentView:TWView];
 
     [TW setDelegate:TWDelegate];
@@ -934,7 +928,7 @@ void InvalidateText(void) {
     NSSize size = [TWView frame].size;
     size.height = (SS.TW.top[SS.TW.rows - 1] + 1) * TextWindow::LINE_HEIGHT / 2;
     [TWView setFrameSize:size];
-    [[TW contentView] setNeedsDisplay:YES];
+    [TWView setNeedsDisplay:YES];
 }
 
 void MoveTextScrollbarTo(int pos, int maxPos, int page) {
