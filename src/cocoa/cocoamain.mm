@@ -119,6 +119,8 @@ void SolveSpace::ScheduleLater() {
 @interface GLViewWithEditor : NSView
 - (void)drawGL;
 
+@property BOOL wantsBackingStoreScaling;
+
 @property(readonly, getter=isEditing) BOOL editing;
 - (void)startEditing:(NSString*)text at:(NSPoint)origin;
 - (void)stopEditing;
@@ -157,13 +159,39 @@ void SolveSpace::ScheduleLater() {
     delete offscreen;
 }
 
+#define CONVERT1(name, to_from) \
+    - (NS##name)convert##name##to_from##Backing:(NS##name)input { \
+        return _wantsBackingStoreScaling ? [super convert##name##to_from##Backing:input] : input; }
+#define CONVERT(name) CONVERT1(name, To) CONVERT1(name, From)
+CONVERT(Size)
+CONVERT(Rect)
+#undef CONVERT
+#undef CONVERT1
+
+- (NSPoint)convertPointToBacking:(NSPoint)input {
+    if(_wantsBackingStoreScaling) return [super convertPointToBacking:input];
+    else {
+        input.y *= -1;
+        return input;
+    }
+}
+
+- (NSPoint)convertPointFromBacking:(NSPoint)input {
+    if(_wantsBackingStoreScaling) return [super convertPointFromBacking:input];
+    else {
+        input.y *= -1;
+        return input;
+    }
+}
+
 - (void)drawRect:(NSRect)aRect {
     [glContext makeCurrentContext];
 
     if(!offscreen)
         offscreen = new GLOffscreen;
 
-    NSSize size = [self frame].size;
+    NSSize size = [self convertSizeToBacking:[self bounds].size];
+    NSRect bounds = [self convertRectToBacking:[self bounds]];
     offscreen->begin(size.width, size.height);
 
     [self drawGL];
@@ -179,7 +207,7 @@ void SolveSpace::ScheduleLater() {
         provider, NULL, true, kCGRenderingIntentDefault);
 
     CGContextDrawImage((CGContextRef) [[NSGraphicsContext currentContext] graphicsPort],
-                       [self frame], image);
+                       [self bounds], image);
 }
 
 - (void)drawGL {
@@ -261,7 +289,7 @@ void SolveSpace::ScheduleLater() {
 }
 
 - (void)mouseMoved:(NSEvent*)event {
-    NSPoint point = [self ij_to_xy:[self convertPointToBacking:[event locationInWindow]]];
+    NSPoint point = [self ij_to_xy:[self convertPoint:[event locationInWindow] fromView:nil]];
     NSUInteger flags = [event modifierFlags];
     NSUInteger buttons = [NSEvent pressedMouseButtons];
     SolveSpace::SS.GW.MouseMoved(point.x, point.y,
@@ -285,7 +313,7 @@ void SolveSpace::ScheduleLater() {
 }
 
 - (void)mouseDown:(NSEvent*)event {
-    NSPoint point = [self ij_to_xy:[self convertPointToBacking:[event locationInWindow]]];
+    NSPoint point = [self ij_to_xy:[self convertPoint:[event locationInWindow] fromView:nil]];
     if([event clickCount] == 1)
         SolveSpace::SS.GW.MouseLeftDown(point.x, point.y);
     else if([event clickCount] == 2)
@@ -293,7 +321,7 @@ void SolveSpace::ScheduleLater() {
 }
 
 - (void)rightMouseDown:(NSEvent*)event {
-    NSPoint point = [self ij_to_xy:[self convertPointToBacking:[event locationInWindow]]];
+    NSPoint point = [self ij_to_xy:[self convertPoint:[event locationInWindow] fromView:nil]];
     SolveSpace::SS.GW.MouseMiddleOrRightDown(point.x, point.y);
 }
 
@@ -302,18 +330,18 @@ void SolveSpace::ScheduleLater() {
 }
 
 - (void)mouseUp:(NSEvent*)event {
-    NSPoint point = [self ij_to_xy:[self convertPointToBacking:[event locationInWindow]]];
+    NSPoint point = [self ij_to_xy:[self convertPoint:[event locationInWindow] fromView:nil]];
     SolveSpace::SS.GW.MouseLeftUp(point.x, point.y);
 }
 
 - (void)rightMouseUp:(NSEvent*)event {
-    NSPoint point = [self ij_to_xy:[self convertPointToBacking:[event locationInWindow]]];
+    NSPoint point = [self ij_to_xy:[self convertPoint:[event locationInWindow] fromView:nil]];
     self->_lastContextMenuEvent = event;
     SolveSpace::SS.GW.MouseRightUp(point.x, point.y);
 }
 
 - (void)scrollWheel:(NSEvent*)event {
-    NSPoint point = [self ij_to_xy:[self convertPointToBacking:[event locationInWindow]]];
+    NSPoint point = [self ij_to_xy:[self convertPoint:[event locationInWindow] fromView:nil]];
     SolveSpace::SS.GW.MouseScroll(point.x, point.y, -[event deltaY]);
 }
 
@@ -346,7 +374,7 @@ void SolveSpace::ScheduleLater() {
 
 - (void)startEditing:(NSString*)text at:(NSPoint)xy {
     // Convert to ij (vs. xy) style coordinates
-    NSSize size = [self convertSizeToBacking:[self frame].size];
+    NSSize size = [self convertSizeToBacking:[self bounds].size];
     NSPoint point = {
         .x = xy.x + size.width / 2,
         .y = xy.y - size.height / 2 + [editor intrinsicContentSize].height
@@ -365,8 +393,9 @@ void SolveSpace::ScheduleLater() {
 - (NSPoint)ij_to_xy:(NSPoint)ij {
     // Convert to xy (vs. ij) style coordinates,
     // with (0, 0) at center
-    NSSize size = [self convertSizeToBacking:[self frame].size];
-    return (NSPoint){ .x = ij.x - size.width / 2, .y = -size.height / 2 - ij.y };
+    NSSize size = [self bounds].size;
+    return [self convertPointToBacking:(NSPoint){
+        .x = ij.x - size.width / 2, .y = ij.y - size.height / 2 }];
 }
 @end
 
@@ -794,7 +823,7 @@ int SolveSpace::SaveFileYesNoCancel(void) {
 }
 
 - (void) createTrackingArea {
-    trackingArea = [[NSTrackingArea alloc] initWithRect:[self frame]
+    trackingArea = [[NSTrackingArea alloc] initWithRect:[self bounds]
         options:(NSTrackingMouseEnteredAndExited | NSTrackingMouseMoved |
                  NSTrackingActiveAlways)
         owner:self userInfo:nil];
@@ -863,7 +892,7 @@ int SolveSpace::SaveFileYesNoCancel(void) {
 
 - (void)prepareEditor {
     [editor setFrameSize:(NSSize){
-        .width = [self frame].size.width - [editor frame].origin.x,
+        .width = [self bounds].size.width - [editor frame].origin.x,
         .height = [editor intrinsicContentSize].height }];
 }
 
@@ -939,9 +968,9 @@ void GetTextWindowSize(int *w, int *h) {
 }
 
 void InvalidateText(void) {
-    NSSize size = [TWView frame].size;
+    NSSize size = [TWView convertSizeToBacking:[TWView frame].size];
     size.height = (SS.TW.top[SS.TW.rows - 1] + 1) * TextWindow::LINE_HEIGHT / 2;
-    [TWView setFrameSize:size];
+    [TWView setFrameSize:[TWView convertSizeFromBacking:size]];
     [TWView setNeedsDisplay:YES];
 }
 
