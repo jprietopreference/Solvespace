@@ -168,6 +168,7 @@ void SolveSpace::ScheduleLater() {
 
     [self drawGL];
     GL_CHECK();
+    [glContext flushBuffer]; // tell apitrace we're done with the frame
 
     uint8_t *pixels = offscreen->end(![self isFlipped]);
     CGDataProviderRef provider = CGDataProviderCreateWithData(
