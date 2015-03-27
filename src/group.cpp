@@ -37,8 +37,7 @@ void Group::Clear(void) {
 }
 
 void Group::AddParam(IdList<Param,hParam> *param, hParam hp, double v) {
-    Param pa;
-    memset(&pa, 0, sizeof(pa));
+    Param pa = {};
     pa.h = hp;
     pa.val = v;
 
@@ -52,8 +51,7 @@ bool Group::IsVisible(void) {
 }
 
 void Group::MenuGroup(int id) {
-    Group g;
-    ZERO(&g);
+    Group g = {};
     g.visible = true;
     g.color = RGBi(100, 100, 100);
     g.scale = 1;
@@ -362,8 +360,7 @@ void Group::Generate(IdList<Entity,hEntity> *entity,
                 origin = face->FaceGetPointNum();
             } else oops();
 
-            Entity normal;
-            memset(&normal, 0, sizeof(normal));
+            Entity normal = {};
             normal.type = Entity::NORMAL_N_COPY;
             normal.numNormal = q;
             normal.point[0] = h.entity(2);
@@ -371,16 +368,14 @@ void Group::Generate(IdList<Entity,hEntity> *entity,
             normal.h = h.entity(1);
             entity->Add(&normal);
 
-            Entity point;
-            memset(&point, 0, sizeof(point));
+            Entity point = {};
             point.type = Entity::POINT_N_COPY;
             point.numPoint = origin;
             point.group = h;
             point.h = h.entity(2);
             entity->Add(&point);
 
-            Entity wp;
-            memset(&wp, 0, sizeof(wp));
+            Entity wp = {};
             wp.type = Entity::WORKPLANE;
             wp.normal = normal.h;
             wp.point[0] = point.h;
@@ -562,8 +557,7 @@ void Group::AddEq(IdList<Equation,hEquation> *l, Expr *expr, int index) {
 }
 
 void Group::GenerateEquations(IdList<Equation,hEquation> *l) {
-    Equation eq;
-    ZERO(&eq);
+    Equation eq = {};
     if(type == IMPORTED) {
         // Normalize the quaternion
         ExprQuaternion q = {
@@ -652,8 +646,7 @@ void Group::MakeExtrusionLines(IdList<Entity,hEntity> *el, hEntity in) {
     // Let the face's u coordinate be the workplane normal.
     Vector u = w->Normal()->numNormal.RotationN();
 
-    Entity en;
-    ZERO(&en);
+    Entity en = {};
     if(ep->IsPoint()) {
         // A point gets extruded to form a line segment
         en.point[0] = Remap(ep->h, REMAP_TOP);
@@ -686,8 +679,7 @@ void Group::MakeExtrusionLines(IdList<Entity,hEntity> *el, hEntity in) {
 void Group::MakeLatheCircles(IdList<Entity,hEntity> *el, IdList<Param,hParam> *param, hEntity in, Vector pt, Vector axis, int ai) {
     Entity *ep = SK.GetEntity(in);
 
-    Entity en;
-    ZERO(&en);
+    Entity en = {};
 
     if(ep->IsPoint()) {
         // A point gets revolved to form an arc.
@@ -711,8 +703,7 @@ void Group::MakeLatheCircles(IdList<Entity,hEntity> *el, IdList<Param,hParam> *p
         en.type = Entity::ARC_OF_CIRCLE;
 
         // Generate a normal.
-        Entity n;
-        memset(&n, 0, sizeof(n));
+        Entity n = {};
         n.workplane = en.workplane;
         n.h = Remap(ep->h, REMAP_PT_TO_NORMAL);
         n.group = en.group;
@@ -763,8 +754,7 @@ void Group::MakeExtrusionTopBottomFaces(IdList<Entity,hEntity> *el, hEntity pt)
     Group *src = SK.GetGroup(opA);
     Vector n = src->polyLoops.normal;
 
-    Entity en;
-    ZERO(&en);
+    Entity en = {};
     en.type = Entity::FACE_QUAT_PT;
     en.group = h;
 
@@ -785,8 +775,7 @@ void Group::CopyEntity(IdList<Entity,hEntity> *el,
                        hParam qw, hParam qvx, hParam qvy, hParam qvz,
                        bool asTrans, bool asAxisAngle)
 {
-    Entity en;
-    ZERO(&en);
+    Entity en = {};
     en.type = ep->type;
     en.extraPoints = ep->extraPoints;
     en.h = Remap(ep->h, remap);
