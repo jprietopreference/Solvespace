@@ -776,6 +776,8 @@ int SolveSpace::SaveFileYesNoCancel(void) {
 {
     NSTrackingArea *trackingArea;
 }
+
+@property (nonatomic, getter=isCursorHand) BOOL cursorHand;
 @end
 
 @implementation TextWindowView
@@ -827,7 +829,18 @@ int SolveSpace::SaveFileYesNoCancel(void) {
                                  point.x, -point.y);
 }
 
+- (void)setCursorHand:(BOOL)cursorHand {
+    if(_cursorHand != cursorHand) {
+        if(cursorHand)
+            [[NSCursor pointingHandCursor] push];
+        else
+            [NSCursor pop];
+    }
+    _cursorHand = cursorHand;
+}
+
 - (void)mouseExited:(NSEvent*)event {
+    [self setCursorHand:FALSE];
     SolveSpace::SS.TW.MouseLeave();
 }
 
@@ -937,10 +950,7 @@ void MoveTextScrollbarTo(int pos, int maxPos, int page) {
 }
 
 void SetMousePointerToHand(bool is_hand) {
-    if(is_hand)
-        [[NSCursor pointingHandCursor] set];
-    else
-        [[NSCursor arrowCursor] set];
+    [TWView setCursorHand:is_hand];
 }
 
 void ShowTextEditControl(int x, int y, char *str) {
