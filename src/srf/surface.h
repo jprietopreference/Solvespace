@@ -201,7 +201,7 @@ public:
     hSSurface       surfA;
     hSSurface       surfB;
 
-    static SCurve FromTransformationOf(SCurve *a, Vector t, Quaternion q, 
+    static SCurve FromTransformationOf(SCurve *a, Vector t, Quaternion q,
                                         double scale);
     SCurve MakeCopySplitAgainst(SShell *agnstA, SShell *agnstB,
                                 SSurface *srfA, SSurface *srfB);
@@ -251,6 +251,7 @@ public:
     hSSurface       newH;
 
     RgbColor        color;
+    double          alpha;
     uint32_t        face;
 
     int             degm, degn;
@@ -285,7 +286,7 @@ public:
     SSurface MakeCopyTrimAgainst(SShell *parent, SShell *a, SShell *b,
                                     SShell *into, int type);
     void TrimFromEdgeList(SEdgeList *el, bool asUv);
-    void IntersectAgainst(SSurface *b, SShell *agnstA, SShell *agnstB, 
+    void IntersectAgainst(SSurface *b, SShell *agnstA, SShell *agnstB,
                           SShell *into);
     void AddExactIntersectionCurve(SBezier *sb, SSurface *srfB,
                           SShell *agnstA, SShell *agnstB, SShell *into);
@@ -361,9 +362,9 @@ public:
     bool                        booleanFailed;
 
     void MakeFromExtrusionOf(SBezierLoopSet *sbls, Vector t0, Vector t1,
-                             RgbColor color);
+                             RgbColor color, double alpha);
     void MakeFromRevolutionOf(SBezierLoopSet *sbls, Vector pt, Vector axis,
-                              RgbColor color);
+                              RgbColor color, double alpha);
 
     void MakeFromUnionOf(SShell *a, SShell *b);
     void MakeFromDifferenceOf(SShell *a, SShell *b);
@@ -398,7 +399,7 @@ public:
     int ClassifyRegion(Vector edge_n, Vector inter_surf_n, Vector edge_surf_n);
     bool ClassifyEdge(int *indir, int *outdir,
                       Vector ea, Vector eb,
-                      Vector p, 
+                      Vector p,
                       Vector edge_n_in, Vector edge_n_out, Vector surf_n);
 
     void MakeFromCopyOf(SShell *a);
