@@ -119,7 +119,6 @@ public:
     double      valB;
     double      valC;
     RgbColor    color;
-    double      alpha;
 
     struct {
         int                 how;

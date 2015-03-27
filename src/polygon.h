@@ -124,7 +124,6 @@ public:
 typedef struct {
     uint32_t face;
     RgbColor color;
-    double alpha;
 } STriMeta;
 
 class SPolygon {
@@ -227,7 +226,6 @@ public:
     bool    flipNormal;
     bool    keepCoplanar;
     bool    atLeastOneDiscarded;
-    bool    isTransparent;
 
     void Clear(void);
     void AddTriangle(STriangle *st);

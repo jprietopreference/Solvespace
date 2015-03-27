@@ -123,14 +123,14 @@ SSurface SSurface::FromPlane(Vector pt, Vector u, Vector v) {
     ret.degm = 1;
     ret.degn = 1;
 
-    ret.weight[0][0] = ret.weight[0][1] = 1;
+    ret.weight[0][0] = ret.weight[0][1] = 1; 
     ret.weight[1][0] = ret.weight[1][1] = 1;
 
     ret.ctrl[0][0] = pt;
     ret.ctrl[0][1] = pt.Plus(u);
     ret.ctrl[1][0] = pt.Plus(v);
     ret.ctrl[1][1] = pt.Plus(v).Plus(u);
-
+    
     return ret;
 }
 
@@ -143,7 +143,6 @@ SSurface SSurface::FromTransformationOf(SSurface *a,
 
     ret.h = a->h;
     ret.color = a->color;
-    ret.alpha = a->alpha;
     ret.face = a->face;
 
     ret.degm = a->degm;
@@ -414,7 +413,7 @@ void SSurface::TriangulateInto(SShell *shell, SMesh *sm) {
     if(el.AssemblePolygon(&poly, NULL, true)) {
         int i, start = sm->l.n;
         if(degm == 1 && degn == 1) {
-            // A surface with curvature along one direction only; so
+            // A surface with curvature along one direction only; so 
             // choose the triangulation with chords that lie as much
             // as possible within the surface. And since the trim curves
             // have been pwl'd to within the desired chord tol, that will
@@ -429,7 +428,7 @@ void SSurface::TriangulateInto(SShell *shell, SMesh *sm) {
             poly.UvGridTriangulateInto(sm, this);
         }
 
-        STriMeta meta = { face, color, alpha };
+        STriMeta meta = { face, color };
         for(i = start; i < sm->l.n; i++) {
             STriangle *st = &(sm->l.elem[i]);
             st->meta = meta;
@@ -491,7 +490,7 @@ typedef struct {
 } TrimLine;
 
 void SShell::MakeFromExtrusionOf(SBezierLoopSet *sbls, Vector t0, Vector t1,
-                                 RgbColor color, double alpha)
+                                 RgbColor color)
 {
     // Make the extrusion direction consistent with respect to the normal
     // of the sketch we're extruding.
@@ -519,13 +518,11 @@ void SShell::MakeFromExtrusionOf(SBezierLoopSet *sbls, Vector t0, Vector t1,
     SSurface s0, s1;
     s0 = SSurface::FromPlane(orig.Plus(t0), u, v);
     s0.color = color;
-    s0.alpha = alpha;
     s1 = SSurface::FromPlane(orig.Plus(t1).Plus(u), u.ScaledBy(-1), v);
     s1.color = color;
-    s1.alpha = alpha;
     hSSurface hs0 = surface.AddAndAssignId(&s0),
               hs1 = surface.AddAndAssignId(&s1);
-
+    
     // Now go through the input curves. For each one, generate its surface
     // of extrusion, its two translated trim curves, and one trim line. We
     // go through by loops so that we can assign the lines correctly.
@@ -540,7 +537,6 @@ void SShell::MakeFromExtrusionOf(SBezierLoopSet *sbls, Vector t0, Vector t1,
             // it to the list
             SSurface ss = SSurface::FromExtrusionOf(sb, t0, t1);
             ss.color = color;
-            ss.alpha = alpha;
             hSSurface hsext = surface.AddAndAssignId(&ss);
 
             // Translate the curve by t0 and t1 to produce two trim curves
@@ -614,7 +610,7 @@ typedef struct {
 } Revolved;
 
 void SShell::MakeFromRevolutionOf(SBezierLoopSet *sbls, Vector pt, Vector axis,
-                                  RgbColor color, double alpha)
+                                  RgbColor color)
 {
     SBezierLoop *sbl;
 
@@ -657,7 +653,7 @@ void SShell::MakeFromRevolutionOf(SBezierLoopSet *sbls, Vector pt, Vector axis,
         for(sb = sbl->l.First(); sb; sb = sbl->l.NextAfter(sb)) {
             Revolved revs;
             for(j = 0; j < 4; j++) {
-                if(sb->deg == 1 &&
+                if(sb->deg == 1 && 
                     (sb->ctrl[0]).DistanceToLine(pt, axis) < LENGTH_EPS &&
                     (sb->ctrl[1]).DistanceToLine(pt, axis) < LENGTH_EPS)
                 {
@@ -669,7 +665,6 @@ void SShell::MakeFromRevolutionOf(SBezierLoopSet *sbls, Vector pt, Vector axis,
                                                              (PI/2)*j,
                                                              (PI/2)*(j+1));
                     ss.color = color;
-                    ss.alpha = alpha;
                     revs.d[j] = surface.AddAndAssignId(&ss);
                 }
             }
@@ -710,7 +705,7 @@ void SShell::MakeFromRevolutionOf(SBezierLoopSet *sbls, Vector pt, Vector axis,
 
                 // And if this input curve and the one after it both generated
                 // surfaces, then trim both of those by the appropriate
-                // circle.
+                // circle. 
                 if(revs.d[j].v && revsp.d[j].v) {
                     SSurface *ss = surface.FindById(revs.d[j]);
 
