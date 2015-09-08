@@ -24,7 +24,11 @@ if(WIN32)
     set(DISABLE_TTF2C CACHE BOOL "Disable font regeneration with ttf2c, for use on CI")
 endif()
 
-if(NOT WIN32)
+if(APPLE)
+   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libstdc++")
+endif()
+
+if(NOT WIN32 AND NOT APPLE)
     set(GUI gtk2 CACHE STRING "GUI toolkit to use (one of: gtk2 gtk3)")
 endif()
 
