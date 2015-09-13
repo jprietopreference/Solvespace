@@ -327,7 +327,7 @@ if(SPACEWARE_FOUND)
 endif()
 
 if(APPLE)
-    set_target_properties(solvespace PROPERTIES INSTALL_RPATH ON)
+    set_target_properties(solvespace PROPERTIES MACOSX_RPATH ON)
 
     set(fixups)
     foreach(lib ${platform_BUNDLED_LIBS})
@@ -344,7 +344,7 @@ if(APPLE)
         COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_BINARY_DIR}/${bundle}.dmg
         COMMAND hdiutil create -srcfolder ${CMAKE_CURRENT_BINARY_DIR}/${bundle}.app
                 ${CMAKE_BINARY_DIR}/${bundle}.dmg
-        DEPENDS $<TARGET_FILE:${bundle}>
+        DEPENDS solvespace
         COMMENT "Building ${bundle}.dmg")
 
     add_custom_target(${bundle}-dmg ALL
