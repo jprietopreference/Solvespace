@@ -25,7 +25,12 @@ if(WIN32)
 endif()
 
 if(APPLE)
-   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libstdc++")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libstdc++")
+endif()
+
+if(UNIX AND NOT APPLE)
+    # We want C++11 for gtkmm, but Ubuntu 14.10's gcc is too old for that
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
 endif()
 
 if(NOT WIN32 AND NOT APPLE)
