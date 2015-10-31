@@ -102,13 +102,33 @@ void Group::MenuGroup(int id) {
                 }
                 if(SS.GW.projRight.Dot(ut) < 0) g.predef.negateU = true;
                 if(SS.GW.projUp.   Dot(vt) < 0) g.predef.negateV = true;
+            } else if(gs.faces == 1 && gs.n == 1) {
+                g.subtype = WORKPLANE_BY_FACE;
+
+                // Remember the face used to create workplane.
+                g.predef.entityB = gs.face[0];
+
+                // Calculate workplane basis.
+                Entity *face = SK.GetEntity(g.predef.entityB);
+                Quaternion q = face->FaceGetQuatNum();
+                Vector ut = q.RotationU();
+                Vector vt = q.RotationV();
+
+                // Choose workplane orientation based on the current point of view.
+                if(fabs(SS.GW.projUp.Dot(vt)) < fabs(SS.GW.projUp.Dot(ut))) {
+                    swap(ut, vt);
+                    g.predef.swapUV = true;
+                }
+                if(SS.GW.projRight.Dot(ut) < 0) g.predef.negateU = true;
+                if(SS.GW.projUp.   Dot(vt) < 0) g.predef.negateV = true;
             } else {
                 Error("Bad selection for new sketch in workplane. This "
                       "group can be created with:\n\n"
                       "    * a point (orthogonal to coordinate axes, "
                              "through the point)\n"
                       "    * a point and two line segments (parallel to the "
-                             "lines, through the point)\n");
+                             "lines, through the point)\n"
+                      "    * a plane face\n");
                 return;
             }
             break;
@@ -309,6 +329,7 @@ void Group::Generate(IdList<Entity,hEntity> *entity,
             break;
 
         case DRAWING_WORKPLANE: {
+            Vector origin;
             Quaternion q;
             if(subtype == WORKPLANE_BY_LINE_SEGMENTS) {
                 Vector u = SK.GetEntity(predef.entityB)->VectorGetNum();
@@ -321,9 +342,24 @@ void Group::Generate(IdList<Entity,hEntity> *entity,
                 if(predef.negateU) u = u.ScaledBy(-1);
                 if(predef.negateV) v = v.ScaledBy(-1);
                 q = Quaternion::From(u, v);
+                origin = SK.GetEntity(predef.origin)->PointGetNum();
             } else if(subtype == WORKPLANE_BY_POINT_ORTHO) {
                 // Already given, numerically.
                 q = predef.q;
+                origin = SK.GetEntity(predef.origin)->PointGetNum();
+            } else if(subtype == WORKPLANE_BY_FACE) {
+                Entity *face = SK.GetEntity(predef.entityB);
+                q = face->FaceGetQuatNum();
+
+                Vector u = q.RotationU();
+                Vector v = q.RotationV();
+
+                if(predef.swapUV) swap(u, v);
+                if(predef.negateU) u = u.ScaledBy(-1);
+                if(predef.negateV) v = v.ScaledBy(-1);
+                q = Quaternion::From(u, v);
+
+                origin = face->FaceGetPointNum();
             } else oops();
 
             Entity normal;
@@ -338,7 +374,7 @@ void Group::Generate(IdList<Entity,hEntity> *entity,
             Entity point;
             memset(&point, 0, sizeof(point));
             point.type = Entity::POINT_N_COPY;
-            point.numPoint = SK.GetEntity(predef.origin)->PointGetNum();
+            point.numPoint = origin;
             point.group = h;
             point.h = h.entity(2);
             entity->Add(&point);
