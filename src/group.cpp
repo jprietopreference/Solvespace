@@ -573,6 +573,12 @@ hEntity Group::Remap(hEntity in, int copyNumber) {
 void Group::MakeExtrusionLines(IdList<Entity,hEntity> *el, hEntity in) {
     Entity *ep = SK.GetEntity(in);
 
+    // Get workplane of the sketch group.
+    Entity *w = SK.GetEntity(predef.entityB);
+
+    // Let the face's u coordinate be the workplane normal.
+    Vector u = w->Normal()->numNormal.RotationN();
+
     Entity en;
     ZERO(&en);
     if(ep->IsPoint()) {
@@ -590,19 +596,16 @@ void Group::MakeExtrusionLines(IdList<Entity,hEntity> *el, hEntity in) {
         // original line is a point in the plane, and the line is in the plane.
         Vector a = SK.GetEntity(ep->point[0])->PointGetNum();
         Vector b = SK.GetEntity(ep->point[1])->PointGetNum();
-        Vector ab = b.Minus(a);
+        Vector v = b.Minus(a).WithMagnitude(1.0);
 
-        en.param[0] = h.param(0);
-        en.param[1] = h.param(1);
-        en.param[2] = h.param(2);
         en.numPoint = a;
-        en.numNormal = Quaternion::From(0, ab.x, ab.y, ab.z);
+        en.numNormal = Quaternion::From(u, v);
 
         en.group = h;
         en.construction = ep->construction;
         en.style = ep->style;
         en.h = Remap(ep->h, REMAP_LINE_TO_FACE);
-        en.type = Entity::FACE_XPROD;
+        en.type = Entity::FACE_QUAT_PT;
         el->Add(&en);
     }
 }
@@ -615,11 +618,12 @@ void Group::MakeExtrusionTopBottomFaces(IdList<Entity,hEntity> *el, hEntity pt)
 
     Entity en;
     ZERO(&en);
-    en.type = Entity::FACE_NORMAL_PT;
+    en.type = Entity::FACE_QUAT_PT;
     en.group = h;
 
-    en.numNormal = Quaternion::From(0, n.x, n.y, n.z);
-    en.point[0] = Remap(pt, REMAP_TOP);
+    Entity *w = SK.GetEntity(predef.entityB);
+    en.numNormal = w->Normal()->numNormal;
+    en.numPoint = SK.GetEntity(pt)->PointGetNum();
     en.h = Remap(Entity::NO_ENTITY, REMAP_TOP);
     el->Add(&en);
 
@@ -709,8 +713,7 @@ void Group::CopyEntity(IdList<Entity,hEntity> *el,
             en.numDistance = ep->actDistance*fabs(scale);
             break;
 
-        case Entity::FACE_NORMAL_PT:
-        case Entity::FACE_XPROD:
+        case Entity::FACE_QUAT_PT:
         case Entity::FACE_N_ROT_TRANS:
         case Entity::FACE_N_TRANS:
         case Entity::FACE_N_ROT_AA:
