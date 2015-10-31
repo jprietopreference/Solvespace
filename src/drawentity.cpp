@@ -204,8 +204,7 @@ void Entity::CalculateNumerical(bool forExport) {
     }
     if(IsFace()) {
         actPoint  = FaceGetPointNum();
-        Vector n = FaceGetNormalNum();
-        actNormal = Quaternion::From(0, n.x, n.y, n.z);
+        actNormal = FaceGetQuatNum();
     }
     if(forExport) {
         // Visibility in copied import entities follows source file
@@ -636,8 +635,7 @@ void Entity::DrawOrGetDistance(void) {
             // Nothing but the curve(s).
             break;
 
-        case FACE_NORMAL_PT:
-        case FACE_XPROD:
+        case FACE_QUAT_PT:
         case FACE_N_ROT_TRANS:
         case FACE_N_TRANS:
         case FACE_N_ROT_AA:
