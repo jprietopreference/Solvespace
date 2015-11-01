@@ -902,6 +902,12 @@ void SolveSpaceUI::ExportMeshAsThreeJsTo(FILE *f, const char * filename, SMesh *
     strcpy(baseFilename, lastSlash); // Copy the file w/ extension.
     *strrchr(baseFilename, '.') = '\0'; // Strip extension.
 
+    for(int i = 0; i < strlen(baseFilename); i++) {
+        if(!isalpha(baseFilename[i]) &&
+           /* also permit UTF-8 */ !((unsigned char)baseFilename[i] >= 0x80))
+            baseFilename[i] = '_';
+    }
+
     fprintf(f, html, baseFilename, baseFilename);
     fprintf(f, "var three_js_%s = {\n"
                "  bounds: {\n"
