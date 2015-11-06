@@ -196,11 +196,11 @@ public:
     SShell      impShell;
     EntityList  impEntity;
 
-    NameStr     name;
+    std::string     name;
 
 
     void Activate(void);
-    char *DescriptionString(void);
+    std::string DescriptionString(void);
     void Clear(void);
 
     static void AddParam(ParamList *param, hParam hp, double v);
@@ -290,13 +290,13 @@ public:
     hStyle      style;
 
     bool        construction;
-    NameStr     str;
-    NameStr     font;
+    std::string str;
+    std::string font;
 
     static hParam AddParam(ParamList *param, hParam hp);
     void Generate(EntityList *entity, ParamList *param);
 
-    char *DescriptionString(void);
+    std::string DescriptionString(void);
 
     void Clear(void) {}
 };
@@ -362,8 +362,8 @@ public:
     Quaternion  numNormal;
     double      numDistance;
 
-    NameStr     str;
-    NameStr     font;
+    std::string str;
+    std::string font;
 
     // For entities that are derived by a transformation, the number of
     // times to apply the transformation.
@@ -497,7 +497,7 @@ public:
 
     void CalculateNumerical(bool forExport);
 
-    char *DescriptionString(void);
+    std::string DescriptionString(void);
 };
 
 class EntReqTable {
@@ -612,7 +612,7 @@ public:
     bool        other2;
 
     bool        reference;  // a ref dimension, that generates no eqs
-    NameStr     comment;    // since comments are represented as constraints
+    std::string comment;    // since comments are represented as constraints
 
     bool HasLabel(void);
 
@@ -660,7 +660,7 @@ public:
     void LineDrawOrGetDistance(Vector a, Vector b);
     void DrawOrGetDistance(Vector *labelPos);
     double EllipticalInterpolation(double rx, double ry, double theta);
-    char *Label(void);
+    std::string Label(void);
     void DoArcForAngle(Vector a0, Vector da, Vector b0, Vector db,
                         Vector offset, Vector *ref);
     void DoLineWithArrows(Vector ref, Vector a, Vector b, bool onlyOneExt);
@@ -671,7 +671,7 @@ public:
     void DoEqualLenTicks(Vector a, Vector b, Vector gn);
     void DoEqualRadiusTicks(hEntity he);
 
-    char *DescriptionString(void);
+    std::string DescriptionString(void);
 
     static void AddConstraint(Constraint *c, bool rememberForUndo);
     static void AddConstraint(Constraint *c);
@@ -732,7 +732,7 @@ public:
         FIRST_CUSTOM   = 0x100
     };
 
-    NameStr     name;
+    std::string name;
 
     enum {
         UNITS_AS_PIXELS   = 0,
@@ -766,9 +766,9 @@ public:
     } Default;
     static const Default Defaults[];
 
-    static char *CnfColor(const char *prefix);
-    static char *CnfWidth(const char *prefix);
-    static char *CnfPrefixToName(const char *prefix);
+    static std::string CnfColor(const std::string &prefix);
+    static std::string CnfWidth(const std::string &prefix);
+    static std::string CnfPrefixToName(const std::string &prefix);
 
     static void CreateAllDefaultStyles(void);
     static void CreateDefaultStyle(hStyle h);
@@ -791,7 +791,7 @@ public:
     static bool Exportable(int hs);
     static hStyle ForEntity(hEntity he);
 
-    char *DescriptionString(void);
+    std::string DescriptionString(void);
 
     void Clear(void) {}
 };
@@ -842,8 +842,8 @@ public:
     int         type;
     int         extraPoints;
     hStyle      style;
-    NameStr     str;
-    NameStr     font;
+    std::string str;
+    std::string font;
     bool        construction;
 
     Vector      point[MAX_POINTS_IN_ENTITY];
