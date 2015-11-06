@@ -257,7 +257,6 @@ float CnfThawFloat(float v, const char *name);
 void *AllocTemporary(size_t n);
 void FreeTemporary(void *p);
 void FreeAllTemporary(void);
-void *MemRealloc(void *p, size_t n);
 void *MemAlloc(size_t n);
 void MemFree(void *p);
 void InitHeaps(void);
