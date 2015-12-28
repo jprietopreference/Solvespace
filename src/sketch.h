@@ -447,7 +447,11 @@ public:
     // Necessary for Entity e = {} to zero-initialize, since
     // classes with base classes are not aggregates and
     // the default constructor does not initialize members.
-    Entity() : EntityBase(), forceHidden(), actPoint(), actNormal(),
+    //
+    // Note EntityBase({}); without explicitly value-initializing
+    // the base class, MSVC2013 will default-initialize it, leaving
+    // POD members with indeterminate value.
+    Entity() : EntityBase({}), forceHidden(), actPoint(), actNormal(),
         actDistance(), actVisible(), style(), construction(),
         dogd() {};
 
@@ -630,7 +634,7 @@ public:
 class Constraint : public ConstraintBase {
 public:
     // See Entity::Entity().
-    Constraint() : ConstraintBase(), disp(), dogd() {}
+    Constraint() : ConstraintBase({}), disp(), dogd() {}
 
     // These define how the constraint is drawn on-screen.
     struct {
