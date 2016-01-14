@@ -49,7 +49,7 @@ public:
     Expr    *a;
     union {
         double  v;
-        hParam  parh;
+        uint32_t  parhv;
         Param  *parp;
         Expr    *b;
 

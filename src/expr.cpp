@@ -214,7 +214,7 @@ Expr *ExprQuaternion::Magnitude(void) {
 Expr *Expr::From(hParam p) {
     Expr *r = AllocExpr();
     r->op = PARAM;
-    r->parh = p;
+    r->parhv = p.v;
     return r;
 }
 
@@ -314,8 +314,8 @@ Expr *Expr::DeepCopyWithParamsAsPointers(IdList<Param,hParam> *firstTry,
         // A param that is referenced by its hParam gets rewritten to go
         // straight in to the parameter table with a pointer, or simply
         // into a constant if it's already known.
-        Param *p = firstTry->FindByIdNoOops(parh);
-        if(!p) p = thenTry->FindById(parh);
+        Param *p = firstTry->FindByIdNoOops(hParam{parhv});
+        if(!p) p = thenTry->FindById(hParam{parhv});
         if(p->known) {
             n->op = CONSTANT;
             n->v = p->val;
@@ -335,7 +335,7 @@ Expr *Expr::DeepCopyWithParamsAsPointers(IdList<Param,hParam> *firstTry,
 
 double Expr::Eval(void) {
     switch(op) {
-        case PARAM:         return SK.GetParam(parh)->val;
+        case PARAM:         return SK.GetParam(hParam{parhv})->val;
         case PARAM_PTR:     return parp->val;
 
         case CONSTANT:      return v;
@@ -362,7 +362,7 @@ Expr *Expr::PartialWrt(hParam p) {
 
     switch(op) {
         case PARAM_PTR: return From(p.v == parp->h.v ? 1 : 0);
-        case PARAM:     return From(p.v == parh.v ? 1 : 0);
+        case PARAM:     return From(p.v == parhv ? 1 : 0);
 
         case CONSTANT:  return From(0.0);
 
@@ -402,7 +402,7 @@ Expr *Expr::PartialWrt(hParam p) {
 
 uint64_t Expr::ParamsUsed(void) {
     uint64_t r = 0;
-    if(op == PARAM)     r |= ((uint64_t)1 << (parh.v % 61));
+    if(op == PARAM)     r |= ((uint64_t)1 << (parhv % 61));
     if(op == PARAM_PTR) r |= ((uint64_t)1 << (parp->h.v % 61));
 
     int c = Children();
@@ -412,7 +412,7 @@ uint64_t Expr::ParamsUsed(void) {
 }
 
 bool Expr::DependsOn(hParam p) {
-    if(op == PARAM)     return (parh.v    == p.v);
+    if(op == PARAM)     return (parhv    == p.v);
     if(op == PARAM_PTR) return (parp->h.v == p.v);
 
     int c = Children();
@@ -495,8 +495,8 @@ Expr *Expr::FoldConstants(void) {
 void Expr::Substitute(hParam oldh, hParam newh) {
     if(op == PARAM_PTR) oops();
 
-    if(op == PARAM && parh.v == oldh.v) {
-        parh = newh;
+    if(op == PARAM && parhv == oldh.v) {
+        parhv = newh.v;
     }
     int c = Children();
     if(c >= 1) a->Substitute(oldh, newh);
@@ -512,8 +512,8 @@ const hParam Expr::NO_PARAMS       { 0 };
 const hParam Expr::MULTIPLE_PARAMS { 1 };
 hParam Expr::ReferencedParams(ParamList *pl) {
     if(op == PARAM) {
-        if(pl->FindByIdNoOops(parh)) {
-            return parh;
+        if(pl->FindByIdNoOops(hParam{parhv})) {
+            return hParam{parhv};
         } else {
             return NO_PARAMS;
         }
@@ -551,7 +551,7 @@ std::string Expr::Print(void) {
 
     char c;
     switch(op) {
-        case PARAM:     return ssprintf("param(%08x)", parh.v);
+        case PARAM:     return ssprintf("param(%08x)", parhv);
         case PARAM_PTR: return ssprintf("param(p%08x)", parp->h.v);
 
         case CONSTANT:  return ssprintf("%.3f", v);
