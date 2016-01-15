@@ -167,10 +167,11 @@ int Constraint::DoLineTrimmedAgainstBox(Vector ref, Vector a, Vector b) {
     double swidth  = ssglStrWidth(s.c_str(), DEFAULT_TEXT_HEIGHT) + 4*pixels,
            sheight = ssglStrHeight(DEFAULT_TEXT_HEIGHT) + 8*pixels;
 
-    struct {
+    struct Planes {
         Vector n;
         double d;
-    } planes[4];
+    };
+    Planes planes[4];
     // reference pos is the center of box occupied by text; build a rectangle
     // around that, aligned to axes gr and gu, from four planes will all four
     // normals pointing inward

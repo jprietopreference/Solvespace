@@ -355,10 +355,12 @@ pruned:
 void SolveSpaceUI::ForceReferences(void) {
     // Force the values of the parameters that define the three reference
     // coordinate systems.
-    static const struct {
+    
+    struct RequestQuat {
         hRequest    hr;
         Quaternion  q;
-    } Quat[] {
+    };
+    static const RequestQuat Quat[] {
         { Request::HREQUEST_REFERENCE_XY, { 1,    0,    0,    0,   } },
         { Request::HREQUEST_REFERENCE_YZ, { 0.5,  0.5,  0.5,  0.5, } },
         { Request::HREQUEST_REFERENCE_ZX, { 0.5, -0.5, -0.5, -0.5, } },

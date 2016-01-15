@@ -2,11 +2,13 @@
 
 #define PEN_UP 127
 
-static const struct {
+struct FontChar {
     int         points;
     int         width;
     signed char coord[120];
-} Font[] {
+};
+
+static const FontChar Font[] {
     // character 32 (' ')
     { 0, 16,
         { 1

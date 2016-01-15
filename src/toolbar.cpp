@@ -9,11 +9,14 @@
 #include "generated/icons.h"
 
 static uint8_t SPACER[1];
-static const struct {
+
+struct ToolbarInfo {
     uint8_t     *image;
     int          menu;
     const char  *tip;
-} Toolbar[] {
+};
+
+static const ToolbarInfo Toolbar[] {
     { Icon_line,            GraphicsWindow::MNU_LINE_SEGMENT,   "Sketch line segment"                               },
     { Icon_rectangle,       GraphicsWindow::MNU_RECTANGLE,      "Sketch rectangle"                                  },
     { Icon_circle,          GraphicsWindow::MNU_CIRCLE,         "Sketch circle"                                     },

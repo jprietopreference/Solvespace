@@ -478,10 +478,10 @@ void SSurface::Clear(void) {
     trim.Clear();
 }
 
-typedef struct {
+struct TrimLine {
     hSCurve     hc;
     hSSurface   hs;
-} TrimLine;
+};
 
 void SShell::MakeFromExtrusionOf(SBezierLoopSet *sbls, Vector t0, Vector t1, RgbaColor color)
 {
@@ -596,9 +596,9 @@ void SShell::MakeFromExtrusionOf(SBezierLoopSet *sbls, Vector t0, Vector t1, Rgb
 }
 
 
-typedef struct {
+struct Revolved {
     hSSurface   d[4];
-} Revolved;
+};
 
 void SShell::MakeFromRevolutionOf(SBezierLoopSet *sbls, Vector pt, Vector axis, RgbaColor color)
 {

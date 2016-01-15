@@ -16,10 +16,10 @@ public:
         MAX_ROWS = 2000
     };
 
-    typedef struct {
+    struct Color {
         char      c;
         RgbaColor color;
-    } Color;
+    };
     static const Color fgColors[];
     static const Color bgColors[];
 
@@ -44,7 +44,7 @@ public:
     uint32_t text[MAX_ROWS][MAX_COLS];
     typedef void LinkFunction(int link, uint32_t v);
     enum { NOT_A_LINK = 0 };
-    struct {
+    struct Meta {
         char            fg;
         char            bg;
         RgbaColor       bgRgb;
@@ -52,7 +52,8 @@ public:
         uint32_t        data;
         LinkFunction   *f;
         LinkFunction   *h;
-    }       meta[MAX_ROWS][MAX_COLS];
+    };
+    Meta meta[MAX_ROWS][MAX_COLS];
     int hoveredRow, hoveredCol;
 
 
@@ -60,11 +61,11 @@ public:
     int rows;
 
     // The row of icons at the top of the text window, to hide/show things
-    typedef struct {
+    struct HideShowIcon {
         bool       *var;
         uint8_t    *icon;
         const char *tip;
-    } HideShowIcon;
+    };
     static HideShowIcon hideShowIcons[];
     static bool SPACER;
 
@@ -111,7 +112,7 @@ public:
         SCREEN_EDIT_VIEW           = 8,
         SCREEN_TANGENT_ARC         = 9
     };
-    typedef struct {
+    struct ShownState {
         int         screen;
 
         hGroup      group;
@@ -122,14 +123,15 @@ public:
         double      dimFinish;
         int         dimSteps;
 
-        struct {
+        struct Paste {
             int         times;
             Vector      trans;
             double      theta;
             Vector      origin;
             double      scale;
-        }           paste;
-    } ShownState;
+        };
+        Paste paste;
+    };
     ShownState shown;
 
     enum {
@@ -183,29 +185,32 @@ public:
         // For tangent arc
         EDIT_TANGENT_ARC_RADIUS    = 800
     };
-    struct {
+    struct Edit {
         bool        showAgain;
         int         meaning;
         int         i;
         hGroup      group;
         hRequest    request;
         hStyle      style;
-    } edit;
+    };
+    Edit edit;
 
     static void ReportHowGroupSolved(hGroup hg);
 
-    struct {
+    struct EditControl {
         int     halfRow;
         int     col;
 
-        struct {
+        struct ColorPicker {
             RgbaColor rgb;
             double    h, s, v;
             bool      show;
             bool      picker1dActive;
             bool      picker2dActive;
-        }       colorPicker;
-    } editControl;
+        };
+        ColorPicker colorPicker;
+    };
+    EditControl editControl;
 
     void HideEditControl(void);
     void ShowEditControl(int halfRow, int col, const std::string &str);
@@ -327,7 +332,7 @@ public:
     void Init(void);
 
     // This table describes the top-level menus in the graphics winodw.
-    typedef enum {
+    enum MenuId {
         // File
         MNU_NEW = 100,
         MNU_OPEN,
@@ -427,7 +432,7 @@ public:
         // Help,
         MNU_WEBSITE,
         MNU_ABOUT
-    } MenuId;
+    };
     typedef void MenuHandler(int id);
     enum {
         ESCAPE_KEY = 27,
@@ -443,14 +448,14 @@ public:
         MENU_ITEM_CHECK,
         MENU_ITEM_RADIO
     };
-    typedef struct {
+    struct MenuEntry {
         int          level;          // 0 == on menu bar, 1 == one level down
         const char  *label;          // or NULL for a separator
         int          id;             // unique ID
         int          accel;          // keyboard accelerator
         MenuItemKind kind;
         MenuHandler  *fn;
-    } MenuEntry;
+    };
     static const MenuEntry menu[];
     static void MenuView(int id);
     static void MenuEdit(int id);
@@ -469,7 +474,7 @@ public:
     Vector  projRight;
     Vector  projUp;
     double  scale;
-    struct {
+    struct Orig {
         bool    mouseDown;
         Vector  offset;
         Vector  projRight;
@@ -478,7 +483,8 @@ public:
         Point2d mouseOnButtonDown;
         Vector  marqueePoint;
         bool    startedMoving;
-    }       orig;
+    };
+    Orig orig;
 
     // Most recent mouse position, updated every time the mouse moves.
     Point2d currentMousePosition;
@@ -489,9 +495,10 @@ public:
     bool    havePainted;
 
     // Some state for the context menu.
-    struct {
+    struct Context {
         bool        active;
-    }       context;
+    };
+    Context context;
 
     void NormalizeProjectionVectors(void);
     Point2d ProjectPoint(Vector p);
@@ -529,7 +536,7 @@ public:
         DRAGGING_NEW_RADIUS         = 0x0f000008,
         DRAGGING_MARQUEE            = 0x0f000009
     };
-    struct {
+    struct Pending {
         int             operation;
 
         hRequest        request;
@@ -540,7 +547,8 @@ public:
         hConstraint     constraint;
 
         const char     *description;
-    } pending;
+    };
+    Pending pending;
     void ClearPending(void);
     // The constraint that is being edited with the on-screen textbox.
     hConstraint constraintBeingEdited;
@@ -608,7 +616,7 @@ public:
     void ClearSelection(void);
     void ClearNonexistentSelectionItems(void);
     enum { MAX_SELECTED = 32 };
-    struct {
+    struct GS {
         hEntity     point[MAX_SELECTED];
         hEntity     entity[MAX_SELECTED];
         hEntity     anyNormal[MAX_SELECTED];
@@ -631,7 +639,8 @@ public:
         int         comments;
         int         withEndpoints;
         int         n;
-    } gs;
+    };
+    GS gs;
     void GroupSelection(void);
     bool IsSelected(Selection *s);
     bool IsSelected(hEntity he);

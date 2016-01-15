@@ -121,10 +121,10 @@ public:
     void UvTriangulateInto(SMesh *m, SSurface *srf);
 };
 
-typedef struct {
+struct STriMeta {
     uint32_t face;
     RgbaColor color;
-} STriMeta;
+};
 
 class SPolygon {
 public:

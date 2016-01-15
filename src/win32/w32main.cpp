@@ -35,9 +35,10 @@ HGLRC TextGl;
 HWND GraphicsWnd;
 HGLRC GraphicsGl;
 HWND GraphicsEditControl;
-static struct {
+struct LastMousePosInfo {
     int x, y;
-} LastMousePos;
+};
+LastMousePosInfo LastMousePos;
 
 HMENU SubMenus[100];
 HMENU RecentOpenMenu, RecentImportMenu;

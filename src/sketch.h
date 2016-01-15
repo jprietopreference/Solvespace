@@ -120,11 +120,12 @@ public:
     double      valC;
     RgbaColor   color;
 
-    struct {
+    struct Solved {
         int                 how;
         int                 dof;
         List<hConstraint>   remove;
-    } solved;
+    };
+    Solved solved;
 
     enum {
         // For drawings in 2d
@@ -138,7 +139,7 @@ public:
 
     bool skipFirst; // for step and repeat ops
 
-    struct {
+    struct Predef {
         Quaternion  q;
         hEntity     origin;
         hEntity     entityB;
@@ -146,7 +147,8 @@ public:
         bool        swapUV;
         bool        negateU;
         bool        negateV;
-    } predef;
+    };
+    Predef predef;
 
     SPolygon                polyLoops;
     SBezierLoopSetSet       bezierLoops;
@@ -158,11 +160,12 @@ public:
         POLY_SELF_INTERSECTING = 3,
         POLY_ZERO_LEN_EDGE     = 4
     };
-    struct {
+    struct PolyError {
         int             how;
         SEdge           notClosedAt;
         Vector          errorPointAt;
-    }               polyError;
+    };
+    PolyError polyError;
 
     bool            booleanFailed;
 
@@ -467,13 +470,15 @@ public:
 
     // Routines to draw and hit-test the representation of the entity
     // on-screen.
-    struct {
+    struct Dogd {
         bool        drawing;
         Point2d     mp;
         double      dmin;
         Vector      refp;
         double      lineWidth;
-    } dogd; // state for drawing or getting distance (for hit testing)
+    };
+    Dogd dogd; // state for drawing or getting distance (for hit testing)
+
     void LineDrawOrGetDistance(Vector a, Vector b, bool maybeFat=false);
     void DrawOrGetDistance(void);
 
@@ -496,7 +501,7 @@ public:
 
 class EntReqTable {
 public:
-    typedef struct {
+    struct TableEntry {
         int         reqType;
         int         entType;
         int         points;
@@ -504,7 +509,7 @@ public:
         bool        hasNormal;
         bool        hasDistance;
         const char *description;
-    } TableEntry;
+    };
 
     static const TableEntry Table[];
 
@@ -631,19 +636,21 @@ public:
     Constraint() : ConstraintBase({}), disp(), dogd() {}
 
     // These define how the constraint is drawn on-screen.
-    struct {
+    struct Disp {
         Vector      offset;
         hStyle      style;
-    } disp;
+    };
+    Disp disp;
 
     // State for drawing or getting distance (for hit testing).
-    struct {
+    struct Dogd {
         bool        drawing;
         Point2d     mp;
         double      dmin;
         Vector      refp;
         SEdgeList   *sel;
-    } dogd;
+    };
+    Dogd dogd;
 
     double GetDistance(Point2d mp);
     Vector GetLabelPos(void);
@@ -752,12 +759,12 @@ public:
 
     // The default styles, for entities that don't have a style assigned yet,
     // and for datums and such.
-    typedef struct {
+    struct Default {
         hStyle      h;
         const char *cnfPrefix;
         RgbaColor   color;
         double      width;
-    } Default;
+    };
     static const Default Defaults[];
 
     static std::string CnfColor(const std::string &prefix);
