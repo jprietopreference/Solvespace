@@ -340,7 +340,7 @@ void SolveSpaceUI::GenerateAll(int first, int last, bool andFindFree) {
         deleted = {};
     }
 
-    FreeAllTemporary();
+    sketch->heap.FreeAll();
     allConsistent = true;
     return;
 
@@ -476,7 +476,7 @@ void SolveSpaceUI::SolveGroup(hGroup hg, bool andFindFree) {
         TextWindow::ReportHowGroupSolved(g->h);
     }
     g->solved.how = how;
-    FreeAllTemporary();
+    sketch->heap.FreeAll();
 }
 
 bool SolveSpaceUI::AllGroupsOkay(void) {

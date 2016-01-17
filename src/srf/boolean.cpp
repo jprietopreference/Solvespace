@@ -784,7 +784,7 @@ void SSurface::MakeClassifyingBsp(SShell *shell, SShell *useCurvesFrom) {
 }
 
 SBspUv *SBspUv::Alloc(Sketch *sk) {
-    return (SBspUv *)AllocTemporary(sizeof(SBspUv));
+    return sk->AllocTemporary<SBspUv>();
 }
 
 static int ByLength(const void *av, const void *bv)

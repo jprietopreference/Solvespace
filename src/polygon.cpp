@@ -300,12 +300,12 @@ void SEdgeList::CullExtraneousEdges(void) {
 // that would naively be O(n).
 //-----------------------------------------------------------------------------
 SKdNodeEdges *SKdNodeEdges::Alloc(Sketch *sk) {
-    SKdNodeEdges *ne = (SKdNodeEdges *)AllocTemporary(sizeof(SKdNodeEdges));
+    SKdNodeEdges *ne = sk->AllocTemporary<SKdNodeEdges>();
     *ne = {};
     return ne;
 }
 SEdgeLl *SEdgeLl::Alloc(Sketch *sk) {
-    SEdgeLl *sell = (SEdgeLl *)AllocTemporary(sizeof(SEdgeLl));
+    SEdgeLl *sell = sk->AllocTemporary<SEdgeLl>();
     *sell = {};
     return sell;
 }

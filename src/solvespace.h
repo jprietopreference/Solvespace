@@ -272,13 +272,28 @@ std::string CnfThawString(const std::string &val, const std::string &name);
 uint32_t CnfThawInt(uint32_t val, const std::string &name);
 float CnfThawFloat(float val, const std::string &name);
 
-void *AllocTemporary(size_t n);
-void FreeTemporary(void *p);
-void FreeAllTemporary(void);
 void *MemAlloc(size_t n);
 void MemFree(void *p);
 void InitHeaps(void);
 void vl(void); // debug function to validate heaps
+
+class TemporaryHeap {
+    
+    void *data;
+    
+public:
+    
+    TemporaryHeap();
+    ~TemporaryHeap();
+    
+    void *Alloc(size_t n);
+    void Free(void *p);
+    void FreeAll();
+    
+    template <typename T>
+    T *New() { return (T *)Alloc(sizeof(T)); }
+    
+};
 
 // End of platform-specific functions
 //================
@@ -717,6 +732,7 @@ public:
     // These are generated from the above.
     IdList<ENTITY,hEntity>          entity;
     IdList<Param,hParam>            param;
+    TemporaryHeap heap;
 
     inline CONSTRAINT *GetConstraint(hConstraint h)
         { return constraint.FindById(h); }
@@ -726,6 +742,17 @@ public:
     inline Group   *GetGroup  (hGroup   h) { return group.  FindById(h); }
     // Styles are handled a bit differently.
 
+    template <typename T>
+    T *AllocTemporary(size_t count) {
+        T *r = (T *)heap.Alloc(sizeof(T) * count);
+        return r;
+    }
+    
+    template <typename T>
+    T *AllocTemporary() {
+        T *r = heap.New<T>();
+        return r;
+    }
     void Clear(void);
 };
 #undef ENTITY

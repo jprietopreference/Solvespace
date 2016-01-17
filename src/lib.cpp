@@ -256,7 +256,7 @@ default: dbp("bad constraint type %d", sc->type); return;
     SK.entity.Clear();
     SK.constraint.Clear();
 
-    FreeAllTemporary();
+    SK.heap.FreeAll();
 }
 
 } /* extern "C" */

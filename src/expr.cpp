@@ -211,9 +211,13 @@ Expr *ExprQuaternion::Magnitude(void) {
 }
 
 
+Expr *Expr::AllocExpr(Sketch *sk) {
+    return sk->AllocTemporary<Expr>();
+}
+
 Expr *Expr::From(Sketch *sk, hParam p) {
     if(sk == NULL) oops();
-    Expr *r = AllocExpr();
+    Expr *r = AllocExpr(sk);
     r->sketch = sk;
     r->op = PARAM;
     r->parhv = p.v;
@@ -222,7 +226,7 @@ Expr *Expr::From(Sketch *sk, hParam p) {
 
 Expr *Expr::From(Sketch *sk, double v) {
     if(sk == NULL) oops();
-    Expr *r = AllocExpr();
+    Expr *r = AllocExpr(sk);
     r->sketch = sk;
     r->op = CONSTANT;
     r->v = v;
@@ -231,7 +235,7 @@ Expr *Expr::From(Sketch *sk, double v) {
 
 Expr *Expr::From(Sketch *sk) {
     if(sk == NULL) oops();
-    Expr *r = AllocExpr();
+    Expr *r = AllocExpr(sk);
     r->sketch = sk;
     r->op = UNKNOWN;
     return r;
@@ -240,7 +244,7 @@ Expr *Expr::From(Sketch *sk) {
 Expr *Expr::AnyOp(int newOp, Expr *b) {
     Sketch *sk = (sketch) ? sketch : b->sketch;
     if(sk == NULL) oops();
-    Expr *r = AllocExpr();
+    Expr *r = AllocExpr(sk);
     r->sketch = sk;
     r->op = newOp;
     r->a = this;
@@ -284,7 +288,7 @@ int Expr::Nodes(void) {
 }
 
 Expr *Expr::DeepCopy(void) {
-    Expr *n = AllocExpr();
+    Expr *n = AllocExpr(sketch);
     *n = *this;
     int c = n->Children();
     if(c > 0) n->a = a->DeepCopy();
@@ -295,7 +299,7 @@ Expr *Expr::DeepCopy(void) {
 Expr *Expr::DeepCopyWithParamsAsPointers(IdList<Param,hParam> *firstTry,
     IdList<Param,hParam> *thenTry)
 {
-    Expr *n = AllocExpr();
+    Expr *n = AllocExpr(sketch);
     n->sketch = sketch;
     if(op == PARAM) {
         // A param that is referenced by its hParam gets rewritten to go
@@ -412,7 +416,7 @@ bool Expr::Tol(double a, double b) {
     return fabs(a - b) < 0.001;
 }
 Expr *Expr::FoldConstants(void) {
-    Expr *n = AllocExpr();
+    Expr *n = AllocExpr(sketch);
     *n = *this;
 
     int c = Children();
@@ -666,7 +670,7 @@ void Expr::ReduceAndPush(Expr *n) {
 
 void Expr::Parse(Sketch *sk) {
     if(sk == NULL) oops();
-    Expr *e = AllocExpr();
+    Expr *e = AllocExpr(sk);
     e->sketch = sk;
     e->op = ALL_RESOLVED;
     PushOperator(e);

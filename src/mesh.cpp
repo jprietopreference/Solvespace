@@ -355,13 +355,13 @@ uint32_t SMesh::FirstIntersectionWith(Point2d mp) {
 }
 
 STriangleLl *STriangleLl::Alloc(Sketch *sk)
-    { return (STriangleLl *)AllocTemporary(sizeof(STriangleLl)); }
+    { return sk->AllocTemporary<STriangleLl>(); }
 SKdNode *SKdNode::Alloc(Sketch *sk)
-    { return (SKdNode *)AllocTemporary(sizeof(SKdNode)); }
+    { return sk->AllocTemporary<SKdNode>(); }
 
 SKdNode *SKdNode::From(SMesh *m) {
     int i;
-    STriangle *tra = (STriangle *)AllocTemporary((m->l.n) * sizeof(*tra));
+    STriangle *tra = m->sketch->AllocTemporary<STriangle>(m->l.n);
 
     for(i = 0; i < m->l.n; i++) {
         tra[i] = m->l.elem[i];
@@ -626,7 +626,7 @@ void SKdNode::SnapToMesh(SMesh *m) {
             SnapToVertex(v, &extra);
 
             for(k = 0; k < extra.l.n; k++) {
-                STriangle *tra = (STriangle *)AllocTemporary(sizeof(*tra));
+                STriangle *tra = m->sketch->AllocTemporary<STriangle>();
                 *tra = extra.l.elem[k];
                 AddTriangle(m->sketch, tra);
             }

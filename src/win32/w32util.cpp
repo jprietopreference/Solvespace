@@ -9,7 +9,7 @@
 #include "solvespace.h"
 
 namespace SolveSpace {
-static HANDLE PermHeap, TempHeap;
+static HANDLE PermHeap;
 
 void dbp(const char *str, ...)
 {
@@ -93,22 +93,41 @@ void ssremove(const std::string &filename)
 // to be sloppy with our memory management, and just free everything at once
 // at the end.
 //-----------------------------------------------------------------------------
-void *AllocTemporary(size_t n)
+
+TemporaryHeap::TemporaryHeap() : data(NULL) {
+    HANDLE *handle = new HANDLE();
+    *handle = HeapCreate(HEAP_NO_SERIALIZE, 1024 * 1024 * 20, 0);
+    if(!HeapValidate(*handle, HEAP_NO_SERIALIZE, NULL)) oops();
+    data = (void *)handle;
+}
+
+TemporaryHeap::~TemporaryHeap() {
+    HANDLE *handle = (HANDLE *)data;
+    if(*handle) HeapDestroy(*handle);
+    delete handle;
+}
+
+void *TemporaryHeap::Alloc(size_t n)
 {
-    void *v = HeapAlloc(TempHeap, HEAP_NO_SERIALIZE | HEAP_ZERO_MEMORY, n);
+    HANDLE *handle = (HANDLE *)data;
+    void *v = HeapAlloc(*handle, HEAP_NO_SERIALIZE | HEAP_ZERO_MEMORY, n);
     if(!v) oops();
     return v;
 }
-void FreeTemporary(void *p) {
-    HeapFree(TempHeap, HEAP_NO_SERIALIZE, p);
-}
-void FreeAllTemporary(void)
+
+void TemporaryHeap::Free(void *p)
 {
-    if(TempHeap) HeapDestroy(TempHeap);
-    TempHeap = HeapCreate(HEAP_NO_SERIALIZE, 1024*1024*20, 0);
-    // This is a good place to validate, because it gets called fairly
-    // often.
-    vl();
+    HANDLE *handle = (HANDLE *)data;
+    HeapFree(*handle, HEAP_NO_SERIALIZE, p);
+}
+
+void TemporaryHeap::FreeAll()
+{
+    HANDLE *handle = (HANDLE *)data;
+    if(*handle) HeapDestroy(*handle);
+    *handle = HeapCreate(HEAP_NO_SERIALIZE, 1024 * 1024 * 20, 0);
+    if(!HeapValidate(*handle, HEAP_NO_SERIALIZE, NULL)) oops();
+    data = (void *)handle;
 }
 
 void *MemAlloc(size_t n) {
@@ -121,14 +140,11 @@ void MemFree(void *p) {
 }
 
 void vl(void) {
-    if(!HeapValidate(TempHeap, HEAP_NO_SERIALIZE, NULL)) oops();
     if(!HeapValidate(PermHeap, HEAP_NO_SERIALIZE, NULL)) oops();
 }
 
 void InitHeaps(void) {
     // Create the heap used for long-lived stuff (that gets freed piecewise).
     PermHeap = HeapCreate(HEAP_NO_SERIALIZE, 1024*1024*20, 0);
-    // Create the heap that we use to store Exprs and other temp stuff.
-    FreeAllTemporary();
 }
 }
