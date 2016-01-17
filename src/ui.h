@@ -16,6 +16,7 @@ public:
         MAX_ROWS = 2000
     };
 
+    // uninitialized because of using initializer list initialization
     struct Color {
         char      c;
         RgbaColor color;
@@ -23,8 +24,8 @@ public:
     static const Color fgColors[];
     static const Color bgColors[];
 
-    float bgColorTable[256*3];
-    float fgColorTable[256*3];
+    float bgColorTable[256*3] = { };
+    float fgColorTable[256*3] = { };
 
     enum {
         CHAR_WIDTH     = 9,
@@ -38,29 +39,31 @@ public:
 #define RADIO_FALSE "\xEE\x80\x82"
 #define RADIO_TRUE  "\xEE\x80\x83"
 
-    int scrollPos;      // The scrollbar position, in half-row units
-    int halfRows;       // The height of our window, in half-row units
+    int scrollPos   = 0;    // The scrollbar position, in half-row units
+    int halfRows    = 0;    // The height of our window, in half-row units
 
-    uint32_t text[MAX_ROWS][MAX_COLS];
+    uint32_t text[MAX_ROWS][MAX_COLS] = { };
     typedef void LinkFunction(int link, uint32_t v);
     enum { NOT_A_LINK = 0 };
     struct Meta {
-        char            fg;
-        char            bg;
+        char            fg      = 0;
+        char            bg      = 0;
         RgbaColor       bgRgb;
-        int             link;
-        uint32_t        data;
-        LinkFunction   *f;
-        LinkFunction   *h;
+        int             link    = 0;
+        uint32_t        data    = 0;
+        LinkFunction   *f       = NULL;
+        LinkFunction   *h       = NULL;
     };
     Meta meta[MAX_ROWS][MAX_COLS];
-    int hoveredRow, hoveredCol;
+    int hoveredRow = 0;
+    int hoveredCol = 0;
 
 
-    int top[MAX_ROWS]; // in half-line units, or -1 for unused
-    int rows;
+    int top[MAX_ROWS] = { }; // in half-line units, or -1 for unused
+    int rows = 0;
 
     // The row of icons at the top of the text window, to hide/show things
+    // uninitialized because of using initializer list initialization
     struct HideShowIcon {
         bool       *var;
         uint8_t    *icon;
@@ -84,7 +87,8 @@ public:
     void DrawOrHitTestIcons(int how, double mx, double my);
     void TimerCallback(void);
     Point2d oldMousePos;
-    HideShowIcon *hoveredIcon, *tooltippedIcon;
+    HideShowIcon *hoveredIcon       = NULL;
+    HideShowIcon *tooltippedIcon    = NULL;
 
     Vector HsvToRgb(Vector hsv);
     uint8_t *HsvPattern2d(void);
@@ -113,22 +117,22 @@ public:
         SCREEN_TANGENT_ARC         = 9
     };
     struct ShownState {
-        int         screen;
+        int         screen          = SCREEN_LIST_OF_GROUPS;
 
         hGroup      group;
         hStyle      style;
 
         hConstraint constraint;
-        bool        dimIsDistance;
-        double      dimFinish;
-        int         dimSteps;
+        bool        dimIsDistance   = false;
+        double      dimFinish       = false;
+        int         dimSteps        = false;
 
         struct Paste {
-            int         times;
+            int         times       = 0;
             Vector      trans;
-            double      theta;
+            double      theta       = 0.0;
             Vector      origin;
-            double      scale;
+            double      scale       = 0.0;
         };
         Paste paste;
     };
@@ -186,9 +190,9 @@ public:
         EDIT_TANGENT_ARC_RADIUS    = 800
     };
     struct Edit {
-        bool        showAgain;
-        int         meaning;
-        int         i;
+        bool        showAgain   = false;
+        int         meaning     = EDIT_NOTHING;
+        int         i           = 0;
         hGroup      group;
         hRequest    request;
         hStyle      style;
@@ -198,15 +202,17 @@ public:
     static void ReportHowGroupSolved(hGroup hg);
 
     struct EditControl {
-        int     halfRow;
-        int     col;
+        int     halfRow     = 0;
+        int     col         = 0;
 
         struct ColorPicker {
             RgbaColor rgb;
-            double    h, s, v;
-            bool      show;
-            bool      picker1dActive;
-            bool      picker2dActive;
+            double h        = 0;
+            double s        = 0;
+            double v        = 0;
+            bool      show  = false;
+            bool      picker1dActive    = false;
+            bool      picker2dActive    = false;
         };
         ColorPicker colorPicker;
     };
@@ -448,6 +454,7 @@ public:
         MENU_ITEM_CHECK,
         MENU_ITEM_RADIO
     };
+    // uninitialized because of initializer-list initialization
     struct MenuEntry {
         int          level;          // 0 == on menu bar, 1 == one level down
         const char  *label;          // or NULL for a separator
@@ -466,23 +473,25 @@ public:
     static void MenuClipboard(int id);
 
     // The width and height (in pixels) of the window.
-    double width, height;
+    double width    = 0.0;
+    double height   = 0.0;
     // These parameters define the map from 2d screen coordinates to the
     // coordinates of the 3d sketch points. We will use an axonometric
     // projection.
     Vector  offset;
     Vector  projRight;
     Vector  projUp;
-    double  scale;
+    double  scale     = 1.0;
+    
     struct Orig {
-        bool    mouseDown;
+        bool    mouseDown = false;
         Vector  offset;
         Vector  projRight;
         Vector  projUp;
         Point2d mouse;
         Point2d mouseOnButtonDown;
         Vector  marqueePoint;
-        bool    startedMoving;
+        bool    startedMoving = false;
     };
     Orig orig;
 
@@ -492,11 +501,11 @@ public:
     // When the user is dragging a point, don't solve multiple times without
     // allowing a paint in between. The extra solves are wasted if they're
     // not displayed.
-    bool    havePainted;
+    bool    havePainted = false;
 
     // Some state for the context menu.
     struct Context {
-        bool        active;
+        bool        active = false;
     };
     Context context;
 
@@ -537,7 +546,7 @@ public:
         DRAGGING_MARQUEE            = 0x0f000009
     };
     struct Pending {
-        int             operation;
+        int             operation = 0;
 
         hRequest        request;
         hEntity         point;
@@ -546,7 +555,7 @@ public:
         hEntity         normal;
         hConstraint     constraint;
 
-        const char     *description;
+        const char     *description = NULL;
     };
     Pending pending;
     void ClearPending(void);
@@ -568,10 +577,15 @@ public:
 
     class ParametricCurve {
     public:
-        bool isLine; // else circle
-        Vector p0, p1;
-        Vector u, v;
-        double r, theta0, theta1, dtheta;
+        bool isLine     = false; // else circle
+        Vector p0;
+        Vector p1;
+        Vector u;
+        Vector v;
+        double r        = 0.0;
+        double theta0   = 0.0;
+        double theta1   = 0.0;
+        double dtheta   = 0.0;
 
         void MakeFromEntity(hEntity he, bool reverse);
         Vector PointAt(double t);
@@ -595,11 +609,11 @@ public:
     // The current selection.
     class Selection {
     public:
-        int         tag;
+        int         tag = 0;
 
         hEntity     entity;
         hConstraint constraint;
-        bool        emphasized;
+        bool        emphasized = false;
 
         void Draw(void);
 
@@ -610,7 +624,7 @@ public:
         bool HasEndpoints(void);
     };
     Selection hover;
-    bool hoverWasSelectedOnMousedown;
+    bool hoverWasSelectedOnMousedown    = false;
     List<Selection> selection;
     void HitTestMakeSelection(Point2d mp);
     void ClearSelection(void);
@@ -623,22 +637,22 @@ public:
         hEntity     vector[MAX_SELECTED];
         hEntity     face[MAX_SELECTED];
         hConstraint constraint[MAX_SELECTED];
-        int         points;
-        int         entities;
-        int         workplanes;
-        int         faces;
-        int         lineSegments;
-        int         circlesOrArcs;
-        int         arcs;
-        int         cubics;
-        int         periodicCubics;
-        int         anyNormals;
-        int         vectors;
-        int         constraints;
-        int         stylables;
-        int         comments;
-        int         withEndpoints;
-        int         n;
+        int         points          = 0;
+        int         entities        = 0;
+        int         workplanes      = 0;
+        int         faces           = 0;
+        int         lineSegments    = 0;
+        int         circlesOrArcs   = 0;
+        int         arcs            = 0;
+        int         cubics          = 0;
+        int         periodicCubics  = 0;
+        int         anyNormals      = 0;
+        int         vectors         = 0;
+        int         constraints     = 0;
+        int         stylables       = 0;
+        int         comments        = 0;
+        int         withEndpoints   = 0;
+        int         n               = 0;
     };
     GS gs;
     void GroupSelection(void);
@@ -670,7 +684,7 @@ public:
         CMNU_FIRST_STYLE      = 0x40000000
     };
     void ContextMenuListStyles(void);
-    int64_t contextMenuCancelTime;
+    int64_t contextMenuCancelTime = 0;
 
     // The toolbar, in toolbar.cpp
     bool ToolbarDrawOrHitTest(int x, int y, bool paint, int *menuHit);
@@ -678,24 +692,25 @@ public:
     bool ToolbarMouseMoved(int x, int y);
     bool ToolbarMouseDown(int x, int y);
     static void TimerCallback(void);
-    int toolbarHovered;
-    int toolbarTooltipped;
-    int toolbarMouseX, toolbarMouseY;
+    int toolbarHovered      = 0;
+    int toolbarTooltipped   = 0;
+    int toolbarMouseX       = 0;
+    int toolbarMouseY       = 0;
 
     // This sets what gets displayed.
-    bool    showWorkplanes;
-    bool    showNormals;
-    bool    showPoints;
-    bool    showConstraints;
-    bool    showTextWindow;
-    bool    showShaded;
-    bool    showEdges;
-    bool    showFaces;
-    bool    showMesh;
-    bool    showHdnLines;
+    bool    showWorkplanes  = false;
+    bool    showNormals     = false;
+    bool    showPoints      = false;
+    bool    showConstraints = false;
+    bool    showTextWindow  = false;
+    bool    showShaded      = false;
+    bool    showEdges       = false;
+    bool    showFaces       = false;
+    bool    showMesh        = false;
+    bool    showHdnLines    = false;
     void ToggleBool(bool *v);
 
-    bool    showSnapGrid;
+    bool    showSnapGrid    = false;
 
     void AddPointToDraggedList(hEntity hp);
     void StartDraggingByEntity(hEntity he);
@@ -717,7 +732,7 @@ public:
     bool KeyDown(int c);
     void EditControlDone(const char *s);
 
-    int64_t lastSpaceNavigatorTime;
+    int64_t lastSpaceNavigatorTime = 0;
     hGroup lastSpaceNavigatorGroup;
     void SpaceNavigatorMoved(double tx, double ty, double tz,
                              double rx, double ry, double rz, bool shiftDown);

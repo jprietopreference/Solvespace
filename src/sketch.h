@@ -26,8 +26,10 @@ class Equation;
 class hGroup {
 public:
     // bits 15: 0   -- group index
-    uint32_t v;
+    uint32_t v = 0;
 
+    hGroup() { }
+    explicit hGroup(uint32_t nv) : v(nv) { }
     inline hEntity entity(int i);
     inline hParam param(int i);
     inline hEquation equation(int i);
@@ -35,8 +37,10 @@ public:
 class hRequest {
 public:
     // bits 15: 0   -- request index
-    uint32_t v;
+    uint32_t v = 0;
 
+    hRequest() { }
+    explicit hRequest(uint32_t nv) : v(nv) { }
     inline hEntity entity(int i);
     inline hParam param(int i);
 
@@ -46,8 +50,10 @@ class hEntity {
 public:
     // bits 15: 0   -- entity index
     //      31:16   -- request index
-    uint32_t v;
+    uint32_t v = 0;
 
+    hEntity() { }
+    explicit hEntity(uint32_t nv) : v(nv) { }
     inline bool isFromRequest(void);
     inline hRequest request(void);
     inline hGroup group(void);
@@ -57,28 +63,33 @@ class hParam {
 public:
     // bits 15: 0   -- param index
     //      31:16   -- request index
-    uint32_t v;
+    uint32_t v = 0; // can not be initialized because of using in union inside Expr.
 
+    hParam() { }
+    explicit hParam(uint32_t nv) : v(nv) { }
     inline hRequest request(void);
 };
 
 class hStyle {
 public:
-    uint32_t v;
+    uint32_t v = 0;
+
+    hStyle() { }
+    explicit hStyle(uint32_t nv) : v(nv) { }
 };
 
 
 class EntityId {
 public:
-    uint32_t v;     // entity ID, starting from 0
+    uint32_t v = 0;     // entity ID, starting from 0
 };
 class EntityMap {
 public:
-    int         tag;
+    int         tag = 0;
 
     EntityId    h;
     hEntity     input;
-    int         copyNumber;
+    int         copyNumber = 0;
     // (input, copyNumber) gets mapped to ((Request)xxx).entity(h.v)
 
     void Clear(void) {}
@@ -89,10 +100,11 @@ class Group {
 public:
     static const hGroup     HGROUP_REFERENCES;
 
-    int         tag;
+    int         tag = 0;
     hGroup      h;
 
     enum {
+        UNKNOWN                       = 0,
         DRAWING_3D                    = 5000,
         DRAWING_WORKPLANE             = 5001,
         EXTRUDE                       = 5100,
@@ -101,28 +113,28 @@ public:
         TRANSLATE                     = 5201,
         IMPORTED                      = 5300
     };
-    int type;
+    int type = UNKNOWN;
 
-    int order;
+    int order = 0;
 
     hGroup      opA;
     hGroup      opB;
-    bool        visible;
-    bool        suppress;
-    bool        relaxConstraints;
-    bool        allDimsReference;
-    double      scale;
+    bool        visible             = false;
+    bool        suppress            = false;
+    bool        relaxConstraints    = false;
+    bool        allDimsReference    = false;
+    double      scale               = 1.0;
 
-    bool        clean;
+    bool        clean               = false;
     hEntity     activeWorkplane;
-    double      valA;
-    double      valB;
-    double      valC;
+    double      valA                = 0.0;
+    double      valB                = 0.0;
+    double      valC                = 0.0;
     RgbaColor   color;
 
     struct Solved {
-        int                 how;
-        int                 dof;
+        int                 how     = 0;
+        int                 dof     = 0;
         List<hConstraint>   remove;
     };
     Solved solved;
@@ -135,24 +147,24 @@ public:
         ONE_SIDED                  = 7000,
         TWO_SIDED                  = 7001
     };
-    int subtype;
+    int subtype     = UNKNOWN;
 
-    bool skipFirst; // for step and repeat ops
+    bool skipFirst  = false; // for step and repeat ops
 
     struct Predef {
         Quaternion  q;
         hEntity     origin;
         hEntity     entityB;
         hEntity     entityC;
-        bool        swapUV;
-        bool        negateU;
-        bool        negateV;
+        bool        swapUV      = false;
+        bool        negateU     = false;
+        bool        negateV     = false;
     };
     Predef predef;
 
-    SPolygon                polyLoops;
-    SBezierLoopSetSet       bezierLoops;
-    SBezierList             bezierOpens;
+    SPolygon                polyLoops       = {};
+    SBezierLoopSetSet       bezierLoops     = {};
+    SBezierList             bezierOpens     = {};
     enum {
         POLY_GOOD              = 0,
         POLY_NOT_CLOSED        = 1,
@@ -161,42 +173,42 @@ public:
         POLY_ZERO_LEN_EDGE     = 4
     };
     struct PolyError {
-        int             how;
-        SEdge           notClosedAt;
+        int             how = POLY_GOOD;
+        SEdge           notClosedAt     = {};
         Vector          errorPointAt;
     };
     PolyError polyError;
 
-    bool            booleanFailed;
+    bool            booleanFailed = false;
 
-    SShell          thisShell;
-    SShell          runningShell;
+    SShell          thisShell       = {};
+    SShell          runningShell    = {};
 
-    SMesh           thisMesh;
-    SMesh           runningMesh;
+    SMesh           thisMesh        = {};
+    SMesh           runningMesh     = {};
 
-    bool            displayDirty;
-    SMesh           displayMesh;
-    SEdgeList       displayEdges;
+    bool            displayDirty = false;
+    SMesh           displayMesh     = {};
+    SEdgeList       displayEdges    = {};
 
     enum {
         COMBINE_AS_UNION           = 0,
         COMBINE_AS_DIFFERENCE      = 1,
         COMBINE_AS_ASSEMBLE        = 2
     };
-    int meshCombine;
+    int meshCombine = COMBINE_AS_UNION;
 
-    bool forceToMesh;
+    bool forceToMesh = false;
 
     IdList<EntityMap,EntityId> remap;
     enum { REMAP_PRIME = 19477 };
-    int remapCache[REMAP_PRIME];
+    int remapCache[REMAP_PRIME] = {};
 
     std::string impFile;
     std::string impFileRel;
-    SMesh       impMesh;
-    SShell      impShell;
-    EntityList  impEntity;
+    SMesh       impMesh     = {};
+    SShell      impShell    = {};
+    EntityList  impEntity   = {};
 
     std::string     name;
 
@@ -264,11 +276,12 @@ public:
     static const hRequest   HREQUEST_REFERENCE_YZ;
     static const hRequest   HREQUEST_REFERENCE_ZX;
 
-    int         tag;
+    int         tag = 0;
     hRequest    h;
 
     // Types of requests
     enum {
+        UNKNOWN                = 0,
         WORKPLANE              = 100,
         DATUM_POINT            = 101,
         LINE_SEGMENT           = 200,
@@ -279,14 +292,14 @@ public:
         TTF_TEXT               = 600
     };
 
-    int         type;
-    int         extraPoints;
+    int         type = UNKNOWN;
+    int         extraPoints = 0;
 
     hEntity     workplane; // or Entity::FREE_IN_3D
     hGroup      group;
     hStyle      style;
 
-    bool        construction;
+    bool        construction = false;
     std::string str;
     std::string font;
 
@@ -301,13 +314,14 @@ public:
 #define MAX_POINTS_IN_ENTITY (12)
 class EntityBase {
 public:
-    int         tag;
+    int         tag = 0;
     hEntity     h;
 
     static const hEntity    FREE_IN_3D;
     static const hEntity    NO_ENTITY;
 
     enum {
+        UNKNOWN                =  0,
         POINT_IN_3D            =  2000,
         POINT_IN_2D            =  2001,
         POINT_N_TRANS          =  2010,
@@ -340,7 +354,7 @@ public:
         TTF_TEXT               = 15000
     };
 
-    int         type;
+    int         type = UNKNOWN;
 
     hGroup      group;
     hEntity     workplane;   // or Entity::FREE_IN_3D
@@ -348,7 +362,7 @@ public:
     // When it comes time to draw an entity, we look here to get the
     // defining variables.
     hEntity     point[MAX_POINTS_IN_ENTITY];
-    int         extraPoints;
+    int         extraPoints = 0;
     hEntity     normal;
     hEntity     distance;
     // The only types that have their own params are points, normals,
@@ -358,14 +372,14 @@ public:
     // Transformed points/normals/distances have their numerical base
     Vector      numPoint;
     Quaternion  numNormal;
-    double      numDistance;
+    double      numDistance = 0.0;
 
     std::string str;
     std::string font;
 
     // For entities that are derived by a transformation, the number of
     // times to apply the transformation.
-    int timesApplied;
+    int timesApplied = 0;
 
     Quaternion GetAxisAngleQuaternion(int param0);
     ExprQuaternion GetAxisAngleQuaternionExprs(int param0);
@@ -441,41 +455,30 @@ public:
 
 class Entity : public EntityBase {
 public:
-    // Necessary for Entity e {} to zero-initialize, since
-    // classes with base classes are not aggregates and
-    // the default constructor does not initialize members.
-    //
-    // Note EntityBase({}); without explicitly value-initializing
-    // the base class, MSVC2013 will default-initialize it, leaving
-    // POD members with indeterminate value.
-    Entity() : EntityBase({}), forceHidden(), actPoint(), actNormal(),
-        actDistance(), actVisible(), style(), construction(),
-        dogd() {};
-
     // An imported entity that was hidden in the source file ends up hidden
     // here too.
-    bool        forceHidden;
+    bool        forceHidden = false;
 
     // All points/normals/distances have their numerical value; this is
     // a convenience, to simplify the import/assembly code, so that the
     // part is entirely described by the entities.
     Vector      actPoint;
     Quaternion  actNormal;
-    double      actDistance;
+    double      actDistance = 0.0;
     // and the shown state also gets saved here, for later import
-    bool        actVisible;
+    bool        actVisible = false;
 
     hStyle      style;
-    bool        construction;
+    bool        construction = false;
 
     // Routines to draw and hit-test the representation of the entity
     // on-screen.
     struct Dogd {
-        bool        drawing;
+        bool        drawing = false;
         Point2d     mp;
-        double      dmin;
+        double      dmin = false;
         Vector      refp;
-        double      lineWidth;
+        double      lineWidth = 1.0;
     };
     Dogd dogd; // state for drawing or getting distance (for hit testing)
 
@@ -502,6 +505,7 @@ public:
 class EntReqTable {
 public:
     struct TableEntry {
+        // uninitialized because of initializer list initialization
         int         reqType;
         int         entType;
         int         points;
@@ -525,12 +529,12 @@ public:
 
 class Param {
 public:
-    int         tag;
+    int         tag     = 0;
     hParam      h;
 
-    double      val;
-    bool        known;
-    bool        free;
+    double      val     = 0.0;
+    bool        known   = false;
+    bool        free    = false;
 
     // Used only in the solver
     hParam      substd;
@@ -543,19 +547,22 @@ public:
 
 class hConstraint {
 public:
-    uint32_t v;
+    uint32_t v = 0;
 
+    hConstraint() { }
+    explicit hConstraint(uint32_t nv) : v(nv) { }
     inline hEquation equation(int i);
 };
 
 class ConstraintBase {
 public:
-    int         tag;
+    int         tag = 0;
     hConstraint h;
 
     static const hConstraint NO_CONSTRAINT;
 
     enum {
+        UNKNOWN                =  0,
         POINTS_COINCIDENT      =  20,
         PT_PT_DISTANCE         =  30,
         PT_PLANE_DISTANCE      =  31,
@@ -594,23 +601,23 @@ public:
         COMMENT                = 1000
     };
 
-    int         type;
+    int         type = UNKNOWN;
 
     hGroup      group;
     hEntity     workplane;
 
     // These are the parameters for the constraint.
-    double      valA;
+    double      valA = 0.0;
     hEntity     ptA;
     hEntity     ptB;
     hEntity     entityA;
     hEntity     entityB;
     hEntity     entityC;
     hEntity     entityD;
-    bool        other;
-    bool        other2;
+    bool        other = false;
+    bool        other2 = false;
 
-    bool        reference;  // a ref dimension, that generates no eqs
+    bool        reference = false;  // a ref dimension, that generates no eqs
     std::string comment;    // since comments are represented as constraints
 
     bool HasLabel(void);
@@ -644,11 +651,11 @@ public:
 
     // State for drawing or getting distance (for hit testing).
     struct Dogd {
-        bool        drawing;
+        bool        drawing = false;
         Point2d     mp;
-        double      dmin;
+        double      dmin = false;
         Vector      refp;
-        SEdgeList   *sel;
+        SEdgeList   *sel = NULL;
     };
     Dogd dogd;
 
@@ -688,18 +695,20 @@ public:
 
 class hEquation {
 public:
-    uint32_t v;
+    uint32_t v = 0;
 
+    hEquation() { }
+    explicit hEquation(uint32_t nv) : v(nv) { }
     inline bool isFromConstraint(void);
     inline hConstraint constraint(void);
 };
 
 class Equation {
 public:
-    int         tag;
+    int         tag = 0;
     hEquation   h;
 
-    Expr        *e;
+    Expr        *e = NULL;
 
     void Clear(void) {}
 };
@@ -707,7 +716,7 @@ public:
 
 class Style {
 public:
-    int         tag;
+    int         tag = 0;
     hStyle      h;
 
     enum {
@@ -739,27 +748,28 @@ public:
         UNITS_AS_PIXELS   = 0,
         UNITS_AS_MM       = 1
     };
-    double      width;
-    int         widthAs;
-    double      textHeight;
-    int         textHeightAs;
+    double      width           = 1.0;
+    int         widthAs         = UNITS_AS_PIXELS;
+    double      textHeight      = 11.0;//DEFAULT_TEXT_HEIGHT;
+    int         textHeightAs    = UNITS_AS_PIXELS;
     enum {
         ORIGIN_LEFT       = 0x01,
         ORIGIN_RIGHT      = 0x02,
         ORIGIN_BOT        = 0x04,
         ORIGIN_TOP        = 0x08
     };
-    int         textOrigin;
-    double      textAngle;
-    RgbaColor   color;
-    bool        filled;
-    RgbaColor   fillColor;
-    bool        visible;
-    bool        exportable;
+    int         textOrigin      = 0;
+    double      textAngle       = 0;
+    RgbaColor   color           = {1.0f, 1.0f, 1.0f, 1.0f};
+    bool        filled          = false;
+    RgbaColor   fillColor       = {0.3f, 0.3f, 0.3f, 1.0f};
+    bool        visible         = true;
+    bool        exportable      = true;
 
     // The default styles, for entities that don't have a style assigned yet,
     // and for datums and such.
     struct Default {
+        // uninitialized because of initializer list initialization
         hStyle      h;
         const char *cnfPrefix;
         RgbaColor   color;
@@ -840,15 +850,15 @@ inline hConstraint hEquation::constraint(void)
 // The format for entities stored on the clipboard.
 class ClipboardRequest {
 public:
-    int         type;
-    int         extraPoints;
+    int         type            = Request::UNKNOWN;
+    int         extraPoints     = 0;
     hStyle      style;
     std::string str;
     std::string font;
-    bool        construction;
+    bool        construction    = false;
 
     Vector      point[MAX_POINTS_IN_ENTITY];
-    double      distance;
+    double      distance        = 0.0;
 
     hEntity     oldEnt;
     hEntity     oldPointEnt[MAX_POINTS_IN_ENTITY];

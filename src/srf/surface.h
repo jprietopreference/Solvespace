@@ -358,7 +358,7 @@ public:
     IdList<SCurve,hSCurve>      curve;
     IdList<SSurface,hSSurface>  surface;
 
-    bool                        booleanFailed;
+    bool                        booleanFailed = false;
 
     void MakeFromExtrusionOf(SBezierLoopSet *sbls, Vector t0, Vector t1,
                              RgbaColor color);

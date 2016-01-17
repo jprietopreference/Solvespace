@@ -394,24 +394,25 @@ public:
         hParam      param[MAX_UNKNOWNS];
 
         // We're solving AX = B
-        int m, n;
+        int m = 0;
+        int n = 0;
         struct MatA {
-            Expr        *sym[MAX_UNKNOWNS][MAX_UNKNOWNS];
-            double       num[MAX_UNKNOWNS][MAX_UNKNOWNS];
+            Expr        *sym[MAX_UNKNOWNS][MAX_UNKNOWNS] = {};
+            double       num[MAX_UNKNOWNS][MAX_UNKNOWNS] = {};
         };
         MatA A;
 
-        double      scale[MAX_UNKNOWNS];
+        double      scale[MAX_UNKNOWNS] = {};
 
         // Some helpers for the least squares solve
-        double AAt[MAX_UNKNOWNS][MAX_UNKNOWNS];
-        double Z[MAX_UNKNOWNS];
+        double AAt[MAX_UNKNOWNS][MAX_UNKNOWNS] = {};
+        double Z[MAX_UNKNOWNS] = {};
 
-        double      X[MAX_UNKNOWNS];
+        double      X[MAX_UNKNOWNS] = {};
 
         struct VecB {
-            Expr        *sym[MAX_UNKNOWNS];
-            double       num[MAX_UNKNOWNS];
+            Expr        *sym[MAX_UNKNOWNS] = {};
+            double       num[MAX_UNKNOWNS] = {};
         };
         VecB B;
     };
@@ -449,52 +450,53 @@ public:
 class TtfFont {
 public:
     struct FontPoint {
-        bool        onCurve;
-        bool        lastInContour;
-        int16_t     x;
-        int16_t     y;
+        bool        onCurve = false;
+        bool        lastInContour = false;
+        int16_t     x = 0;
+        int16_t     y = 0;
     };
 
     struct Glyph {
-        FontPoint   *pt;
-        int         pts;
+        FontPoint   *pt = NULL;
+        int         pts = 0;
 
-        int         xMax;
-        int         xMin;
-        int         leftSideBearing;
-        int         advanceWidth;
+        int         xMax = 0;
+        int         xMin = 0;
+        int         leftSideBearing = 0;
+        int         advanceWidth = 0;
     };
 
     struct IntPoint {
-        int x, y;
+        int x = 0;
+        int y = 0;
     };
 
     std::string           fontFile;
     std::string           name;
-    bool                  loaded;
+    bool                  loaded = false;
 
     // The font itself, plus the mapping from ASCII codes to glyphs
     std::vector<uint16_t> charMap;
     std::vector<Glyph>    glyph;
 
-    int                   maxPoints;
-    int                   scale;
+    int                   maxPoints = 0;
+    int                   scale = 0;
 
     // The filehandle, while loading
-    FILE   *fh;
+    FILE   *fh = NULL;
     // Some state while rendering a character to curves
     enum {
         NOTHING   = 0,
         ON_CURVE  = 1,
         OFF_CURVE = 2
     };
-    int                   lastWas;
+    int                   lastWas = 0;
     IntPoint              lastOnCurve;
     IntPoint              lastOffCurve;
 
     // And the state that the caller must specify, determines where we
     // render to and how
-    SBezierList *beziers;
+    SBezierList *beziers = NULL;
     Vector      origin, u, v;
 
     int Getc(void);
@@ -519,7 +521,7 @@ public:
 
 class TtfFontList {
 public:
-    bool                loaded;
+    bool                loaded = false;
     List<TtfFont>       l;
 
     void LoadAll(void);
@@ -541,13 +543,13 @@ public:
 
     List<int> curves;
     List<int> advancedFaces;
-    FILE *f;
-    int id;
+    FILE *f = NULL;
+    int id = 0;
 };
 
 class VectorFileWriter {
 public:
-    FILE *f;
+    FILE *f = NULL;
     Vector ptMin, ptMax;
 
     // This quells the Clang++ warning "'VectorFileWriter' has virtual
@@ -604,8 +606,8 @@ public:
 };
 class PdfFileWriter : public VectorFileWriter {
 public:
-    uint32_t xref[10];
-    uint32_t bodyStart;
+    uint32_t xref[10] = {};
+    uint32_t bodyStart = 0;
     Vector prevPt;
     void MaybeMoveTo(Vector s, Vector f);
 
@@ -707,8 +709,8 @@ public:
 
 class SolveSpaceUI {
 public:
-    TextWindow                  TW;
-    GraphicsWindow              GW;
+    TextWindow                  TW = {};
+    GraphicsWindow              GW = {};
 
     // The state for undo/redo
     struct UndoState {
@@ -730,8 +732,8 @@ public:
     enum { MAX_UNDO = 16 };
     struct UndoStack {
         UndoState   d[MAX_UNDO];
-        int         cnt;
-        int         write;
+        int         cnt = 0;
+        int         write = 0;
     };
     UndoStack   undo;
     UndoStack   redo;
@@ -748,41 +750,41 @@ public:
     enum { MODEL_COLORS = 8 };
     RgbaColor modelColor[MODEL_COLORS];
     Vector   lightDir[2];
-    double   lightIntensity[2];
-    double   ambientIntensity;
-    double   chordTol;
-    int      maxSegments;
-    double   cameraTangent;
-    float    gridSpacing;
-    float    exportScale;
-    float    exportOffset;
-    bool     fixExportColors;
-    bool     drawBackFaces;
-    bool     checkClosedContour;
-    bool     showToolbar;
-    RgbaColor backgroundColor;
-    bool     exportShadedTriangles;
-    bool     exportPwlCurves;
-    bool     exportCanvasSizeAuto;
+    double   lightIntensity[2]      = {/*1.0, 0.5*/};
+    double   ambientIntensity       = 0.3;
+    double   chordTol               = 2.0;
+    int      maxSegments            = 10;
+    double   cameraTangent          = 0.3f / 1e3f;
+    float    gridSpacing            = 5.0f;
+    float    exportScale            = 1.0f;
+    float    exportOffset           = 0.0f;
+    bool     fixExportColors        = true;
+    bool     drawBackFaces          = true;
+    bool     checkClosedContour     = true;
+    bool     showToolbar            = true;
+    RgbaColor backgroundColor       = RGBi(0, 0, 0);
+    bool     exportShadedTriangles  = true;
+    bool     exportPwlCurves        = false;
+    bool     exportCanvasSizeAuto   = true;
     struct ExportMargin {
-        float   left;
-        float   right;
-        float   bottom;
-        float   top;
+        float   left        = 5.0f;
+        float   right       = 5.0f;
+        float   bottom      = 5.0f;
+        float   top         = 5.0f;
     };
     ExportMargin exportMargin;
     struct ExportCanvas {
-        float   width;
-        float   height;
-        float   dx;
-        float   dy;
+        float   width       = 100.0f;
+        float   height      = 100.0f;
+        float   dx          = 5.0f;
+        float   dy          = 5.0f;
     };
     ExportCanvas exportCanvas;
     struct GCode {
-        float   depth;
-        int     passes;
-        float   feed;
-        float   plungeFeed;
+        float   depth       = 10.0f;
+        int     passes      = 1;
+        float   feed        = 10.0f;
+        float   plungeFeed  = 10.0f;
     };
     GCode gCode;
 
@@ -790,10 +792,10 @@ public:
         UNIT_MM = 0,
         UNIT_INCHES
     };
-    Unit     viewUnits;
-    int      afterDecimalMm;
-    int      afterDecimalInch;
-    int      autosaveInterval; // in minutes
+    Unit     viewUnits          = UNIT_MM;
+    int      afterDecimalMm     = 2;
+    int      afterDecimalInch   = 3;
+    int      autosaveInterval   = 5; // in minutes
 
     std::string MmToString(double v);
     double ExprToMm(Expr *e);
@@ -819,14 +821,15 @@ public:
 
     // File load/save routines, including the additional files that get
     // loaded when we have import groups.
-    FILE        *fh;
+    FILE        *fh = NULL;
     void AfterNewFile(void);
     static void RemoveFromRecentList(const std::string &filename);
     static void AddToRecentList(const std::string &filename);
     std::string saveFile;
-    bool        fileLoadError;
-    bool        unsaved;
+    bool        fileLoadError   = false;
+    bool        unsaved         = false;
     struct SaveTable {
+        // uninitialized because of initalizer list initialization
         char        type;
         const char *desc;
         char        fmt;
@@ -882,23 +885,25 @@ public:
         hEntity     point;
     };
     Traced traced;
-    SEdgeList nakedEdges;
+    SEdgeList nakedEdges = {};
     struct ExtraLine {
-        bool        draw;
+        bool        draw = false;
         Vector      ptA;
         Vector      ptB;
     };
     ExtraLine extraLine;
     struct BGImage {
-        uint8_t     *fromFile;
-        int         w, h;
-        int         rw, rh;
-        double      scale; // pixels per mm
+        uint8_t     *fromFile = NULL;
+        int         w       = 0;
+        int         h       = 0;
+        int         rw      = 0;
+        int         rh      = 0;
+        double      scale   = 1.0; // pixels per mm
         Vector      origin;
     };
     BGImage bgImage;
     struct JustExportedInfo {
-        bool        draw;
+        bool        draw = false;
         Vector      pt, u, v;
     };
     JustExportedInfo justExportedInfo;
@@ -920,10 +925,10 @@ public:
     // Consistency checking on the sketch: stuff with missing dependencies
     // will get deleted automatically.
     struct Deleted {
-        int     requests;
-        int     groups;
-        int     constraints;
-        int     nonTrivialConstraints;
+        int     requests                = 0;
+        int     groups                  = 0;
+        int     constraints             = 0;
+        int     nonTrivialConstraints   = 0;
     };
     Deleted deleted;
     bool GroupExists(hGroup hg);
@@ -951,12 +956,12 @@ public:
     // Everything has been pruned, so we know there's no dangling references
     // to entities that don't exist. Before that, we mustn't try to display
     // the sketch!
-    bool allConsistent;
+    bool allConsistent = false;
 
     struct Later {
-        bool    scheduled;
-        bool    showTW;
-        bool    generateAll;
+        bool    scheduled   = false;
+        bool    showTW      = false;
+        bool    generateAll = false;
     };
     Later later;
     void ScheduleShowTW();

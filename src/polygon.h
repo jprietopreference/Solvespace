@@ -223,10 +223,10 @@ class SMesh {
 public:
     List<STriangle>     l;
 
-    bool    flipNormal;
-    bool    keepCoplanar;
-    bool    atLeastOneDiscarded;
-    bool    isTransparent;
+    bool    flipNormal              = false;
+    bool    keepCoplanar            = false;
+    bool    atLeastOneDiscarded     = false;
+    bool    isTransparent           = false;
 
     void Clear(void);
     void AddTriangle(STriangle *st);

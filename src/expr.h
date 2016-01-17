@@ -14,11 +14,12 @@ class Expr {
 public:
 
     enum {
+        UNKNOWN        =  0,
         // A parameter, by the hParam handle
-        PARAM          =  0,
+        PARAM          =  1,
         // A parameter, by a pointer straight in to the param table (faster,
         // if we know that the param table won't move around)
-        PARAM_PTR      =  1,
+        PARAM_PTR      =  2,
 
         CONSTANT       = 20,
 
@@ -45,8 +46,8 @@ public:
         UNARY_OP       = 1003
     };
 
-    int op;
-    Expr    *a;
+    int op  = UNKNOWN;
+    Expr *a = NULL;
     union {
         double  v;
         uint32_t  parhv;
@@ -57,8 +58,8 @@ public:
         char    c;
     };
 
-    Expr() { }
-    Expr(double val) : op(CONSTANT) { v = val; }
+    Expr() : b(NULL) { }
+    explicit Expr(double val) : op(CONSTANT), v(val) { }
 
     static inline Expr *AllocExpr(void)
         { return (Expr *)AllocTemporary(sizeof(Expr)); }

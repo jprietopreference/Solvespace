@@ -18,7 +18,13 @@ class hParam;
 class Quaternion {
 public:
     // a + (vx)*i + (vy)*j + (vz)*k
-    double w, vx, vy, vz;
+    double w    = 0.0;
+    double vx   = 0.0;
+    double vy   = 0.0;
+    double vz   = 0.0;
+    
+    Quaternion() { }
+    Quaternion(double nw, double nx, double ny, double nz) : w(nw), vx(nx), vy(ny), vz(nz) { }
 
     static const Quaternion IDENTITY;
 
@@ -48,7 +54,13 @@ public:
 
 class Vector {
 public:
-    double x, y, z;
+    
+    double x = 0.0;
+    double y = 0.0;
+    double z = 0.0;
+    
+    Vector() { }
+    Vector(double nx, double ny, double nz) : x(nx), y(ny), z(nz) { }
 
     static Vector From(double x, double y, double z);
     static Vector From(hParam x, hParam y, hParam z);
@@ -109,7 +121,13 @@ public:
 
 class Vector4 {
 public:
-    double w, x, y, z;
+    double w = 0.0;
+    double x = 0.0;
+    double y = 0.0;
+    double z = 0.0;
+    
+    Vector4() { }
+    Vector4(double nw, double nx, double ny, double nz) : w(nw), x(nx), y(ny), z(nz) { }
 
     static Vector4 From(double w, double x, double y, double z);
     static Vector4 From(double w, Vector v3);
@@ -123,8 +141,12 @@ public:
 
 class Point2d {
 public:
-    double x, y;
-
+    double x = 0.0;
+    double y = 0.0;
+    
+    Point2d() { }
+    Point2d(double nx, double ny) : x(nx), y(ny) { }
+    
     static Point2d From(double x, double y);
 
     Point2d Plus(Point2d b);
@@ -145,9 +167,9 @@ public:
 template <class T>
 class List {
 public:
-    T   *elem;
-    int  n;
-    int  elemsAllocated;
+    T   *elem           = NULL;
+    int  n              = 0;
+    int  elemsAllocated = 0;
 
     void AllocForOneMore(void) {
         if(n >= elemsAllocated) {
@@ -240,9 +262,9 @@ public:
 template <class T, class H>
 class IdList {
 public:
-    T     *elem;
-    int   n;
-    int   elemsAllocated;
+    T     *elem             = NULL;
+    int   n                 = 0;
+    int   elemsAllocated    = 0;
 
     uint32_t MaximumId(void) {
         uint32_t id = 0;
@@ -405,10 +427,10 @@ public:
         LEFT_OF_DIAG   = 2
     };
 
-    double A[MAX_UNKNOWNS][MAX_UNKNOWNS];
-    double B[MAX_UNKNOWNS];
-    double X[MAX_UNKNOWNS];
-    int n;
+    double A[MAX_UNKNOWNS][MAX_UNKNOWNS] = {};
+    double B[MAX_UNKNOWNS] = {};
+    double X[MAX_UNKNOWNS] = {};
+    int n = 0;
 
     void Solve(void);
 };
@@ -420,7 +442,15 @@ public:
 //
 class RgbaColor {
 public:
-    uint8_t red, green, blue, alpha;
+
+    uint8_t red     = 0xFF;
+    uint8_t green   = 0xFF;
+    uint8_t blue    = 0xFF;
+    uint8_t alpha   = 0xFF;
+
+    RgbaColor() { }
+    RgbaColor(int r, int g, int b, int a = 255) { *this = From(r, g, b, a); }
+    RgbaColor(float r, float g, float b, float a = 1.0f) { *this = FromFloat(r, g, b, a); }
 
     float redF(void)   const { return (float)red   / 255.0f; }
     float greenF(void) const { return (float)green / 255.0f; }
