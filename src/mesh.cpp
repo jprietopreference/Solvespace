@@ -24,7 +24,7 @@ void SMesh::AddTriangle(STriMeta meta, Vector n, Vector a, Vector b, Vector c) {
     }
 }
 void SMesh::AddTriangle(STriMeta meta, Vector a, Vector b, Vector c) {
-    STriangle t = {};
+    STriangle t {};
     t.meta = meta;
     t.a = a;
     t.b = b;
@@ -62,7 +62,7 @@ void SMesh::GetBounding(Vector *vmax, Vector *vmin) {
 // within the plane n dot p = d.
 //----------------------------------------------------------------------------
 void SMesh::MakeEdgesInPlaneInto(SEdgeList *sel, Vector n, double d) {
-    SMesh m = {};
+    SMesh m {};
     m.MakeFromCopyOf(this);
 
     // Delete all triangles in the mesh that do not lie in our export plane.
@@ -391,9 +391,9 @@ SKdNode *SKdNode::From(STriangleLl *tll) {
     SKdNode *ret = Alloc();
 
     int i;
-    int gtc[3] = { 0, 0, 0 }, ltc[3] = { 0, 0, 0 }, allc = 0;
-    double badness[3] = { 0, 0, 0 };
-    double split[3] = { 0, 0, 0 };
+    int gtc[3] { 0, 0, 0 }, ltc[3] { 0, 0, 0 }, allc = 0;
+    double badness[3] { 0, 0, 0 };
+    double split[3] { 0, 0, 0 };
 
     if(!tll) {
         goto leaf;
@@ -622,7 +622,7 @@ void SKdNode::SnapToMesh(SMesh *m) {
                        ((j == 1) ? tr->b :
                                    tr->c));
 
-            SMesh extra = {};
+            SMesh extra {};
             SnapToVertex(v, &extra);
 
             for(k = 0; k < extra.l.n; k++) {
@@ -641,7 +641,7 @@ void SKdNode::SnapToMesh(SMesh *m) {
 // and our output.
 //-----------------------------------------------------------------------------
 void SKdNode::SplitLinesAgainstTriangle(SEdgeList *sel, STriangle *tr) {
-    SEdgeList seln = {};
+    SEdgeList seln {};
 
     Vector tn = tr->Normal().WithMagnitude(1);
     double td = tn.Dot(tr->a);
@@ -689,11 +689,11 @@ void SKdNode::SplitLinesAgainstTriangle(SEdgeList *sel, STriangle *tr) {
                 b = (tr->b).ProjectXy(),
                 c = (tr->c).ProjectXy();
 
-        Point2d n[3] = { (b.Minus(a)).Normal().WithMagnitude(1),
+        Point2d n[3] { (b.Minus(a)).Normal().WithMagnitude(1),
                          (c.Minus(b)).Normal().WithMagnitude(1),
                          (a.Minus(c)).Normal().WithMagnitude(1)  };
 
-        double d[3] = { n[0].Dot(b),
+        double d[3] { n[0].Dot(b),
                         n[1].Dot(c),
                         n[2].Dot(a)  };
 
@@ -901,7 +901,7 @@ void SKdNode::MakeCertainEdgesInto(SEdgeList *sel, int how,
     if(inter) *inter = false;
     if(leaky) *leaky = false;
 
-    SMesh m = {};
+    SMesh m {};
     ClearTags();
     MakeMeshInto(&m);
 

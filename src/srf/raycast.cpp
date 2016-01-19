@@ -254,7 +254,7 @@ void SSurface::AllPointsIntersecting(Vector a, Vector b,
     Vector ba = b.Minus(a);
     double bam = ba.Magnitude();
 
-    List<Inter> inters = {};
+    List<Inter> inters {};
 
     // All the intersections between the line and the surface; either special
     // cases that we can quickly solve in closed form, or general numerical.
@@ -360,7 +360,7 @@ void SSurface::AllPointsIntersecting(Vector a, Vector b,
         }
 
         // And that it lies inside our trim region
-        Point2d dummy = { 0, 0 };
+        Point2d dummy { 0, 0 };
         int c = bsp->ClassifyPoint(puv, dummy, this);
         if(trimmed && c == SBspUv::OUTSIDE) {
             continue;
@@ -425,7 +425,7 @@ bool SShell::ClassifyEdge(int *indir, int *outdir,
                           Vector p,
                           Vector edge_n_in, Vector edge_n_out, Vector surf_n)
 {
-    List<SInter> l = {};
+    List<SInter> l {};
 
     srand(0);
 
@@ -526,7 +526,7 @@ bool SShell::ClassifyEdge(int *indir, int *outdir,
         Vector pp = srf->PointAt(puv);
 
         if((pp.Minus(p)).Magnitude() > LENGTH_EPS) continue;
-        Point2d dummy = { 0, 0 };
+        Point2d dummy { 0, 0 };
         int c = srf->bsp->ClassifyPoint(puv, dummy, srf);
         if(c == SBspUv::OUTSIDE) continue;
 

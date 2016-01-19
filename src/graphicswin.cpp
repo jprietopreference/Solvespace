@@ -23,7 +23,7 @@
 #define IN    MENU_ITEM_NORMAL
 #define IC    MENU_ITEM_CHECK
 #define IR    MENU_ITEM_RADIO
-const GraphicsWindow::MenuEntry GraphicsWindow::menu[] = {
+const GraphicsWindow::MenuEntry GraphicsWindow::menu[] {
 //level
 //   label                          id                  accel    ty   fn
 { 0, "&File",                       0,                  0,       IN, NULL  },
@@ -363,7 +363,7 @@ void GraphicsWindow::LoopOverPoints(Point2d *pmax, Point2d *pmin, double *wmin,
 }
 void GraphicsWindow::ZoomToFit(bool includingInvisibles) {
     // On the first run, ignore perspective.
-    Point2d pmax = { -1e12, -1e12 }, pmin = { 1e12, 1e12 };
+    Point2d pmax { -1e12, -1e12 }, pmin { 1e12, 1e12 };
     double wmin = 1;
     LoopOverPoints(&pmax, &pmin, &wmin, false, includingInvisibles);
 
@@ -452,7 +452,7 @@ void GraphicsWindow::MenuView(int id) {
             }  // if not in 2d mode fall through and use ORTHO logic
         case MNU_NEAREST_ORTHO:
         case MNU_NEAREST_ISO: {
-            static const Vector ortho[3] = {
+            static const Vector ortho[3] {
                 Vector::From(1, 0, 0),
                 Vector::From(0, 1, 0),
                 Vector::From(0, 0, 1)

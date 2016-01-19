@@ -8,11 +8,11 @@
 //-----------------------------------------------------------------------------
 #include "solvespace.h"
 
-const hRequest Request::HREQUEST_REFERENCE_XY = { 1 };
-const hRequest Request::HREQUEST_REFERENCE_YZ = { 2 };
-const hRequest Request::HREQUEST_REFERENCE_ZX = { 3 };
+const hRequest Request::HREQUEST_REFERENCE_XY { 1 };
+const hRequest Request::HREQUEST_REFERENCE_YZ { 2 };
+const hRequest Request::HREQUEST_REFERENCE_ZX { 3 };
 
-const EntReqTable::TableEntry EntReqTable::Table[] = {
+const EntReqTable::TableEntry EntReqTable::Table[] {
 //   request type               entity type       pts   xtra?   norml   dist    description
 { Request::WORKPLANE,       Entity::WORKPLANE,      1,  false,  true,   false, "workplane"      },
 { Request::DATUM_POINT,     0,                      1,  false,  false,  false, "datum-point"    },
@@ -91,7 +91,7 @@ void Request::Generate(IdList<Entity,hEntity> *entity,
     bool hasDistance = false;
     int i;
 
-    Entity e = {};
+    Entity e {};
     EntReqTable::GetRequestInfo(type, extraPoints,
                     &et, &points, &hasNormal, &hasDistance);
 
@@ -108,7 +108,7 @@ void Request::Generate(IdList<Entity,hEntity> *entity,
 
     // And generate entities for the points
     for(i = 0; i < points; i++) {
-        Entity p = {};
+        Entity p {};
         p.workplane = workplane;
         // points start from entity 1, except for datum point case
         p.h = h.entity(i+(et ? 1 : 0));
@@ -131,7 +131,7 @@ void Request::Generate(IdList<Entity,hEntity> *entity,
         e.point[i] = p.h;
     }
     if(hasNormal) {
-        Entity n = {};
+        Entity n {};
         n.workplane = workplane;
         n.h = h.entity(32);
         n.group = group;
@@ -155,7 +155,7 @@ void Request::Generate(IdList<Entity,hEntity> *entity,
         e.normal = n.h;
     }
     if(hasDistance) {
-        Entity d = {};
+        Entity d {};
         d.workplane = workplane;
         d.h = h.entity(64);
         d.group = group;
@@ -185,7 +185,7 @@ std::string Request::DescriptionString(void) {
 }
 
 hParam Request::AddParam(IdList<Param,hParam> *param, hParam hp) {
-    Param pa = {};
+    Param pa {};
     pa.h = hp;
     param->Add(&pa);
     return hp;

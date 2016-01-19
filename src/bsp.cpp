@@ -15,7 +15,7 @@ SBsp3 *SBsp3::FromMesh(SMesh *m) {
     SBsp3 *bsp3 = NULL;
     int i;
 
-    SMesh mc = {};
+    SMesh mc {};
     for(i = 0; i < m->l.n; i++) {
         mc.AddTriangle(&(m->l.elem[i]));
     }
@@ -285,10 +285,10 @@ SBsp3 *SBsp3::Insert(STriangle *tr, SMesh *instead) {
         return r;
     }
 
-    double dt[3] = { (tr->a).Dot(n), (tr->b).Dot(n), (tr->c).Dot(n) };
+    double dt[3] { (tr->a).Dot(n), (tr->b).Dot(n), (tr->c).Dot(n) };
 
     int inc = 0, posc = 0, negc = 0;
-    bool isPos[3] = {}, isNeg[3] = {}, isOn[3] = {};
+    bool isPos[3] {}, isNeg[3] {}, isOn[3] {};
     // Count vertices in the plane
     for(int i = 0; i < 3; i++) {
         if(fabs(dt[i] - d) < LENGTH_EPS) {
@@ -380,7 +380,7 @@ SBsp3 *SBsp3::Insert(STriangle *tr, SMesh *instead) {
     Vector cPa = IntersectionWith(c, a);
 
     STriangle alone = STriangle::From(tr->meta, a, aPb, cPa);
-    Vector quad[4] = { aPb, b, c, cPa };
+    Vector quad[4] { aPb, b, c, cPa };
 
     if(posc == 2 && negc == 1) {
         InsertConvexHow(POS, tr->meta, quad, 4, instead);
@@ -489,9 +489,9 @@ SBsp2 *SBsp2::InsertEdge(SEdge *nedge, Vector nnp, Vector out) {
         return r;
     }
 
-    double dt[2] = { (nedge->a).Dot(no), (nedge->b).Dot(no) };
+    double dt[2] { (nedge->a).Dot(no), (nedge->b).Dot(no) };
 
-    bool isPos[2] = {}, isNeg[2] = {}, isOn[2] = {};
+    bool isPos[2] {}, isNeg[2] {}, isOn[2] {};
     for(int i = 0; i < 2; i++) {
         if(fabs(dt[i] - d) < LENGTH_EPS) {
             isOn[i] = true;
@@ -566,9 +566,9 @@ void SBsp2::InsertTriangleHow(int how, STriangle *tr, SMesh *m, SBsp3 *bsp3) {
 }
 
 void SBsp2::InsertTriangle(STriangle *tr, SMesh *m, SBsp3 *bsp3) {
-    double dt[3] = { (tr->a).Dot(no), (tr->b).Dot(no), (tr->c).Dot(no) };
+    double dt[3] { (tr->a).Dot(no), (tr->b).Dot(no), (tr->c).Dot(no) };
 
-    bool isPos[3] = {}, isNeg[3] = {}, isOn[3] = {};
+    bool isPos[3] {}, isNeg[3] {}, isOn[3] {};
     int inc = 0, posc = 0, negc = 0;
     for(int i = 0; i < 3; i++) {
         if(fabs(dt[i] - d) < LENGTH_EPS) {

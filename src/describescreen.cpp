@@ -11,7 +11,7 @@ void TextWindow::ScreenUnselectAll(int link, uint32_t v) {
 }
 
 void TextWindow::ScreenEditTtfText(int link, uint32_t v) {
-    hRequest hr = { v };
+    hRequest hr { v };
     Request *r = SK.GetRequest(hr);
 
     SS.TW.ShowEditControl(13, 10, r->str.c_str());
@@ -42,7 +42,7 @@ void TextWindow::ScreenSetTtfFont(int link, uint32_t v) {
 }
 
 void TextWindow::ScreenConstraintShowAsRadius(int link, uint32_t v) {
-    hConstraint hc = { v };
+    hConstraint hc { v };
     Constraint *c = SK.GetConstraint(hc);
 
     SS.UndoRemember();

@@ -8,7 +8,7 @@
 #define EXPORT_DLL
 #include <slvs.h>
 
-Sketch SolveSpace::SK = {};
+Sketch SolveSpace::SK {};
 static System SYS;
 
 static int IsInit = 0;
@@ -88,7 +88,7 @@ void Slvs_Solve(Slvs_System *ssys, Slvs_hGroup shg)
     int i;
     for(i = 0; i < ssys->params; i++) {
         Slvs_Param *sp = &(ssys->param[i]);
-        Param p = {};
+        Param p {};
 
         p.h.v = sp->h;
         p.val = sp->val;
@@ -100,7 +100,7 @@ void Slvs_Solve(Slvs_System *ssys, Slvs_hGroup shg)
 
     for(i = 0; i < ssys->entities; i++) {
         Slvs_Entity *se = &(ssys->entity[i]);
-        EntityBase e = {};
+        EntityBase e {};
 
         switch(se->type) {
 case SLVS_E_POINT_IN_3D:        e.type = Entity::POINT_IN_3D; break;
@@ -135,7 +135,7 @@ default: dbp("bad entity type %d", se->type); return;
 
     for(i = 0; i < ssys->constraints; i++) {
         Slvs_Constraint *sc = &(ssys->constraint[i]);
-        ConstraintBase c = {};
+        ConstraintBase c {};
 
         int t;
         switch(sc->type) {
@@ -197,15 +197,15 @@ default: dbp("bad constraint type %d", sc->type); return;
 
     for(i = 0; i < (int)arraylen(ssys->dragged); i++) {
         if(ssys->dragged[i]) {
-            hParam hp = { ssys->dragged[i] };
+            hParam hp { ssys->dragged[i] };
             SYS.dragged.Add(&hp);
         }
     }
 
-    Group g = {};
+    Group g {};
     g.h.v = shg;
 
-    List<hConstraint> bad = {};
+    List<hConstraint> bad {};
 
     // Now we're finally ready to solve!
     bool andFindBad = ssys->calculateFaileds ? true : false;
@@ -234,7 +234,7 @@ default: dbp("bad constraint type %d", sc->type); return;
     // Write the new parameter values back to our caller.
     for(i = 0; i < ssys->params; i++) {
         Slvs_Param *sp = &(ssys->param[i]);
-        hParam hp = { sp->h };
+        hParam hp { sp->h };
         sp->val = SK.GetParam(hp)->val;
     }
 

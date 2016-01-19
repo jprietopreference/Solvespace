@@ -99,7 +99,7 @@ void GraphicsWindow::ClearNonexistentSelectionItems(void) {
 // Is this entity/constraint selected?
 //-----------------------------------------------------------------------------
 bool GraphicsWindow::IsSelected(hEntity he) {
-    Selection s = {};
+    Selection s {};
     s.entity = he;
     return IsSelected(&s);
 }
@@ -120,7 +120,7 @@ bool GraphicsWindow::IsSelected(Selection *st) {
 // would otherwise be impossible to de-select the lower of the two.
 //-----------------------------------------------------------------------------
 void GraphicsWindow::MakeUnselected(hEntity he, bool coincidentPointTrick) {
-    Selection stog = {};
+    Selection stog {};
     stog.entity = he;
     MakeUnselected(&stog, coincidentPointTrick);
 }
@@ -162,7 +162,7 @@ void GraphicsWindow::MakeUnselected(Selection *stog, bool coincidentPointTrick){
 // Select an item, if it isn't selected already.
 //-----------------------------------------------------------------------------
 void GraphicsWindow::MakeSelected(hEntity he) {
-    Selection stog = {};
+    Selection stog {};
     stog.entity = he;
     MakeSelected(&stog);
 }
@@ -222,7 +222,7 @@ void GraphicsWindow::SelectByMarquee(void) {
             // includes the z = 0 plane.
             Vector ptMin = Vector::From(xmin, ymin, -1),
                    ptMax = Vector::From(xmax, ymax, 1);
-            SEdgeList sel = {};
+            SEdgeList sel {};
             e->GenerateEdges(&sel, true);
             SEdge *se;
             for(se = sel.l.First(); se; se = sel.l.NextAfter(se)) {
@@ -317,7 +317,7 @@ void GraphicsWindow::GroupSelection(void) {
 void GraphicsWindow::HitTestMakeSelection(Point2d mp) {
     int i;
     double d, dmin = 1e12;
-    Selection s = {};
+    Selection s {};
 
     // Always do the entities; we might be dragging something that should
     // be auto-constrained, and we need the hover for that.
@@ -380,7 +380,7 @@ void GraphicsWindow::HitTestMakeSelection(Point2d mp) {
 //-----------------------------------------------------------------------------
 Point2d GraphicsWindow::ProjectPoint(Vector p) {
     Vector p3 = ProjectPoint3(p);
-    Point2d p2 = { p3.x, p3.y };
+    Point2d p2 { p3.x, p3.y };
     return p2;
 }
 //-----------------------------------------------------------------------------
@@ -581,25 +581,25 @@ void GraphicsWindow::Paint(void) {
     GLfloat f;
     glEnable(GL_LIGHT0);
     f = (GLfloat)SS.lightIntensity[0];
-    GLfloat li0[] = { f, f, f, 1.0f };
+    GLfloat li0[] { f, f, f, 1.0f };
     glLightfv(GL_LIGHT0, GL_DIFFUSE, li0);
     glLightfv(GL_LIGHT0, GL_SPECULAR, li0);
 
     glEnable(GL_LIGHT1);
     f = (GLfloat)SS.lightIntensity[1];
-    GLfloat li1[] = { f, f, f, 1.0f };
+    GLfloat li1[] { f, f, f, 1.0f };
     glLightfv(GL_LIGHT1, GL_DIFFUSE, li1);
     glLightfv(GL_LIGHT1, GL_SPECULAR, li1);
 
     Vector ld;
     ld = VectorFromProjs(SS.lightDir[0]);
-    GLfloat ld0[4] = { (GLfloat)ld.x, (GLfloat)ld.y, (GLfloat)ld.z, 0 };
+    GLfloat ld0[4] { (GLfloat)ld.x, (GLfloat)ld.y, (GLfloat)ld.z, 0 };
     glLightfv(GL_LIGHT0, GL_POSITION, ld0);
     ld = VectorFromProjs(SS.lightDir[1]);
-    GLfloat ld1[4] = { (GLfloat)ld.x, (GLfloat)ld.y, (GLfloat)ld.z, 0 };
+    GLfloat ld1[4] { (GLfloat)ld.x, (GLfloat)ld.y, (GLfloat)ld.z, 0 };
     glLightfv(GL_LIGHT1, GL_POSITION, ld1);
 
-    GLfloat ambient[4] = { (float)SS.ambientIntensity,
+    GLfloat ambient[4] { (float)SS.ambientIntensity,
                            (float)SS.ambientIntensity,
                            (float)SS.ambientIntensity, 1 };
     glLightModelfv(GL_LIGHT_MODEL_AMBIENT, ambient);
@@ -709,7 +709,7 @@ nogrid:;
         SuggestedConstraint suggested =
             SS.GW.SuggestLineConstraint(SS.GW.pending.request);
         if(suggested != GraphicsWindow::SUGGESTED_NONE) {
-            Constraint c = {};
+            Constraint c {};
             c.group = SS.GW.activeGroup;
             c.workplane = SS.GW.ActiveWorkplane();
             c.type = suggested;

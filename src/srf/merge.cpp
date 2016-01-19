@@ -22,7 +22,7 @@ void SShell::MergeCoincidentSurfaces(void) {
         // time on other surfaces.
         if(si->degm != 1 || si->degn != 1) continue;
 
-        SEdgeList sel = {};
+        SEdgeList sel {};
         si->MakeEdgesInto(this, &sel, SSurface::AS_XYZ);
 
         bool mergedThisTime, merged = false;
@@ -41,7 +41,7 @@ void SShell::MergeCoincidentSurfaces(void) {
                 // surfaces if they contain disjoint contours; that just makes
                 // the bounding box tests less effective, and possibly things
                 // less robust.
-                SEdgeList tel = {};
+                SEdgeList tel {};
                 sj->MakeEdgesInto(this, &tel, SSurface::AS_XYZ);
                 if(!sel.ContainsEdgeFrom(&tel)) {
                     tel.Clear();

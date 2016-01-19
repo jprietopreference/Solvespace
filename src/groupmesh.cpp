@@ -13,7 +13,7 @@ void Group::AssembleLoops(bool *allClosed,
                           bool *allCoplanar,
                           bool *allNonZeroLen)
 {
-    SBezierList sbl = {};
+    SBezierList sbl {};
 
     int i;
     for(i = 0; i < SK.entity.n; i++) {
@@ -85,7 +85,7 @@ void Group::GenerateLoops(void) {
 void SShell::RemapFaces(Group *g, int remap) {
     SSurface *ss;
     for(ss = surface.First(); ss; ss = surface.NextAfter(ss)){
-        hEntity face = { ss->face };
+        hEntity face { ss->face };
         if(face.v == Entity::NO_ENTITY.v) continue;
 
         face = g->Remap(face, remap);
@@ -96,7 +96,7 @@ void SShell::RemapFaces(Group *g, int remap) {
 void SMesh::RemapFaces(Group *g, int remap) {
     STriangle *tr;
     for(tr = l.First(); tr; tr = l.NextAfter(tr)) {
-        hEntity face = { tr->meta.face };
+        hEntity face { tr->meta.face };
         if(face.v == Entity::NO_ENTITY.v) continue;
 
         face = g->Remap(face, remap);
@@ -120,7 +120,7 @@ void Group::GenerateForStepAndRepeat(T *steps, T *outs) {
         int ap = a*2 - (subtype == ONE_SIDED ? 0 : (n-1));
         int remap = (a == (n - 1)) ? REMAP_LAST : a;
 
-        T transd = {};
+        T transd {};
         if(type == TRANSLATE) {
             Vector trans = Vector::From(h.param(0), h.param(1), h.param(2));
             trans = trans.ScaledBy(ap);
@@ -288,11 +288,11 @@ void Group::GenerateShellAndMesh(void) {
     } else if(type == IMPORTED) {
         // The imported shell or mesh are copied over, with the appropriate
         // transformation applied. We also must remap the face entities.
-        Vector offset = {
+        Vector offset {
             SK.GetParam(h.param(0))->val,
             SK.GetParam(h.param(1))->val,
             SK.GetParam(h.param(2))->val };
-        Quaternion q = {
+        Quaternion q {
             SK.GetParam(h.param(3))->val,
             SK.GetParam(h.param(4))->val,
             SK.GetParam(h.param(5))->val,
@@ -341,7 +341,7 @@ void Group::GenerateShellAndMesh(void) {
         thism.MakeFromCopyOf(&thisMesh);
         thisShell.TriangulateInto(&thism);
 
-        SMesh outm = {};
+        SMesh outm {};
         GenerateForBoolean<SMesh>(&prevm, &thism, &outm, srcg->meshCombine);
 
         // And make sure that the output mesh is vertex-to-vertex.
@@ -442,7 +442,7 @@ void Group::DrawDisplayItems(int t) {
     }
     // The back faces are drawn in red; should never seem them, since we
     // draw closed shells, so that's a debugging aid.
-    GLfloat mpb[] = { 1.0f, 0.1f, 0.1f, 1.0f };
+    GLfloat mpb[] { 1.0f, 0.1f, 0.1f, 1.0f };
     glMaterialfv(GL_BACK, GL_AMBIENT_AND_DIFFUSE, mpb);
 
     // When we fill the mesh, we need to know which triangles are selected
@@ -537,7 +537,7 @@ void Group::Draw(void) {
 }
 
 void Group::FillLoopSetAsPolygon(SBezierLoopSet *sbls) {
-    SPolygon sp = {};
+    SPolygon sp {};
     sbls->MakePwlInto(&sp);
     ssglDepthRangeOffset(1);
     ssglFillPolygon(&sp);
@@ -553,7 +553,7 @@ void Group::DrawFilledPaths(void) {
         // In an assembled loop, all the styles should be the same; so doesn't
         // matter which one we grab.
         SBezier *sb = &(sbls->l.elem[0].l.elem[0]);
-        hStyle hs = { (uint32_t)sb->auxA };
+        hStyle hs { (uint32_t)sb->auxA };
         Style *s = Style::Get(hs);
         if(s->filled) {
             // This is a filled loop, where the user specified a fill color.

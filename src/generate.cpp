@@ -175,7 +175,7 @@ void SolveSpaceUI::GenerateAll(int first, int last, bool andFindFree) {
         ;
 
     // Don't lose our numerical guesses when we regenerate.
-    IdList<Param,hParam> prev = {};
+    IdList<Param,hParam> prev {};
     SK.param.MoveSelfInto(&prev);
     SK.entity.Clear();
 
@@ -358,7 +358,7 @@ void SolveSpaceUI::ForceReferences(void) {
     static const struct {
         hRequest    hr;
         Quaternion  q;
-    } Quat[] = {
+    } Quat[] {
         { Request::HREQUEST_REFERENCE_XY, { 1,    0,    0,    0,   } },
         { Request::HREQUEST_REFERENCE_YZ, { 0.5,  0.5,  0.5,  0.5, } },
         { Request::HREQUEST_REFERENCE_ZX, { 0.5, -0.5, -0.5, -0.5, } },

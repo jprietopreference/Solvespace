@@ -9,7 +9,7 @@
 #include "solvespace.h"
 
 ExprVector ExprVector::From(Expr *x, Expr *y, Expr *z) {
-    ExprVector r = { x, y, z};
+    ExprVector r { x, y, z};
     return r;
 }
 
@@ -189,8 +189,8 @@ ExprVector ExprQuaternion::Rotate(ExprVector p) {
 
 ExprQuaternion ExprQuaternion::Times(ExprQuaternion b) {
     Expr *sa = w, *sb = b.w;
-    ExprVector va = { vx, vy, vz };
-    ExprVector vb = { b.vx, b.vy, b.vz };
+    ExprVector va { vx, vy, vz };
+    ExprVector vb { b.vx, b.vy, b.vz };
 
     ExprQuaternion r;
     r.w = (sa->Times(sb))->Minus(va.Dot(vb));
@@ -508,8 +508,8 @@ void Expr::Substitute(hParam oldh, hParam newh) {
 // return that parameter. If no param is referenced, then return NO_PARAMS.
 // If multiple params are referenced, then return MULTIPLE_PARAMS.
 //-----------------------------------------------------------------------------
-const hParam Expr::NO_PARAMS       = { 0 };
-const hParam Expr::MULTIPLE_PARAMS = { 1 };
+const hParam Expr::NO_PARAMS       { 0 };
+const hParam Expr::MULTIPLE_PARAMS { 1 };
 hParam Expr::ReferencedParams(ParamList *pl) {
     if(op == PARAM) {
         if(pl->FindByIdNoOops(parh)) {

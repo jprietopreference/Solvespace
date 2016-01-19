@@ -137,7 +137,7 @@ void System::SolveBySubstitution(void) {
 //-----------------------------------------------------------------------------
 int System::CalculateRank(void) {
     // Actually work with magnitudes squared, not the magnitudes
-    double rowMag[MAX_UNKNOWNS] = {};
+    double rowMag[MAX_UNKNOWNS] {};
     double tol = RANK_MAG_TOLERANCE*RANK_MAG_TOLERANCE;
 
     int i, iprev, j;

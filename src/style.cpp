@@ -8,7 +8,7 @@
 #include "solvespace.h"
 #include <png.h>
 
-const Style::Default Style::Defaults[] = {
+const Style::Default Style::Defaults[] {
     { { ACTIVE_GRP },   "ActiveGrp",    RGBf(1.0, 1.0, 1.0), 1.5, },
     { { CONSTRUCTION }, "Construction", RGBf(0.1, 0.7, 0.1), 1.5, },
     { { INACTIVE_GRP }, "InactiveGrp",  RGBf(0.5, 0.3, 0.0), 1.5, },
@@ -64,7 +64,7 @@ void Style::CreateDefaultStyle(hStyle h) {
         isDefaultStyle = false;
     }
 
-    Style ns = {};
+    Style ns {};
     ns.color        = CnfThawColor(d->color, CnfColor(d->cnfPrefix));
     ns.width        = CnfThawFloat((float)(d->width), CnfWidth(d->cnfPrefix));
     ns.widthAs      = UNITS_AS_PIXELS;
@@ -120,7 +120,7 @@ void Style::FreezeDefaultStyles(void) {
 uint32_t Style::CreateCustomStyle(void) {
     SS.UndoRemember();
     uint32_t vs = max((uint32_t)Style::FIRST_CUSTOM, SK.style.MaximumId() + 1);
-    hStyle hs = { vs };
+    hStyle hs { vs };
     (void)Style::Get(hs);
     return hs.v;
 }
@@ -189,11 +189,11 @@ Style *Style::Get(hStyle h) {
 // hStyle or with the integer corresponding to that hStyle.v.
 //-----------------------------------------------------------------------------
 RgbaColor Style::Color(int s, bool forExport) {
-    hStyle hs = { (uint32_t)s };
+    hStyle hs { (uint32_t)s };
     return Color(hs, forExport);
 }
 float Style::Width(int s) {
-    hStyle hs = { (uint32_t)s };
+    hStyle hs { (uint32_t)s };
     return Width(hs);
 }
 
@@ -281,7 +281,7 @@ double Style::TextHeight(hStyle hs) {
 // if it's both shown and exportable.
 //-----------------------------------------------------------------------------
 bool Style::Exportable(int si) {
-    hStyle hs = { (uint32_t)si };
+    hStyle hs { (uint32_t)si };
     Style *s = Get(hs);
     return (s->exportable) && (s->visible);
 }
@@ -476,7 +476,7 @@ void TextWindow::ShowListOfStyles(void) {
 
 
 void TextWindow::ScreenChangeStyleName(int link, uint32_t v) {
-    hStyle hs = { v };
+    hStyle hs { v };
     Style *s = Style::Get(hs);
     SS.TW.ShowEditControl(10, 12, s->name.c_str());
     SS.TW.edit.style = hs;
@@ -485,7 +485,7 @@ void TextWindow::ScreenChangeStyleName(int link, uint32_t v) {
 
 void TextWindow::ScreenDeleteStyle(int link, uint32_t v) {
     SS.UndoRemember();
-    hStyle hs = { v };
+    hStyle hs { v };
     Style *s = SK.style.FindByIdNoOops(hs);
     if(s) {
         SK.style.RemoveById(hs);
@@ -497,7 +497,7 @@ void TextWindow::ScreenDeleteStyle(int link, uint32_t v) {
 }
 
 void TextWindow::ScreenChangeStyleWidthOrTextHeight(int link, uint32_t v) {
-    hStyle hs = { v };
+    hStyle hs { v };
     Style *s = Style::Get(hs);
     double val   = (link == 't') ? s->textHeight   : s->width;
     int    units = (link == 't') ? s->textHeightAs : s->widthAs;
@@ -524,7 +524,7 @@ void TextWindow::ScreenChangeStyleWidthOrTextHeight(int link, uint32_t v) {
 }
 
 void TextWindow::ScreenChangeStyleTextAngle(int link, uint32_t v) {
-    hStyle hs = { v };
+    hStyle hs { v };
     Style *s = Style::Get(hs);
     SS.TW.ShowEditControl(37, 9, ssprintf("%.2f", s->textAngle));
     SS.TW.edit.style = hs;
@@ -532,7 +532,7 @@ void TextWindow::ScreenChangeStyleTextAngle(int link, uint32_t v) {
 }
 
 void TextWindow::ScreenChangeStyleColor(int link, uint32_t v) {
-    hStyle hs = { v };
+    hStyle hs { v };
     Style *s = Style::Get(hs);
     // Same function used for stroke and fill colors
     int row, col, em;
@@ -555,7 +555,7 @@ void TextWindow::ScreenChangeStyleColor(int link, uint32_t v) {
 
 void TextWindow::ScreenChangeStyleYesNo(int link, uint32_t v) {
     SS.UndoRemember();
-    hStyle hs = { v };
+    hStyle hs { v };
     Style *s = Style::Get(hs);
     switch(link) {
         // Units for the width

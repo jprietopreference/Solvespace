@@ -7,7 +7,7 @@
 #include "../solvespace.h"
 
 SSurface SSurface::FromExtrusionOf(SBezier *sb, Vector t0, Vector t1) {
-    SSurface ret = {};
+    SSurface ret {};
 
     ret.degm = sb->deg;
     ret.degn = 1;
@@ -66,7 +66,7 @@ bool SSurface::IsCylinder(Vector *axis, Vector *center, double *r,
 SSurface SSurface::FromRevolutionOf(SBezier *sb, Vector pt, Vector axis,
                                     double thetas, double thetaf)
 {
-    SSurface ret = {};
+    SSurface ret {};
 
 
     ret.degm = sb->deg;
@@ -115,7 +115,7 @@ SSurface SSurface::FromRevolutionOf(SBezier *sb, Vector pt, Vector axis,
 }
 
 SSurface SSurface::FromPlane(Vector pt, Vector u, Vector v) {
-    SSurface ret = {};
+    SSurface ret {};
 
     ret.degm = 1;
     ret.degn = 1;
@@ -135,7 +135,7 @@ SSurface SSurface::FromTransformationOf(SSurface *a,
                                         Vector t, Quaternion q, double scale,
                                         bool includingTrims)
 {
-    SSurface ret = {};
+    SSurface ret {};
 
     ret.h = a->h;
     ret.color = a->color;
@@ -399,11 +399,11 @@ void SSurface::MakeSectionEdgesInto(SShell *shell,
 }
 
 void SSurface::TriangulateInto(SShell *shell, SMesh *sm) {
-    SEdgeList el = {};
+    SEdgeList el {};
 
     MakeEdgesInto(shell, &el, AS_UV);
 
-    SPolygon poly = {};
+    SPolygon poly {};
     if(el.AssemblePolygon(&poly, NULL, true)) {
         int i, start = sm->l.n;
         if(degm == 1 && degn == 1) {
@@ -422,7 +422,7 @@ void SSurface::TriangulateInto(SShell *shell, SMesh *sm) {
             poly.UvGridTriangulateInto(sm, this);
         }
 
-        STriMeta meta = { face, color };
+        STriMeta meta { face, color };
         for(i = start; i < sm->l.n; i++) {
             STriangle *st = &(sm->l.elem[i]);
             st->meta = meta;
@@ -522,7 +522,7 @@ void SShell::MakeFromExtrusionOf(SBezierLoopSet *sbls, Vector t0, Vector t1, Rgb
     SBezierLoop *sbl;
     for(sbl = sbls->l.First(); sbl; sbl = sbls->l.NextAfter(sbl)) {
         SBezier *sb;
-        List<TrimLine> trimLines = {};
+        List<TrimLine> trimLines {};
 
         for(sb = sbl->l.First(); sb; sb = sbl->l.NextAfter(sb)) {
             // Generate the surface of extrusion of this curve, and add
@@ -532,7 +532,7 @@ void SShell::MakeFromExtrusionOf(SBezierLoopSet *sbls, Vector t0, Vector t1, Rgb
             hSSurface hsext = surface.AddAndAssignId(&ss);
 
             // Translate the curve by t0 and t1 to produce two trim curves
-            SCurve sc = {};
+            SCurve sc {};
             sc.isExact = true;
             sc.exact = sb->TransformedBy(t0, Quaternion::IDENTITY, 1.0);
             (sc.exact).MakePwlInto(&(sc.pts));
@@ -637,7 +637,7 @@ void SShell::MakeFromRevolutionOf(SBezierLoopSet *sbls, Vector pt, Vector axis, 
     for(sbl = sbls->l.First(); sbl; sbl = sbls->l.NextAfter(sbl)) {
         int i, j;
         SBezier *sb, *prev;
-        List<Revolved> hsl = {};
+        List<Revolved> hsl {};
 
         for(sb = sbl->l.First(); sb; sb = sbl->l.NextAfter(sb)) {
             Revolved revs;

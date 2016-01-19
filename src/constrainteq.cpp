@@ -7,7 +7,7 @@
 //-----------------------------------------------------------------------------
 #include "solvespace.h"
 
-const hConstraint ConstraintBase::NO_CONSTRAINT = { 0 };
+const hConstraint ConstraintBase::NO_CONSTRAINT { 0 };
 
 bool ConstraintBase::HasLabel(void) {
     switch(type) {
@@ -179,7 +179,7 @@ void ConstraintBase::ModifyToSatisfy(void) {
     } else {
         // We'll fix these ones up by looking at their symbolic equation;
         // that means no extra work.
-        IdList<Equation,hEquation> l = {};
+        IdList<Equation,hEquation> l {};
         // Generate the equations even if this is a reference dimension
         GenerateReal(&l);
         if(l.n != 1) oops();

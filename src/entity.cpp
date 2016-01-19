@@ -7,8 +7,8 @@
 //-----------------------------------------------------------------------------
 #include "solvespace.h"
 
-const hEntity  EntityBase::FREE_IN_3D = { 0 };
-const hEntity  EntityBase::NO_ENTITY = { 0 };
+const hEntity  EntityBase::FREE_IN_3D { 0 };
+const hEntity  EntityBase::NO_ENTITY { 0 };
 
 bool EntityBase::HasVector(void) {
     switch(type) {

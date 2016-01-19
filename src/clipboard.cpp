@@ -50,7 +50,7 @@ void GraphicsWindow::DeleteSelection(void) {
     SK.constraint.ClearTags();
     List<Selection> *ls = &(selection);
     for(Selection *s = ls->First(); s; s = ls->NextAfter(s)) {
-        hRequest r = { 0 };
+        hRequest r { 0 };
         if(s->entity.v && s->entity.isFromRequest()) {
             r = s->entity.request();
         }
@@ -92,7 +92,7 @@ void GraphicsWindow::CopySelection(void) {
         }
         if(req == Request::WORKPLANE) continue;
 
-        ClipboardRequest cr = {};
+        ClipboardRequest cr {};
         cr.type         = req;
         cr.extraPoints  = e->extraPoints;
         cr.style        = e->style;
@@ -186,7 +186,7 @@ void GraphicsWindow::PasteClipboard(Vector trans, double theta, double scale) {
 
     Constraint *cc;
     for(cc = SS.clipboard.c.First(); cc; cc = SS.clipboard.c.NextAfter(cc)) {
-        Constraint c = {};
+        Constraint c {};
         c.group = SS.GW.activeGroup;
         c.workplane = SS.GW.ActiveWorkplane();
         c.type = cc->type;

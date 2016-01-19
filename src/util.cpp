@@ -224,7 +224,7 @@ void BandedMatrix::Solve(void) {
     }
 }
 
-const Quaternion Quaternion::IDENTITY = { 1, 0, 0, 0 };
+const Quaternion Quaternion::IDENTITY { 1, 0, 0, 0 };
 
 Quaternion Quaternion::From(double w, double vx, double vy, double vz) {
     Quaternion q;
@@ -389,8 +389,8 @@ Quaternion Quaternion::ToThe(double p) {
 
 Quaternion Quaternion::Times(Quaternion b) {
     double sa = w, sb = b.w;
-    Vector va = { vx, vy, vz };
-    Vector vb = { b.vx, b.vy, b.vz };
+    Vector va { vx, vy, vz };
+    Vector vb { b.vx, b.vy, b.vz };
 
     Quaternion r;
     r.w = sa*sb - va.Dot(vb);
@@ -564,7 +564,7 @@ Vector Vector::RotatedAbout(Vector axis, double theta) {
 }
 
 Vector Vector::DotInToCsys(Vector u, Vector v, Vector n) {
-    Vector r = {
+    Vector r {
         this->Dot(u),
         this->Dot(v),
         this->Dot(n)
@@ -997,7 +997,7 @@ Point2d Point2d::WithMagnitude(double v) {
     double m = Magnitude();
     if(m < 1e-20) {
         dbp("!!! WithMagnitude() of zero vector");
-        Point2d r = { v, 0 };
+        Point2d r { v, 0 };
         return r;
     } else {
         return ScaledBy(v/m);

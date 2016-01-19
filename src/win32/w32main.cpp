@@ -130,7 +130,7 @@ void SolveSpace::DoMessageBox(const char *str, int rows, int cols, bool error)
     EnableWindow(TextWnd, false);
 
     // Register the window class for our dialog.
-    WNDCLASSEX wc = {};
+    WNDCLASSEX wc {};
     wc.cbSize           = sizeof(wc);
     wc.style            = CS_BYTEALIGNCLIENT | CS_BYTEALIGNWINDOW | CS_OWNDC;
     wc.lpfnWndProc      = (WNDPROC)MessageProc;
@@ -441,7 +441,7 @@ static void PaintTextWnd(HDC hdc)
 
 void SolveSpace::MoveTextScrollbarTo(int pos, int maxPos, int page)
 {
-    SCROLLINFO si = {};
+    SCROLLINFO si {};
     si.cbSize = sizeof(si);
     si.fMask = SIF_DISABLENOSCROLL | SIF_ALL;
     si.nMin = 0;
@@ -583,7 +583,7 @@ LRESULT CALLBACK TextWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         case WM_LBUTTONDOWN:
         case WM_MOUSEMOVE: {
             // We need this in order to get the WM_MOUSELEAVE
-            TRACKMOUSEEVENT tme = {};
+            TRACKMOUSEEVENT tme {};
             tme.cbSize = sizeof(tme);
             tme.dwFlags = TME_LEAVE;
             tme.hwndTrack = TextWnd;
@@ -734,7 +734,7 @@ static void CreateGlContext(HWND hwnd, HGLRC *glrc)
 {
     HDC hdc = GetDC(hwnd);
 
-    PIXELFORMATDESCRIPTOR pfd = {};
+    PIXELFORMATDESCRIPTOR pfd {};
     int pixelFormat;
 
     pfd.nSize = sizeof(PIXELFORMATDESCRIPTOR);
@@ -886,7 +886,7 @@ LRESULT CALLBACK GraphicsWndProc(HWND hwnd, UINT msg, WPARAM wParam,
             int y = HIWORD(lParam);
 
             // We need this in order to get the WM_MOUSELEAVE
-            TRACKMOUSEEVENT tme = {};
+            TRACKMOUSEEVENT tme {};
             tme.cbSize = sizeof(tme);
             tme.dwFlags = TME_LEAVE;
             tme.hwndTrack = GraphicsWnd;
@@ -978,13 +978,13 @@ static bool OpenSaveFile(bool isOpen, std::string &filename,
     // except with a preallocated buffer of fixed size, so we use something
     // reasonably large.
     const int len = 32768;
-    wchar_t filenameC[len] = {};
+    wchar_t filenameC[len] {};
     wcsncpy(filenameC, Widen(filename).c_str(), len - 1);
 
     std::wstring selPatternW = Widen(std::string(selPattern, strlen2(selPattern)));
     std::wstring defExtensionW = Widen(defExtension);
 
-    OPENFILENAME ofn = {};
+    OPENFILENAME ofn {};
     ofn.lStructSize = sizeof(ofn);
     ofn.hInstance = Instance;
     ofn.hwndOwner = GraphicsWnd;
@@ -1079,7 +1079,7 @@ void SolveSpace::LoadAllFontFiles(void)
     WIN32_FIND_DATA wfd;
     HANDLE h = FindFirstFileW((fontsDir + L"*.ttf").c_str(), &wfd);
     while(h != INVALID_HANDLE_VALUE) {
-        TtfFont tf = {};
+        TtfFont tf {};
         tf.fontFile = Narrow(fontsDir) + Narrow(wfd.cFileName);
         SS.fonts.l.Add(&tf);
 
@@ -1152,7 +1152,7 @@ HMENU CreateGraphicsWindowMenus(void)
     int subMenu = 0;
 
     for(i = 0; SS.GW.menu[i].level >= 0; i++) {
-        char label[100] = { '\0' };
+        char label[100] { '\0' };
         if(SS.GW.menu[i].label) {
             char accelbuf[40];
             const char *sep =
@@ -1190,7 +1190,7 @@ HMENU CreateGraphicsWindowMenus(void)
 
 static void CreateMainWindows(void)
 {
-    WNDCLASSEX wc = {};
+    WNDCLASSEX wc {};
 
     wc.cbSize = sizeof(wc);
 

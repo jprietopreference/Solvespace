@@ -48,7 +48,7 @@ void TextWindow::ScreenSelectGroup(int link, uint32_t v) {
     SS.TW.shown.group.v = v;
 }
 void TextWindow::ScreenToggleGroupShown(int link, uint32_t v) {
-    hGroup hg = { v };
+    hGroup hg { v };
     Group *g = SK.GetGroup(hg);
     g->visible = !(g->visible);
     // If a group was just shown, then it might not have been generated
@@ -68,7 +68,7 @@ void TextWindow::ScreenShowGroupsSpecial(int link, uint32_t v) {
     }
 }
 void TextWindow::ScreenActivateGroup(int link, uint32_t v) {
-    hGroup hg = { v };
+    hGroup hg { v };
     Group *g = SK.GetGroup(hg);
     g->visible = true;
     SS.GW.activeGroup.v = v;
@@ -158,7 +158,7 @@ void TextWindow::ShowListOfGroups(void) {
 void TextWindow::ScreenHoverConstraint(int link, uint32_t v) {
     if(!SS.GW.showConstraints) return;
 
-    hConstraint hc = { v };
+    hConstraint hc { v };
     Constraint *c = SK.GetConstraint(hc);
     if(c->group.v != SS.GW.activeGroup.v) {
         // Only constraints in the active group are visible
@@ -170,20 +170,20 @@ void TextWindow::ScreenHoverConstraint(int link, uint32_t v) {
 }
 void TextWindow::ScreenHoverRequest(int link, uint32_t v) {
     SS.GW.hover.Clear();
-    hRequest hr = { v };
+    hRequest hr { v };
     SS.GW.hover.entity = hr.entity(0);
     SS.GW.hover.emphasized = true;
 }
 void TextWindow::ScreenSelectConstraint(int link, uint32_t v) {
     SS.GW.ClearSelection();
-    GraphicsWindow::Selection sel = {};
+    GraphicsWindow::Selection sel {};
     sel.constraint.v = v;
     SS.GW.selection.Add(&sel);
 }
 void TextWindow::ScreenSelectRequest(int link, uint32_t v) {
     SS.GW.ClearSelection();
-    GraphicsWindow::Selection sel = {};
-    hRequest hr = { v };
+    GraphicsWindow::Selection sel {};
+    hRequest hr { v };
     sel.entity = hr.entity(0);
     SS.GW.selection.Add(&sel);
 }

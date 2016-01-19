@@ -438,7 +438,7 @@ public:
 
 class Entity : public EntityBase {
 public:
-    // Necessary for Entity e = {} to zero-initialize, since
+    // Necessary for Entity e {} to zero-initialize, since
     // classes with base classes are not aggregates and
     // the default constructor does not initialize members.
     //

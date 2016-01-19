@@ -48,7 +48,7 @@ void STriangle::FlipNormal(void) {
 }
 
 STriangle STriangle::From(STriMeta meta, Vector a, Vector b, Vector c) {
-    STriangle tr = {};
+    STriangle tr {};
     tr.meta = meta;
     tr.a = a;
     tr.b = b;
@@ -57,7 +57,7 @@ STriangle STriangle::From(STriMeta meta, Vector a, Vector b, Vector c) {
 }
 
 SEdge SEdge::From(Vector a, Vector b) {
-    SEdge se = {};
+    SEdge se {};
     se.a = a;
     se.b = b;
     return se;
@@ -150,7 +150,7 @@ void SEdgeList::Clear(void) {
 }
 
 void SEdgeList::AddEdge(Vector a, Vector b, int auxA, int auxB) {
-    SEdge e = {};
+    SEdge e {};
     e.a = a;
     e.b = b;
     e.auxA = auxA;
@@ -336,7 +336,7 @@ SKdNodeEdges *SKdNodeEdges::From(SEdgeLl *sell) {
     ptAve = ptAve.ScaledBy(1.0 / (2*totaln));
 
     // For each component, see how it splits.
-    int ltln[3] = { 0, 0, 0 }, gtln[3] = { 0, 0, 0 };
+    int ltln[3] { 0, 0, 0 }, gtln[3] { 0, 0, 0 };
     double badness[3];
     for(flip = sell; flip; flip = flip->next) {
         for(int i = 0; i < 3; i++) {
@@ -497,7 +497,7 @@ void SPointList::IncrementTagFor(Vector pt) {
 }
 
 void SPointList::Add(Vector pt) {
-    SPoint p = {};
+    SPoint p {};
     p.p = pt;
     l.Add(&p);
 }
@@ -618,7 +618,7 @@ void SPolygon::Clear(void) {
 }
 
 void SPolygon::AddEmptyContour(void) {
-    SContour c = {};
+    SContour c {};
     l.Add(&c);
 }
 
@@ -705,7 +705,7 @@ Vector SPolygon::AnyPoint(void) {
 }
 
 bool SPolygon::SelfIntersecting(Vector *intersectsAt) {
-    SEdgeList el = {};
+    SEdgeList el {};
     MakeEdgesInto(&el);
     SKdNodeEdges *kdtree = SKdNodeEdges::From(&el);
 
@@ -817,7 +817,7 @@ void SContour::OffsetInto(SContour *dest, double r) {
         }
 
         if(fabs(thetan - thetap) < (1*PI)/180) {
-            Vector p = { b.x - r*sin(thetap), b.y + r*cos(thetap), 0 };
+            Vector p { b.x - r*sin(thetap), b.y + r*cos(thetap), 0 };
             dest->AddPoint(p);
         } else if(thetan < thetap) {
             // This is an inside corner. We have two edges, Ep and En. Move
@@ -848,17 +848,17 @@ void SContour::OffsetInto(SContour *dest, double r) {
             dest->AddPoint(Vector::From(x, y, 0));
         } else {
             if(fabs(thetap - thetan) < (6*PI)/180) {
-                Vector pp = { b.x - r*sin(thetap),
+                Vector pp { b.x - r*sin(thetap),
                               b.y + r*cos(thetap), 0 };
                 dest->AddPoint(pp);
 
-                Vector pn = { b.x - r*sin(thetan),
+                Vector pn { b.x - r*sin(thetan),
                               b.y + r*cos(thetan), 0 };
                 dest->AddPoint(pn);
             } else {
                 double theta;
                 for(theta = thetap; theta <= thetan; theta += (6*PI)/180) {
-                    Vector p = { b.x - r*sin(theta),
+                    Vector p { b.x - r*sin(theta),
                                  b.y + r*cos(theta), 0 };
                     dest->AddPoint(p);
                 }

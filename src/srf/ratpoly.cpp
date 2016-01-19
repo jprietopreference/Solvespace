@@ -227,7 +227,7 @@ void SBezier::SplitAt(double t, SBezier *bef, SBezier *aft) {
 }
 
 void SBezier::MakePwlInto(SEdgeList *sel, double chordTol) {
-    List<Vector> lv = {};
+    List<Vector> lv {};
     MakePwlInto(&lv, chordTol);
     int i;
     for(i = 1; i < lv.n; i++) {
@@ -236,7 +236,7 @@ void SBezier::MakePwlInto(SEdgeList *sel, double chordTol) {
     lv.Clear();
 }
 void SBezier::MakePwlInto(List<SCurvePt> *l, double chordTol) {
-    List<Vector> lv = {};
+    List<Vector> lv {};
     MakePwlInto(&lv, chordTol);
     int i;
     for(i = 0; i < lv.n; i++) {
@@ -249,7 +249,7 @@ void SBezier::MakePwlInto(List<SCurvePt> *l, double chordTol) {
     lv.Clear();
 }
 void SBezier::MakePwlInto(SContour *sc, double chordTol) {
-    List<Vector> lv = {};
+    List<Vector> lv {};
     MakePwlInto(&lv, chordTol);
     int i;
     for(i = 0; i < lv.n; i++) {
@@ -498,7 +498,7 @@ Vector SSurface::ClosestPointOnThisAndSurface(SSurface *srf2, Vector p) {
     // This is untested.
     int i, j;
     Point2d puv[2];
-    SSurface *srf[2] = { this, srf2 };
+    SSurface *srf[2] { this, srf2 };
 
     for(j = 0; j < 2; j++) {
         (srf[j])->ClosestPointTo(p, &(puv[j]), false);
@@ -545,8 +545,8 @@ Vector SSurface::ClosestPointOnThisAndSurface(SSurface *srf2, Vector p) {
 void SSurface::PointOnSurfaces(SSurface *s1, SSurface *s2,
                                                 double *up, double *vp)
 {
-    double u[3] = { *up, 0, 0 }, v[3] = { *vp, 0, 0 };
-    SSurface *srf[3] = { this, s1, s2 };
+    double u[3] { *up, 0, 0 }, v[3] { *vp, 0, 0 };
+    SSurface *srf[3] { this, s1, s2 };
 
     // Get initial guesses for (u, v) in the other surfaces
     Vector p = PointAt(*u, *v);

@@ -50,7 +50,7 @@ void GraphicsWindow::FixConstraintsForRequestBeingDeleted(hRequest hr) {
     }
 }
 void GraphicsWindow::FixConstraintsForPointBeingDeleted(hEntity hpt) {
-    List<hEntity> ld = {};
+    List<hEntity> ld {};
 
     Constraint *c;
     SK.constraint.ClearTags();
@@ -291,7 +291,7 @@ void GraphicsWindow::MakeTangentArc(void) {
     // at t = 0. Lots of iterations helps convergence, and this is still
     // ~10 ms for everything.
     int iters = 1000;
-    double t[2] = { 0, 0 }, tp[2];
+    double t[2] { 0, 0 }, tp[2];
     for(i = 0; i < iters + 20; i++) {
         Vector p0 = pc[0].PointAt(t[0]),
                p1 = pc[1].PointAt(t[1]),
@@ -482,7 +482,7 @@ hEntity GraphicsWindow::SplitCircle(hEntity he, Vector pinter) {
 hEntity GraphicsWindow::SplitCubic(hEntity he, Vector pinter) {
     // Save the original endpoints, since we're about to delete this entity.
     Entity *e01 = SK.GetEntity(he);
-    SBezierList sbl = {};
+    SBezierList sbl {};
     e01->GenerateBezierCurves(&sbl);
 
     hEntity hep0 = e01->point[0],
@@ -609,7 +609,7 @@ void GraphicsWindow::SplitLinesOrCurves(void) {
     ea->GenerateBezierCurves(&sbla);
     eb->GenerateBezierCurves(&sblb);
     // and then compute the points where they intersect, based on those curves.
-    SPointList inters = {};
+    SPointList inters {};
     sbla.AllIntersectionsWith(&sblb, &inters);
 
     if(inters.l.n > 0) {

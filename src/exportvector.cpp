@@ -648,7 +648,7 @@ void GCodeFileWriter::Bezier(SBezier *sb) {
 }
 
 void GCodeFileWriter::FinishAndCloseFile(void) {
-    SPolygon sp = {};
+    SPolygon sp {};
     sel.AssemblePolygon(&sp, NULL);
 
     int i;

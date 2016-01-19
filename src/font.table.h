@@ -6,7 +6,7 @@ static const struct {
     int         points;
     int         width;
     signed char coord[120];
-} Font[] = {
+} Font[] {
     // character 32 (' ')
     { 0, 16,
         { 1

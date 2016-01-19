@@ -35,7 +35,7 @@ void SolveSpaceUI::ClearExisting(void) {
 }
 
 hGroup SolveSpaceUI::CreateDefaultDrawingGroup(void) {
-    Group g = {};
+    Group g {};
 
     // And an empty group, for the first stuff the user draws.
     g.visible = true;
@@ -54,7 +54,7 @@ void SolveSpaceUI::NewFile(void) {
     ClearExisting();
 
     // Our initial group, that contains the references.
-    Group g = {};
+    Group g {};
     g.visible = true;
     g.name = "#references";
     g.type = Group::DRAWING_3D;
@@ -63,7 +63,7 @@ void SolveSpaceUI::NewFile(void) {
 
     // Let's create three two-d coordinate systems, for the coordinate
     // planes; these are our references, present in every sketch.
-    Request r = {};
+    Request r {};
     r.type = Request::WORKPLANE;
     r.group = Group::HGROUP_REFERENCES;
     r.workplane = Entity::FREE_IN_3D;
@@ -80,7 +80,7 @@ void SolveSpaceUI::NewFile(void) {
     CreateDefaultDrawingGroup();
 }
 
-const SolveSpaceUI::SaveTable SolveSpaceUI::SAVED[] = {
+const SolveSpaceUI::SaveTable SolveSpaceUI::SAVED[] {
     { 'g',  "Group.h.v",                'x',    &(SS.sv.g.h.v)                },
     { 'g',  "Group.type",               'd',    &(SS.sv.g.type)               },
     { 'g',  "Group.order",              'd',    &(SS.sv.g.order)              },
@@ -504,8 +504,8 @@ bool SolveSpaceUI::LoadFromFile(const std::string &filename) {
 bool SolveSpaceUI::LoadEntitiesFromFile(const std::string &filename, EntityList *le,
                                         SMesh *m, SShell *sh)
 {
-    SSurface srf = {};
-    SCurve crv = {};
+    SSurface srf {};
+    SCurve crv {};
 
     fh = ssfopen(filename, "rb");
     if(!fh) return false;
@@ -547,7 +547,7 @@ bool SolveSpaceUI::LoadEntitiesFromFile(const std::string &filename, EntityList 
         } else if(strcmp(line, VERSION_STRING)==0) {
 
         } else if(StrStartsWith(line, "Triangle ")) {
-            STriangle tr = {};
+            STriangle tr {};
             unsigned int rgba = 0;
             if(sscanf(line, "Triangle %x %x  "
                              "%lf %lf %lf  %lf %lf %lf  %lf %lf %lf",
@@ -579,7 +579,7 @@ bool SolveSpaceUI::LoadEntitiesFromFile(const std::string &filename, EntityList 
             srf.ctrl[i][j] = c;
             srf.weight[i][j] = w;
         } else if(StrStartsWith(line, "TrimBy ")) {
-            STrimBy stb = {};
+            STrimBy stb {};
             int backwards;
             if(sscanf(line, "TrimBy %x %d  %lf %lf %lf  %lf %lf %lf",
                 &(stb.curve.v), &backwards,

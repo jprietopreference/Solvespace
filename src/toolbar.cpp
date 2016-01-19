@@ -13,7 +13,7 @@ static const struct {
     uint8_t     *image;
     int          menu;
     const char  *tip;
-} Toolbar[] = {
+} Toolbar[] {
     { Icon_line,            GraphicsWindow::MNU_LINE_SEGMENT,   "Sketch line segment"                               },
     { Icon_rectangle,       GraphicsWindow::MNU_RECTANGLE,      "Sketch rectangle"                                  },
     { Icon_circle,          GraphicsWindow::MNU_CIRCLE,         "Sketch circle"                                     },
@@ -137,7 +137,7 @@ bool GraphicsWindow::ToolbarDrawOrHitTest(int mx, int my,
     struct {
         bool show;
         const char *str;
-    } toolTip = { false, NULL };
+    } toolTip { false, NULL };
 
     bool leftpos = true;
     for(i = 0; Toolbar[i].image; i++) {

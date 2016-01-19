@@ -150,7 +150,7 @@ void ssglAxisAlignedLineLoop(double l, double r, double t, double b)
 static void FatLineEndcap(Vector p, Vector u, Vector v)
 {
     // A table of cos and sin of (pi*i/10 + pi/2), as i goes from 0 to 10
-    static const double Circle[11][2] = {
+    static const double Circle[11][2] {
         {  0.0000,   1.0000 },
         { -0.3090,   0.9511 },
         { -0.5878,   0.8090 },
@@ -290,7 +290,7 @@ void ssglFillMesh(bool useSpecColor, RgbaColor specColor,
             color = tr->meta.color;
         }
         if(!hasMaterial || !color.Equals(prevColor)) {
-            GLfloat mpf[] = { color.redF(), color.greenF(), color.blueF(), color.alphaF() };
+            GLfloat mpf[] { color.redF(), color.greenF(), color.blueF(), color.alphaF() };
             glEnd();
             glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, mpf);
             prevColor = color;

@@ -6,7 +6,7 @@
 #include "solvespace.h"
 #include "generated/icons.h"
 
-const TextWindow::Color TextWindow::fgColors[] = {
+const TextWindow::Color TextWindow::fgColors[] {
     { 'd', RGBi(255, 255, 255) },
     { 'l', RGBi(100, 100, 255) },
     { 't', RGBi(255, 200,   0) },
@@ -20,7 +20,7 @@ const TextWindow::Color TextWindow::fgColors[] = {
     { 'b', RGBi(200, 200, 200) },
     { 0,   RGBi(  0,   0,   0) }
 };
-const TextWindow::Color TextWindow::bgColors[] = {
+const TextWindow::Color TextWindow::bgColors[] {
     { 'd', RGBi(  0,   0,   0) },
     { 't', RGBi( 34,  15,  15) },
     { 'a', RGBi( 25,  25,  25) },
@@ -29,7 +29,7 @@ const TextWindow::Color TextWindow::bgColors[] = {
 };
 
 bool TextWindow::SPACER = false;
-TextWindow::HideShowIcon TextWindow::hideShowIcons[] = {
+TextWindow::HideShowIcon TextWindow::hideShowIcons[] {
     { &(SS.GW.showWorkplanes),  Icon_workplane,     "workplanes from inactive groups"},
     { &(SS.GW.showNormals),     Icon_normal,        "normals"                        },
     { &(SS.GW.showPoints),      Icon_point,         "points"                         },
@@ -62,7 +62,7 @@ void TextWindow::Init(void) {
 void TextWindow::ClearSuper(void) {
     HideEditControl();
 
-    // Cannot use *this = {} here because TextWindow instances
+    // Cannot use *this {} here because TextWindow instances
     // are 2.4MB long; this causes stack overflows in prologue
     // when built with MSVC, even with optimizations.
     memset(this, 0, sizeof(*this));
@@ -571,7 +571,7 @@ bool TextWindow::DrawOrHitTestColorPicker(int how, bool leftDown,
     if(!editControl.colorPicker.show) return false;
     if(how == CLICK || (how == HOVER && leftDown)) InvalidateText();
 
-    static const RgbaColor BaseColor[12] = {
+    static const RgbaColor BaseColor[12] {
         RGBi(255,   0,   0),
         RGBi(  0, 255,   0),
         RGBi(  0,   0, 255),
