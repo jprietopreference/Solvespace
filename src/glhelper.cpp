@@ -346,27 +346,25 @@ void ssglFillPolygon(SPolygon *p)
 }
 
 static void SSGL_CALLBACK Combine(double coords[3], void *vertexData[4],
-                                  float weight[4], void **outData)
+                                  float weight[4], void **outData, void *data)
 {
-    Vector *n = (Vector *)AllocTemporary(sizeof(Vector));
-    n->x = coords[0];
-    n->y = coords[1];
-    n->z = coords[2];
-
+    Vector *n = new Vector { coords[0], coords[1], coords[2] };
+    std::vector <Vector *> &combined = *((std::vector <Vector *> *)data);
+    combined.push_back(n);
     *outData = n;
 }
 void ssglTesselatePolygon(GLUtesselator *gt, SPolygon *p)
 {
     int i, j;
 
-    gluTessCallback(gt, GLU_TESS_COMBINE, (ssglCallbackFptr *)Combine);
+    gluTessCallback(gt, GLU_TESS_COMBINE_DATA, (ssglCallbackFptr *)Combine);
     gluTessProperty(gt, GLU_TESS_WINDING_RULE, GLU_TESS_WINDING_ODD);
 
     Vector normal = p->normal;
     glNormal3d(normal.x, normal.y, normal.z);
     gluTessNormal(gt, normal.x, normal.y, normal.z);
-
-    gluTessBeginPolygon(gt, NULL);
+    std::vector <Vector *> combined;
+    gluTessBeginPolygon(gt, &combined);
     for(i = 0; i < p->l.n; i++) {
         SContour *sc = &(p->l.elem[i]);
         gluTessBeginContour(gt);
@@ -381,6 +379,7 @@ void ssglTesselatePolygon(GLUtesselator *gt, SPolygon *p)
         gluTessEndContour(gt);
     }
     gluTessEndPolygon(gt);
+    for(Vector *v : combined) delete v;
 }
 
 void ssglDebugPolygon(SPolygon *p)

@@ -6,7 +6,7 @@
 // Copyright 2008-2013 Jonathan Westhues.
 //-----------------------------------------------------------------------------
 #include "solvespace.h"
-
+#include <memory>
 //-----------------------------------------------------------------------------
 // Get the list of available font filenames, and load the name for each of
 // them. Only that, though, not the glyphs too.
@@ -118,8 +118,7 @@ void TtfFont::LoadGlyph(int index) {
     }
 
     if(contours > 0) {
-        uint16_t *endPointsOfContours =
-            (uint16_t *)AllocTemporary(contours*sizeof(uint16_t));
+        std::unique_ptr <uint16_t[]> endPointsOfContours { new uint16_t[contours] };
 
         for(i = 0; i < contours; i++) {
             endPointsOfContours[i] = GetUSHORT();
@@ -133,9 +132,9 @@ void TtfFont::LoadGlyph(int index) {
             (void)GetBYTE();
         }
 
-        uint8_t *flags = (uint8_t *)AllocTemporary(totalPts*sizeof(uint8_t));
-        int16_t *x     = (int16_t *)AllocTemporary(totalPts*sizeof(int16_t));
-        int16_t *y     = (int16_t *)AllocTemporary(totalPts*sizeof(int16_t));
+        std::unique_ptr <uint8_t[]> flags { new uint8_t [totalPts] };
+        std::unique_ptr <int16_t[]> x     { new int16_t [totalPts] };
+        std::unique_ptr <int16_t[]> y     { new int16_t [totalPts] };
 
         // Flags, that indicate format of the coordinates
 #define FLAG_ON_CURVE           (1 << 0)
@@ -496,12 +495,11 @@ bool TtfFont::LoadFontFromFile(bool nameOnly) {
         }
 
         int segCount = mapSegCountX2 / 2;
-        uint16_t *endChar       = (uint16_t *)AllocTemporary(segCount*sizeof(uint16_t));
-        uint16_t *startChar     = (uint16_t *)AllocTemporary(segCount*sizeof(uint16_t));
-        uint16_t *idDelta       = (uint16_t *)AllocTemporary(segCount*sizeof(uint16_t));
-        uint16_t *idRangeOffset = (uint16_t *)AllocTemporary(segCount*sizeof(uint16_t));
-
-        uint32_t *filePos = (uint32_t *)AllocTemporary(segCount*sizeof(uint32_t));
+        std::unique_ptr <uint16_t[]> endChar        { new uint16_t[segCount] };
+        std::unique_ptr <uint16_t[]> startChar      { new uint16_t[segCount] };
+        std::unique_ptr <uint16_t[]> idDelta        { new uint16_t[segCount] };
+        std::unique_ptr <uint16_t[]> idRangeOffset  { new uint16_t[segCount] };
+        std::unique_ptr <uint32_t[]> filePos        { new uint32_t[segCount] };
 
         for(i = 0; i < segCount; i++) {
             endChar[i] = GetUSHORT();
@@ -544,7 +542,7 @@ bool TtfFont::LoadFontFromFile(bool nameOnly) {
         // relative to the beginning of the glyf table.
         fseek(fh, locaAddr, SEEK_SET);
 
-        uint32_t *glyphOffsets = (uint32_t *)AllocTemporary(glyph.size()*sizeof(uint32_t));
+        std::unique_ptr <uint32_t[]> glyphOffsets { new uint32_t[glyph.size()] };
 
         for(i = 0; i < glyph.size(); i++) {
             if(headIndexToLocFormat == 1) {

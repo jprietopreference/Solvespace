@@ -1018,8 +1018,8 @@ void SolveSpaceUI::ExportAsPngTo(const std::string &filename) {
     png_write_info(png_ptr, info_ptr);
 
     // Get the pixel data from the framebuffer
-    uint8_t *pixels; pixels = (uint8_t *)AllocTemporary(3*w*h);
-    uint8_t **rowptrs; rowptrs = (uint8_t **)AllocTemporary(h*sizeof(uint8_t *));
+    uint8_t *pixels = new uint8_t[3 * w * h];
+    uint8_t **rowptrs = new uint8_t *[h];
     glReadPixels(0, 0, w, h, GL_RGB, GL_UNSIGNED_BYTE, pixels);
 
     int y;
@@ -1032,6 +1032,8 @@ void SolveSpaceUI::ExportAsPngTo(const std::string &filename) {
     png_write_end(png_ptr, info_ptr);
     png_destroy_write_struct(&png_ptr, &info_ptr);
     fclose(f);
+    delete []pixels;
+    delete []rowptrs;
     return;
 
 err:
