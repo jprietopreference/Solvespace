@@ -354,11 +354,6 @@ uint32_t SMesh::FirstIntersectionWith(Point2d mp) {
     return face;
 }
 
-STriangleLl *STriangleLl::Alloc(Sketch *sk)
-    { return sk->AllocTemporary<STriangleLl>(); }
-SKdNode *SKdNode::Alloc(Sketch *sk)
-    { return sk->AllocTemporary<SKdNode>(); }
-
 SKdNode *SKdNode::From(SMesh *m) {
     int i;
     STriangle *tra = m->sketch->AllocTemporary<STriangle>(m->l.n);
@@ -377,7 +372,7 @@ SKdNode *SKdNode::From(SMesh *m) {
 
     STriangleLl *tll = NULL;
     for(i = 0; i < m->l.n; i++) {
-        STriangleLl *tn = STriangleLl::Alloc(m->sketch);
+        STriangleLl *tn = m->sketch->AllocTemporary<STriangleLl>();
         tn->tri = &(tra[i]);
         tn->next = tll;
         tll = tn;
@@ -388,7 +383,7 @@ SKdNode *SKdNode::From(SMesh *m) {
 
 SKdNode *SKdNode::From(Sketch *sk, STriangleLl *tll) {
     int which = 0;
-    SKdNode *ret = Alloc(sk);
+    SKdNode *ret = sk->AllocTemporary<SKdNode>();
 
     int i;
     int gtc[3] { 0, 0, 0 }, ltc[3] { 0, 0, 0 }, allc = 0;
@@ -459,7 +454,7 @@ SKdNode *SKdNode::From(Sketch *sk, STriangleLl *tll) {
            b < split[which] + KDTREE_EPS ||
            c < split[which] + KDTREE_EPS)
         {
-            STriangleLl *n = STriangleLl::Alloc(sk);
+            STriangleLl *n = sk->AllocTemporary<STriangleLl>();
             *n = *ll;
             n->next = llt;
             llt = n;
@@ -468,7 +463,7 @@ SKdNode *SKdNode::From(Sketch *sk, STriangleLl *tll) {
            b > split[which] - KDTREE_EPS ||
            c > split[which] - KDTREE_EPS)
         {
-            STriangleLl *n = STriangleLl::Alloc(sk);
+            STriangleLl *n = sk->AllocTemporary<STriangleLl>();
             *n = *ll;
             n->next = lgt;
             lgt = n;
@@ -516,7 +511,7 @@ void SKdNode::AddTriangle(Sketch *sk, STriangle *tr) {
             gt->AddTriangle(sk, tr);
         }
     } else {
-        STriangleLl *tn = STriangleLl::Alloc(sk);
+        STriangleLl *tn = sk->AllocTemporary<STriangleLl>();
         tn->tri = tr;
         tn->next = tris;
         tris = tn;

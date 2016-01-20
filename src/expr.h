@@ -63,8 +63,6 @@ public:
     Expr() : b(NULL) { }
     explicit Expr(double val) : op(CONSTANT), v(val) { }
 
-    static inline Expr *AllocExpr(Sketch *sk);
-
     static Expr *From(Sketch *sk, hParam p);
     static Expr *From(Sketch *sk, double v);
     static Expr *From(Sketch *sk);

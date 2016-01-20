@@ -8,9 +8,6 @@
 //-----------------------------------------------------------------------------
 #include "solvespace.h"
 
-SBsp2 *SBsp2::Alloc(Sketch *sk) { return sk->AllocTemporary<SBsp2>(); }
-SBsp3 *SBsp3::Alloc(Sketch *sk) { return sk->AllocTemporary<SBsp3>(); }
-
 SBsp3 *SBsp3::FromMesh(SMesh *m) {
     SBsp3 *bsp3 = NULL;
     int i;
@@ -96,7 +93,7 @@ void SBsp3::InsertHow(Sketch *sk, int how, STriangle *tr, SMesh *instead) {
 
         case COPLANAR: {
             if(instead) goto alt;
-            SBsp3 *m = Alloc(sk);
+            SBsp3 *m = sk->AllocTemporary<SBsp3>();
             m->n = n;
             m->d = d;
             m->tri = *tr;
@@ -278,7 +275,7 @@ SBsp3 *SBsp3::Insert(Sketch *sk, STriangle *tr, SMesh *instead) {
         }
 
         // Brand new node; so allocate for it, and fill us in.
-        SBsp3 *r = Alloc(sk);
+        SBsp3 *r = sk->AllocTemporary<SBsp3>();
         r->n = (tr->Normal()).WithMagnitude(1);
         r->d = (tr->a).Dot(r->n);
         r->tri = *tr;
@@ -478,7 +475,7 @@ Vector SBsp2::IntersectionWith(Vector a, Vector b) {
 SBsp2 *SBsp2::InsertEdge(Sketch *sk, SEdge *nedge, Vector nnp, Vector out) {
     if(!this) {
         // Brand new node; so allocate for it, and fill us in.
-        SBsp2 *r = Alloc(sk);
+        SBsp2 *r = sk->AllocTemporary<SBsp2>();
         r->np = nnp;
         r->no = ((r->np).Cross((nedge->b).Minus(nedge->a))).WithMagnitude(1);
         if(out.Dot(r->no) < 0) {
@@ -511,7 +508,7 @@ SBsp2 *SBsp2::InsertEdge(Sketch *sk, SEdge *nedge, Vector nnp, Vector out) {
         return this;
     }
     if(isOn[0] && isOn[1]) {
-        SBsp2 *m = Alloc(sk);
+        SBsp2 *m = sk->AllocTemporary<SBsp2>();
 
         m->np = nnp;
         m->no = ((m->np).Cross((nedge->b).Minus(nedge->a))).WithMagnitude(1);

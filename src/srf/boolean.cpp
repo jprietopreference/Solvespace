@@ -783,10 +783,6 @@ void SSurface::MakeClassifyingBsp(SShell *shell, SShell *useCurvesFrom) {
     MakeEdgesInto(shell, &edges, AS_XYZ, useCurvesFrom);
 }
 
-SBspUv *SBspUv::Alloc(Sketch *sk) {
-    return sk->AllocTemporary<SBspUv>();
-}
-
 static int ByLength(const void *av, const void *bv)
 {
     SEdge *a = (SEdge *)av,
@@ -855,7 +851,7 @@ double SBspUv::ScaledDistanceToLine(Point2d pt, Point2d a, Point2d b, bool seg,
 
 SBspUv *SBspUv::InsertEdge(Sketch *sk, Point2d ea, Point2d eb, SSurface *srf) {
     if(!this) {
-        SBspUv *ret = Alloc(sk);
+        SBspUv *ret = sk->AllocTemporary<SBspUv>();
         ret->a = ea;
         ret->b = eb;
         return ret;
@@ -866,7 +862,7 @@ SBspUv *SBspUv::InsertEdge(Sketch *sk, Point2d ea, Point2d eb, SSurface *srf) {
 
     if(fabs(dea) < LENGTH_EPS && fabs(deb) < LENGTH_EPS) {
         // Line segment is coincident with this one, store in same node
-        SBspUv *m = Alloc(sk);
+        SBspUv *m = sk->AllocTemporary<SBspUv>();
         m->a = ea;
         m->b = eb;
         m->more = more;

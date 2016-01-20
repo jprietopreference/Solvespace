@@ -36,7 +36,6 @@ public:
         EDGE_OTHER        = 500
     };
 
-    static SBspUv *Alloc(Sketch *sk);
     static SBspUv *From(Sketch *sk, SEdgeList *el, SSurface *srf);
 
     void ScalePoints(Point2d *pt, Point2d *a, Point2d *b, SSurface *srf);

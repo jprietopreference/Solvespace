@@ -751,6 +751,7 @@ public:
     template <typename T>
     T *AllocTemporary() {
         T *r = heap.New<T>();
+        new(r) T();
         return r;
     }
     void Clear(void);

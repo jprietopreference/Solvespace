@@ -51,8 +51,6 @@ class SEdgeLl {
 public:
     SEdge       *se;
     SEdgeLl     *next;
-
-    static SEdgeLl *Alloc(Sketch *sk);
 };
 
 class SKdNodeEdges {
@@ -66,7 +64,6 @@ public:
 
     static SKdNodeEdges *From(Sketch *sk, SEdgeList *sel);
     static SKdNodeEdges *From(Sketch *sk, SEdgeLl *sell);
-    static SKdNodeEdges *Alloc(Sketch *sk);
     int AnyEdgeCrossings(Vector a, Vector b, int cnt,
         Vector *pi=NULL, SPointList *spl=NULL);
 };
@@ -182,7 +179,6 @@ public:
     void InsertTriangle(STriangle *tr, SMesh *m, SBsp3 *bsp3);
     Vector IntersectionWith(Vector a, Vector b);
     SBsp2 *InsertEdge(Sketch *sk, SEdge *nedge, Vector nnp, Vector out);
-    static SBsp2 *Alloc(Sketch *sk);
 
     void DebugDraw(Vector n, double d);
 };
@@ -200,7 +196,6 @@ public:
 
     SBsp2       *edges;
 
-    static SBsp3 *Alloc(Sketch *sk);
     static SBsp3 *FromMesh(SMesh *m);
 
     Vector IntersectionWith(Vector a, Vector b);
@@ -265,8 +260,6 @@ public:
     STriangle       *tri;
 
     STriangleLl     *next;
-
-    static STriangleLl *Alloc(Sketch *sk);
 };
 
 class SKdNode {
@@ -279,7 +272,6 @@ public:
 
     STriangleLl  *tris;
 
-    static SKdNode *Alloc(Sketch *sk);
     static SKdNode *From(SMesh *m);
     static SKdNode *From(Sketch *sk, STriangleLl *tll);
 

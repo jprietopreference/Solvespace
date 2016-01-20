@@ -299,21 +299,11 @@ void SEdgeList::CullExtraneousEdges(void) {
 // Make a kd-tree of edges. This is used for O(log(n)) implementations of stuff
 // that would naively be O(n).
 //-----------------------------------------------------------------------------
-SKdNodeEdges *SKdNodeEdges::Alloc(Sketch *sk) {
-    SKdNodeEdges *ne = sk->AllocTemporary<SKdNodeEdges>();
-    *ne = {};
-    return ne;
-}
-SEdgeLl *SEdgeLl::Alloc(Sketch *sk) {
-    SEdgeLl *sell = sk->AllocTemporary<SEdgeLl>();
-    *sell = {};
-    return sell;
-}
 SKdNodeEdges *SKdNodeEdges::From(Sketch *sk, SEdgeList *sel) {
     SEdgeLl *sell = NULL;
     SEdge *se;
     for(se = sel->l.First(); se; se = sel->l.NextAfter(se)) {
-        SEdgeLl *n = SEdgeLl::Alloc(sk);
+        SEdgeLl *n = sk->AllocTemporary<SEdgeLl>();
         n->se = se;
         n->next = sell;
         sell = n;
@@ -321,7 +311,7 @@ SKdNodeEdges *SKdNodeEdges::From(Sketch *sk, SEdgeList *sel) {
     return SKdNodeEdges::From(sk, sell);
 }
 SKdNodeEdges *SKdNodeEdges::From(Sketch *sk, SEdgeLl *sell) {
-    SKdNodeEdges *n = SKdNodeEdges::Alloc(sk);
+    SKdNodeEdges *n = sk->AllocTemporary<SKdNodeEdges>();
 
     // Compute the midpoints (just mean, though median would be better) of
     // each component.
@@ -378,7 +368,7 @@ SKdNodeEdges *SKdNodeEdges::From(Sketch *sk, SEdgeLl *sell) {
         if(flip->se->a.Element(n->which) < n->c + KDTREE_EPS ||
            flip->se->b.Element(n->which) < n->c + KDTREE_EPS)
         {
-            SEdgeLl *selln = SEdgeLl::Alloc(sk);
+            SEdgeLl *selln = sk->AllocTemporary<SEdgeLl>();
             selln->se = flip->se;
             selln->next = ltl;
             ltl = selln;
@@ -386,7 +376,7 @@ SKdNodeEdges *SKdNodeEdges::From(Sketch *sk, SEdgeLl *sell) {
         if(flip->se->a.Element(n->which) > n->c - KDTREE_EPS ||
            flip->se->b.Element(n->which) > n->c - KDTREE_EPS)
         {
-            SEdgeLl *selln = SEdgeLl::Alloc(sk);
+            SEdgeLl *selln = sk->AllocTemporary<SEdgeLl>();
             selln->se = flip->se;
             selln->next = gtl;
             gtl = selln;
