@@ -13,7 +13,7 @@ void SolveSpaceUI::ExportSectionTo(const std::string &filename) {
     Vector gn = (SS.GW.projRight).Cross(SS.GW.projUp);
     gn = gn.WithMagnitude(1);
 
-    Group *g = SK.GetGroup(SS.GW.activeGroup);
+    Group *g = sketch->GetGroup(SS.GW.activeGroup);
     g->GenerateDisplayItems();
     if(g->displayMesh.IsEmpty()) {
         Error("No solid model present; draw one with extrudes and revolves, "
@@ -29,21 +29,21 @@ void SolveSpaceUI::ExportSectionTo(const std::string &filename) {
     SS.GW.GroupSelection();
 #define gs (SS.GW.gs)
     if((gs.n == 0 && g->activeWorkplane.v != Entity::FREE_IN_3D.v)) {
-        Entity *wrkpl = SK.GetEntity(g->activeWorkplane);
+        Entity *wrkpl = sketch->GetEntity(g->activeWorkplane);
         origin = wrkpl->WorkplaneGetOffset();
         n = wrkpl->Normal()->NormalN();
         u = wrkpl->Normal()->NormalU();
         v = wrkpl->Normal()->NormalV();
     } else if(gs.n == 1 && gs.faces == 1) {
-        Entity *face = SK.GetEntity(gs.entity[0]);
+        Entity *face = sketch->GetEntity(gs.entity[0]);
         origin = face->FaceGetPointNum();
         n = face->FaceGetNormalNum();
         if(n.Dot(gn) < 0) n = n.ScaledBy(-1);
         u = n.Normal(0);
         v = n.Normal(1);
     } else if(gs.n == 3 && gs.vectors == 2 && gs.points == 1) {
-        Vector ut = SK.GetEntity(gs.entity[0])->VectorGetNum(),
-               vt = SK.GetEntity(gs.entity[1])->VectorGetNum();
+        Vector ut = sketch->GetEntity(gs.entity[0])->VectorGetNum(),
+               vt = sketch->GetEntity(gs.entity[1])->VectorGetNum();
         ut = ut.WithMagnitude(1);
         vt = vt.WithMagnitude(1);
 
@@ -53,7 +53,7 @@ void SolveSpaceUI::ExportSectionTo(const std::string &filename) {
         if(SS.GW.projRight.Dot(ut) < 0) ut = ut.ScaledBy(-1);
         if(SS.GW.projUp.   Dot(vt) < 0) vt = vt.ScaledBy(-1);
 
-        origin = SK.GetEntity(gs.point[0])->PointGetNum();
+        origin = sketch->GetEntity(gs.point[0])->PointGetNum();
         n = ut.Cross(vt);
         u = ut.WithMagnitude(1);
         v = (n.Cross(u)).WithMagnitude(1);
@@ -96,12 +96,13 @@ void SolveSpaceUI::ExportSectionTo(const std::string &filename) {
     bl.CullIdenticalBeziers();
 
     // And write the edges.
-    VectorFileWriter *out = VectorFileWriter::ForFile(filename);
+    VectorFileWriter *out = VectorFileWriter::ForFile(sketch, filename);
     if(out) {
         // parallel projection (no perspective), and no mesh
         ExportLinesAndMesh(&el, &bl, NULL,
                            u, v, n, origin, 0,
                            out);
+        delete out;
     }
     el.Clear();
     bl.Clear();
@@ -114,7 +115,7 @@ void SolveSpaceUI::ExportViewOrWireframeTo(const std::string &filename, bool wir
 
     SMesh *sm = NULL;
     if(SS.GW.showShaded) {
-        Group *g = SK.GetGroup(SS.GW.activeGroup);
+        Group *g = sketch->GetGroup(SS.GW.activeGroup);
         g->GenerateDisplayItems();
         sm = &(g->displayMesh);
     }
@@ -122,8 +123,8 @@ void SolveSpaceUI::ExportViewOrWireframeTo(const std::string &filename, bool wir
         sm = NULL;
     }
 
-    for(i = 0; i < SK.entity.n; i++) {
-        Entity *e = &(SK.entity.elem[i]);
+    for(i = 0; i < sketch->entity.n; i++) {
+        Entity *e = &(sketch->entity.elem[i]);
         if(!e->IsVisible()) continue;
         if(e->construction) continue;
 
@@ -140,7 +141,7 @@ void SolveSpaceUI::ExportViewOrWireframeTo(const std::string &filename, bool wir
     }
 
     if(SS.GW.showEdges) {
-        Group *g = SK.GetGroup(SS.GW.activeGroup);
+        Group *g = sketch->GetGroup(SS.GW.activeGroup);
         g->GenerateDisplayItems();
         SEdgeList *selr = &(g->displayEdges);
         SEdge *se;
@@ -151,15 +152,16 @@ void SolveSpaceUI::ExportViewOrWireframeTo(const std::string &filename, bool wir
 
     if(SS.GW.showConstraints) {
         Constraint *c;
-        for(c = SK.constraint.First(); c; c = SK.constraint.NextAfter(c)) {
+        for(c = sketch->constraint.First(); c; c = sketch->constraint.NextAfter(c)) {
             c->GetEdges(&edges);
         }
     }
 
     if(wireframe) {
-        VectorFileWriter *out = VectorFileWriter::ForFile(filename);
+        VectorFileWriter *out = VectorFileWriter::ForFile(sketch, filename);
         if(out) {
             ExportWireframeCurves(&edges, &beziers, out);
+            delete out;
         }
     } else {
         Vector u = SS.GW.projRight,
@@ -167,7 +169,7 @@ void SolveSpaceUI::ExportViewOrWireframeTo(const std::string &filename, bool wir
                n = u.Cross(v),
                origin = SS.GW.offset.ScaledBy(-1);
 
-        VectorFileWriter *out = VectorFileWriter::ForFile(filename);
+        VectorFileWriter *out = VectorFileWriter::ForFile(sketch, filename);
         if(out) {
             ExportLinesAndMesh(&edges, &beziers, sm,
                                u, v, n, origin, SS.CameraTangent()*SS.GW.scale,
@@ -184,6 +186,7 @@ void SolveSpaceUI::ExportViewOrWireframeTo(const std::string &filename, bool wir
             SS.justExportedInfo.v = v;
             InvalidateGraphics();
         }
+        delete out;
     }
 
     edges.Clear();
@@ -258,7 +261,7 @@ void SolveSpaceUI::ExportLinesAndMesh(SEdgeList *sel, SBezierList *sbl, SMesh *s
 
     // Now the triangle mesh; project, then build a BSP to perform
     // occlusion testing and generated the shaded surfaces.
-    SMesh smp {};
+    SMesh smp { sketch };
     if(sm) {
         Vector l0 = (SS.lightDir[0]).WithMagnitude(1),
                l1 = (SS.lightDir[1]).WithMagnitude(1);
@@ -284,7 +287,7 @@ void SolveSpaceUI::ExportLinesAndMesh(SEdgeList *sel, SBezierList *sbl, SMesh *s
 
     // Use the BSP routines to generate the split triangles in paint order.
     SBsp3 *bsp = SBsp3::FromMesh(&smp);
-    SMesh sms {};
+    SMesh sms { sketch };
     bsp->GenerateInPaintOrder(&sms);
     // And cull the back-facing triangles
     STriangle *tr;
@@ -305,7 +308,7 @@ void SolveSpaceUI::ExportLinesAndMesh(SEdgeList *sel, SBezierList *sbl, SMesh *s
         // Generate the edges where a curved surface turns from front-facing
         // to back-facing.
         if(SS.GW.showEdges) {
-            root->MakeCertainEdgesInto(sel, SKdNode::TURNING_EDGES,
+            root->MakeCertainEdgesInto(sketch, sel, SKdNode::TURNING_EDGES,
                         false, NULL, NULL);
         }
 
@@ -389,29 +392,22 @@ double VectorFileWriter::MmToPts(double mm) {
     return (mm/25.4)*72;
 }
 
-VectorFileWriter *VectorFileWriter::ForFile(const std::string &filename) {
-    VectorFileWriter *ret;
+VectorFileWriter *VectorFileWriter::ForFile(Sketch *sk, const std::string &filename) {
+    VectorFileWriter *ret = NULL;
     if(FilenameHasExtension(filename, ".dxf")) {
-        static DxfFileWriter DxfWriter;
-        ret = &DxfWriter;
+        ret = new DxfFileWriter(sk);
     } else if(FilenameHasExtension(filename, ".ps") || FilenameHasExtension(filename, ".eps")) {
-        static EpsFileWriter EpsWriter;
-        ret = &EpsWriter;
+        ret = new EpsFileWriter(sk);
     } else if(FilenameHasExtension(filename, ".pdf")) {
-        static PdfFileWriter PdfWriter;
-        ret = &PdfWriter;
+        ret = new PdfFileWriter(sk);
     } else if(FilenameHasExtension(filename, ".svg")) {
-        static SvgFileWriter SvgWriter;
-        ret = &SvgWriter;
+        ret = new SvgFileWriter(sk);
     } else if(FilenameHasExtension(filename, ".plt")||FilenameHasExtension(filename, ".hpgl")) {
-        static HpglFileWriter HpglWriter;
-        ret = &HpglWriter;
+        ret = new HpglFileWriter(sk);
     } else if(FilenameHasExtension(filename, ".step")||FilenameHasExtension(filename, ".stp")) {
-        static Step2dFileWriter Step2dWriter;
-        ret = &Step2dWriter;
+        ret = new Step2dFileWriter(sk);
     } else if(FilenameHasExtension(filename, ".txt")) {
-        static GCodeFileWriter GCodeWriter;
-        ret = &GCodeWriter;
+        ret = new GCodeFileWriter(sk);
     } else {
         Error("Can't identify output file type from file extension of "
         "filename '%s'; try "
@@ -487,13 +483,13 @@ void VectorFileWriter::Output(SBezierLoopSetSet *sblss, SMesh *sm) {
             sbl = sbls->l.First();
             if(!sbl) continue;
             b = sbl->l.First();
-            if(!b || !Style::Exportable(b->auxA)) continue;
+            if(!b || !Style::Exportable(sketch, b->auxA)) continue;
 
             hStyle hs { (uint32_t)b->auxA };
-            Style *stl = Style::Get(hs);
-            double lineWidth   = Style::WidthMm(b->auxA)*s;
-            RgbaColor strokeRgb = Style::Color(hs, true);
-            RgbaColor fillRgb   = Style::FillColor(hs, true);
+            Style *stl = Style::Get(sketch, hs);
+            double lineWidth   = Style::WidthMm(sketch, b->auxA)*s;
+            RgbaColor strokeRgb = Style::Color(sketch, hs, true);
+            RgbaColor fillRgb   = Style::FillColor(sketch, hs, true);
 
             StartPath(strokeRgb, lineWidth, stl->filled, fillRgb);
             for(sbl = sbls->l.First(); sbl; sbl = sbls->l.NextAfter(sbl)) {
@@ -559,7 +555,7 @@ void VectorFileWriter::BezierAsNonrationalCubic(SBezier *sb, int depth) {
 // Export a triangle mesh, in the requested format.
 //-----------------------------------------------------------------------------
 void SolveSpaceUI::ExportMeshTo(const std::string &filename) {
-    SMesh *m = &(SK.GetGroup(SS.GW.activeGroup)->displayMesh);
+    SMesh *m = &(sketch->GetGroup(SS.GW.activeGroup)->displayMesh);
     if(m->IsEmpty()) {
         Error("Active group mesh is empty; nothing to export.");
         return;
@@ -576,7 +572,7 @@ void SolveSpaceUI::ExportMeshTo(const std::string &filename) {
     } else if(FilenameHasExtension(filename, ".obj")) {
         ExportMeshAsObjTo(f, m);
     } else if(FilenameHasExtension(filename, ".js")) {
-        SEdgeList *e = &(SK.GetGroup(SS.GW.activeGroup)->displayEdges);
+        SEdgeList *e = &(sketch->GetGroup(SS.GW.activeGroup)->displayEdges);
         ExportMeshAsThreeJsTo(f, filename, m, e);
     } else {
         Error("Can't identify output file type from file extension of "

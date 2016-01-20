@@ -10,6 +10,9 @@
 
 class TextWindow {
 public:
+    Sketch *sketch;
+    explicit TextWindow(Sketch *sk) : sketch(sk) { }
+
     enum {
         MAX_COLS = 100,
         MIN_COLS = 45,
@@ -335,6 +338,9 @@ public:
 
 class GraphicsWindow {
 public:
+    Sketch *sketch;
+    explicit GraphicsWindow(Sketch *sk) : sketch(sk), hover(sk) { }
+
     void Init(void);
 
     // This table describes the top-level menus in the graphics winodw.
@@ -586,8 +592,10 @@ public:
         double theta0   = 0.0;
         double theta1   = 0.0;
         double dtheta   = 0.0;
+        Sketch *sketch  = NULL;
+        ParametricCurve(Sketch *sk) : sketch(sk) { }
 
-        void MakeFromEntity(hEntity he, bool reverse);
+        void MakeFromEntity(Sketch *sk, hEntity he, bool reverse);
         Vector PointAt(double t);
         Vector TangentAt(double t);
         double LengthForAuto(void);
@@ -609,6 +617,9 @@ public:
     // The current selection.
     class Selection {
     public:
+        Sketch      *sketch = NULL;
+        explicit Selection(Sketch *sk) : sketch(sk) { }
+
         int         tag = 0;
 
         hEntity     entity;

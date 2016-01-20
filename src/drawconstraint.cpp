@@ -24,8 +24,8 @@ void Constraint::LineDrawOrGetDistance(Vector a, Vector b) {
         } else {
             // The only constraints with styles should be comments, so don't
             // check otherwise, save looking up the styles constantly.
-            if(type == COMMENT && Style::Width(hs) >= 3.0) {
-                ssglFatLine(a, b, Style::Width(hs) / SS.GW.scale);
+            if(type == COMMENT && Style::Width(sketch, hs) >= 3.0) {
+                ssglFatLine(a, b, Style::Width(sketch, hs) / SS.GW.scale);
             } else {
                 glBegin(GL_LINE_STRIP);
                     ssglVertex3v(a);
@@ -87,7 +87,7 @@ std::string Constraint::Label(void) {
 void Constraint::DoLabel(Vector ref, Vector *labelPos, Vector gr, Vector gu) {
     double th;
     if(type == COMMENT) {
-        th = Style::TextHeight(disp.style);
+        th = Style::TextHeight(sketch, disp.style);
     } else {
         th = DEFAULT_TEXT_HEIGHT;
     }
@@ -100,7 +100,7 @@ void Constraint::DoLabel(Vector ref, Vector *labelPos, Vector gr, Vector gu) {
     // specify otherwise if one is present, and it could also specify a
     // rotation.
     if(type == COMMENT && disp.style.v) {
-        Style *st = Style::Get(disp.style);
+        Style *st = Style::Get(sketch, disp.style);
         // rotation first
         double rads = st->textAngle*PI/180;
         double c = cos(rads), s = sin(rads);
@@ -145,7 +145,7 @@ void Constraint::StippledLine(Vector a, Vector b) {
 }
 
 void Constraint::DoProjectedPoint(Vector *r) {
-    Vector p = r->ProjectInto(workplane);
+    Vector p = r->ProjectInto(sketch, workplane);
     StippledLine(p, *r);
     *r = p;
 }
@@ -296,9 +296,9 @@ void Constraint::DoEqualLenTicks(Vector a, Vector b, Vector gn) {
 }
 
 void Constraint::DoEqualRadiusTicks(hEntity he) {
-    Entity *circ = SK.GetEntity(he);
+    Entity *circ = sketch->GetEntity(he);
 
-    Vector center = SK.GetEntity(circ->point[0])->PointGetNum();
+    Vector center = sketch->GetEntity(circ->point[0])->PointGetNum();
     double r = circ->CircleGetRadiusNum();
     Quaternion q = circ->Normal()->NormalGetNum();
     Vector u = q.RotationU(), v = q.RotationV();
@@ -326,10 +326,10 @@ void Constraint::DoArcForAngle(Vector a0, Vector da, Vector b0, Vector db,
     Vector gu = SS.GW.projUp.ScaledBy(1/SS.GW.scale);
 
     if(workplane.v != Entity::FREE_IN_3D.v) {
-        a0 = a0.ProjectInto(workplane);
-        b0 = b0.ProjectInto(workplane);
-        da = da.ProjectVectorInto(workplane);
-        db = db.ProjectVectorInto(workplane);
+        a0 = a0.ProjectInto(sketch, workplane);
+        b0 = b0.ProjectInto(sketch, workplane);
+        da = da.ProjectVectorInto(sketch, workplane);
+        db = db.ProjectVectorInto(sketch, workplane);
     }
 
     bool skew;
@@ -389,7 +389,7 @@ void Constraint::DoArcForAngle(Vector a0, Vector da, Vector b0, Vector db,
 
 void Constraint::DrawOrGetDistance(Vector *labelPos) {
     if(!SS.GW.showConstraints) return;
-    Group *g = SK.GetGroup(group);
+    Group *g = sketch->GetGroup(group);
     // If the group is hidden, then the constraints are hidden and not
     // able to be selected.
     if(!(g->visible)) return;
@@ -399,7 +399,7 @@ void Constraint::DrawOrGetDistance(Vector *labelPos) {
         return;
     }
     if(disp.style.v) {
-        Style *s = Style::Get(disp.style);
+        Style *s = Style::Get(sketch, disp.style);
         if(!s->visible) return;
     }
 
@@ -412,8 +412,8 @@ void Constraint::DrawOrGetDistance(Vector *labelPos) {
 
     switch(type) {
         case PT_PT_DISTANCE: {
-            Vector ap = SK.GetEntity(ptA)->PointGetNum();
-            Vector bp = SK.GetEntity(ptB)->PointGetNum();
+            Vector ap = sketch->GetEntity(ptA)->PointGetNum();
+            Vector bp = sketch->GetEntity(ptB)->PointGetNum();
 
             if(workplane.v != Entity::FREE_IN_3D.v) {
                 DoProjectedPoint(&ap);
@@ -428,10 +428,10 @@ void Constraint::DrawOrGetDistance(Vector *labelPos) {
         }
 
         case PROJ_PT_DISTANCE: {
-            Vector ap = SK.GetEntity(ptA)->PointGetNum(),
-                   bp = SK.GetEntity(ptB)->PointGetNum(),
+            Vector ap = sketch->GetEntity(ptA)->PointGetNum(),
+                   bp = sketch->GetEntity(ptB)->PointGetNum(),
                    dp = (bp.Minus(ap)),
-                   pp = SK.GetEntity(entityA)->VectorGetNum();
+                   pp = sketch->GetEntity(entityA)->VectorGetNum();
 
             Vector ref = ((ap.Plus(bp)).ScaledBy(0.5)).Plus(disp.offset);
 
@@ -448,8 +448,8 @@ void Constraint::DrawOrGetDistance(Vector *labelPos) {
 
         case PT_FACE_DISTANCE:
         case PT_PLANE_DISTANCE: {
-            Vector pt = SK.GetEntity(ptA)->PointGetNum();
-            Entity *enta = SK.GetEntity(entityA);
+            Vector pt = sketch->GetEntity(ptA)->PointGetNum();
+            Entity *enta = sketch->GetEntity(entityA);
             Vector n, p;
             if(type == PT_PLANE_DISTANCE) {
                 n = enta->Normal()->NormalN();
@@ -473,15 +473,15 @@ void Constraint::DrawOrGetDistance(Vector *labelPos) {
         }
 
         case PT_LINE_DISTANCE: {
-            Vector pt = SK.GetEntity(ptA)->PointGetNum();
-            Entity *line = SK.GetEntity(entityA);
-            Vector lA = SK.GetEntity(line->point[0])->PointGetNum();
-            Vector lB = SK.GetEntity(line->point[1])->PointGetNum();
+            Vector pt = sketch->GetEntity(ptA)->PointGetNum();
+            Entity *line = sketch->GetEntity(entityA);
+            Vector lA = sketch->GetEntity(line->point[0])->PointGetNum();
+            Vector lB = sketch->GetEntity(line->point[1])->PointGetNum();
             Vector dl = lB.Minus(lA);
 
             if(workplane.v != Entity::FREE_IN_3D.v) {
-                lA = lA.ProjectInto(workplane);
-                lB = lB.ProjectInto(workplane);
+                lA = lA.ProjectInto(sketch, workplane);
+                lB = lB.ProjectInto(sketch, workplane);
                 DoProjectedPoint(&pt);
             }
 
@@ -501,8 +501,8 @@ void Constraint::DrawOrGetDistance(Vector *labelPos) {
                 Vector lAB = (lA.Minus(lB));
                 double t = (lA.Minus(closest)).DivPivoting(lAB);
 
-                Vector lA = SK.GetEntity(line->point[0])->PointGetNum();
-                Vector lB = SK.GetEntity(line->point[1])->PointGetNum();
+                Vector lA = sketch->GetEntity(line->point[0])->PointGetNum();
+                Vector lB = sketch->GetEntity(line->point[1])->PointGetNum();
 
                 Vector c2 = (lA.ScaledBy(1-t)).Plus(lB.ScaledBy(t));
                 DoProjectedPoint(&c2);
@@ -511,9 +511,9 @@ void Constraint::DrawOrGetDistance(Vector *labelPos) {
         }
 
         case DIAMETER: {
-            Entity *circle = SK.GetEntity(entityA);
-            Vector center = SK.GetEntity(circle->point[0])->PointGetNum();
-            Quaternion q = SK.GetEntity(circle->normal)->NormalGetNum();
+            Entity *circle = sketch->GetEntity(entityA);
+            Vector center = sketch->GetEntity(circle->point[0])->PointGetNum();
+            Quaternion q = sketch->GetEntity(circle->normal)->NormalGetNum();
             Vector n = q.RotationN().WithMagnitude(1);
             double r = circle->CircleGetRadiusNum();
 
@@ -559,7 +559,7 @@ void Constraint::DrawOrGetDistance(Vector *labelPos) {
         case POINTS_COINCIDENT: {
             if(!dogd.drawing) {
                 for(int i = 0; i < 2; i++) {
-                    Vector p = SK.GetEntity(i == 0 ? ptA : ptB)-> PointGetNum();
+                    Vector p = sketch->GetEntity(i == 0 ? ptA : ptB)-> PointGetNum();
                     Point2d pp = SS.GW.ProjectPoint(p);
                     // The point is selected within a radius of 7, from the
                     // same center; so if the point is visible, then this
@@ -574,8 +574,8 @@ void Constraint::DrawOrGetDistance(Vector *labelPos) {
                 // Let's adjust the color of this constraint to have the same
                 // rough luma as the point color, so that the constraint does not
                 // stand out in an ugly way.
-                RgbaColor cd = Style::Color(Style::DATUM),
-                         cc = Style::Color(Style::CONSTRAINT);
+                RgbaColor cd = Style::Color(sketch, Style::DATUM),
+                         cc = Style::Color(sketch, Style::CONSTRAINT);
                 // convert from 8-bit color to a vector
                 Vector vd = Vector::From(cd.redF(), cd.greenF(), cd.blueF()),
                        vc = Vector::From(cc.redF(), cc.greenF(), cc.blueF());
@@ -589,7 +589,7 @@ void Constraint::DrawOrGetDistance(Vector *labelPos) {
                     Vector r = SS.GW.projRight.ScaledBy((a+1)/SS.GW.scale);
                     Vector d = SS.GW.projUp.ScaledBy((2-a)/SS.GW.scale);
                     for(int i = 0; i < 2; i++) {
-                        Vector p = SK.GetEntity(i == 0 ? ptA : ptB)-> PointGetNum();
+                        Vector p = sketch->GetEntity(i == 0 ? ptA : ptB)-> PointGetNum();
                         glBegin(GL_QUADS);
                             ssglVertex3v(p.Plus (r).Plus (d));
                             ssglVertex3v(p.Plus (r).Minus(d));
@@ -608,14 +608,14 @@ void Constraint::DrawOrGetDistance(Vector *labelPos) {
         case PT_ON_FACE:
         case PT_IN_PLANE: {
             double s = 8/SS.GW.scale;
-            Vector p = SK.GetEntity(ptA)->PointGetNum();
+            Vector p = sketch->GetEntity(ptA)->PointGetNum();
             Vector r, d;
             if(type == PT_ON_FACE) {
-                Vector n = SK.GetEntity(entityA)->FaceGetNormalNum();
+                Vector n = sketch->GetEntity(entityA)->FaceGetNormalNum();
                 r = n.Normal(0);
                 d = n.Normal(1);
             } else if(type == PT_IN_PLANE) {
-                EntityBase *n = SK.GetEntity(entityA)->Normal();
+                EntityBase *n = sketch->GetEntity(entityA)->Normal();
                 r = n->NormalU();
                 d = n->NormalV();
             } else {
@@ -632,7 +632,7 @@ void Constraint::DrawOrGetDistance(Vector *labelPos) {
         }
 
         case WHERE_DRAGGED: {
-            Vector p = SK.GetEntity(ptA)->PointGetNum(),
+            Vector p = sketch->GetEntity(ptA)->PointGetNum(),
                    u = p.Plus(gu.WithMagnitude(8/SS.GW.scale)).Plus(
                               gr.WithMagnitude(8/SS.GW.scale)),
                    uu = u.Minus(gu.WithMagnitude(5/SS.GW.scale)),
@@ -652,11 +652,11 @@ void Constraint::DrawOrGetDistance(Vector *labelPos) {
 
         case SAME_ORIENTATION: {
             for(int i = 0; i < 2; i++) {
-                Entity *e = SK.GetEntity(i == 0 ? entityA : entityB);
+                Entity *e = sketch->GetEntity(i == 0 ? entityA : entityB);
                 Quaternion q = e->NormalGetNum();
                 Vector n = q.RotationN().WithMagnitude(25/SS.GW.scale);
                 Vector u = q.RotationU().WithMagnitude(6/SS.GW.scale);
-                Vector p = SK.GetEntity(e->point[0])->PointGetNum();
+                Vector p = sketch->GetEntity(e->point[0])->PointGetNum();
                 p = p.Plus(n.WithMagnitude(10/SS.GW.scale));
 
                 LineDrawOrGetDistance(p.Plus(u), p.Minus(u).Plus(n));
@@ -667,10 +667,10 @@ void Constraint::DrawOrGetDistance(Vector *labelPos) {
 
         case EQUAL_ANGLE: {
             Vector ref;
-            Entity *a = SK.GetEntity(entityA);
-            Entity *b = SK.GetEntity(entityB);
-            Entity *c = SK.GetEntity(entityC);
-            Entity *d = SK.GetEntity(entityD);
+            Entity *a = sketch->GetEntity(entityA);
+            Entity *b = sketch->GetEntity(entityB);
+            Entity *c = sketch->GetEntity(entityC);
+            Entity *d = sketch->GetEntity(entityD);
 
             Vector a0 = a->VectorGetRefPoint();
             Vector b0 = b->VectorGetRefPoint();
@@ -692,8 +692,8 @@ void Constraint::DrawOrGetDistance(Vector *labelPos) {
         }
 
         case ANGLE: {
-            Entity *a = SK.GetEntity(entityA);
-            Entity *b = SK.GetEntity(entityB);
+            Entity *a = sketch->GetEntity(entityA);
+            Entity *b = sketch->GetEntity(entityB);
 
             Vector a0 = a->VectorGetRefPoint();
             Vector b0 = b->VectorGetRefPoint();
@@ -714,13 +714,13 @@ void Constraint::DrawOrGetDistance(Vector *labelPos) {
                 rn = gn;
                 ru = gu;
             } else {
-                EntityBase *normal = SK.GetEntity(workplane)->Normal();
+                EntityBase *normal = sketch->GetEntity(workplane)->Normal();
                 rn = normal->NormalN();
                 ru = normal->NormalV(); // ru meaning r_up, not u/v
             }
 
             for(int i = 0; i < 2; i++) {
-                Entity *e = SK.GetEntity(i == 0 ? entityA : entityB);
+                Entity *e = sketch->GetEntity(i == 0 ? entityA : entityB);
 
                 if(i == 0) {
                     // Calculate orientation of perpendicular sign only
@@ -752,11 +752,11 @@ void Constraint::DrawOrGetDistance(Vector *labelPos) {
             Vector textAt, u, v;
 
             if(type == ARC_LINE_TANGENT) {
-                Entity *arc = SK.GetEntity(entityA);
-                Entity *norm = SK.GetEntity(arc->normal);
-                Vector c = SK.GetEntity(arc->point[0])->PointGetNum();
+                Entity *arc = sketch->GetEntity(entityA);
+                Entity *norm = sketch->GetEntity(arc->normal);
+                Vector c = sketch->GetEntity(arc->point[0])->PointGetNum();
                 Vector p =
-                    SK.GetEntity(arc->point[other ? 2 : 1])->PointGetNum();
+                    sketch->GetEntity(arc->point[other ? 2 : 1])->PointGetNum();
                 Vector r = p.Minus(c);
                 textAt = p.Plus(r.WithMagnitude(14/SS.GW.scale));
                 u = norm->NormalU();
@@ -768,25 +768,25 @@ void Constraint::DrawOrGetDistance(Vector *labelPos) {
                     v = gu;
                     n = gn;
                 } else {
-                    EntityBase *wn = SK.GetEntity(workplane)->Normal();
+                    EntityBase *wn = sketch->GetEntity(workplane)->Normal();
                     u = wn->NormalU();
                     v = wn->NormalV();
                     n = wn->NormalN();
                 }
 
-                Entity *cubic = SK.GetEntity(entityA);
+                Entity *cubic = sketch->GetEntity(entityA);
                 Vector p = other ? cubic->CubicGetFinishNum() :
                                    cubic->CubicGetStartNum();
-                Vector dir = SK.GetEntity(entityB)->VectorGetNum();
+                Vector dir = sketch->GetEntity(entityB)->VectorGetNum();
                 Vector out = n.Cross(dir);
                 textAt = p.Plus(out.WithMagnitude(14/SS.GW.scale));
             } else {
                 Vector n, dir;
-                EntityBase *wn = SK.GetEntity(workplane)->Normal();
+                EntityBase *wn = sketch->GetEntity(workplane)->Normal();
                 u = wn->NormalU();
                 v = wn->NormalV();
                 n = wn->NormalN();
-                EntityBase *eA = SK.GetEntity(entityA);
+                EntityBase *eA = sketch->GetEntity(entityA);
                 // Big pain; we have to get a vector tangent to the curve
                 // at the shared point, which could be from either a cubic
                 // or an arc.
@@ -795,8 +795,8 @@ void Constraint::DrawOrGetDistance(Vector *labelPos) {
                     if(eA->type == Entity::CUBIC) {
                         dir = eA->CubicGetFinishTangentNum();
                     } else {
-                        dir = SK.GetEntity(eA->point[0])->PointGetNum().Minus(
-                              SK.GetEntity(eA->point[2])->PointGetNum());
+                        dir = sketch->GetEntity(eA->point[0])->PointGetNum().Minus(
+                              sketch->GetEntity(eA->point[2])->PointGetNum());
                         dir = n.Cross(dir);
                     }
                 } else {
@@ -804,8 +804,8 @@ void Constraint::DrawOrGetDistance(Vector *labelPos) {
                     if(eA->type == Entity::CUBIC) {
                         dir = eA->CubicGetStartTangentNum();
                     } else {
-                        dir = SK.GetEntity(eA->point[0])->PointGetNum().Minus(
-                              SK.GetEntity(eA->point[1])->PointGetNum());
+                        dir = sketch->GetEntity(eA->point[0])->PointGetNum().Minus(
+                              sketch->GetEntity(eA->point[1])->PointGetNum());
                         dir = n.Cross(dir);
                     }
                 }
@@ -826,7 +826,7 @@ void Constraint::DrawOrGetDistance(Vector *labelPos) {
 
         case PARALLEL: {
             for(int i = 0; i < 2; i++) {
-                Entity *e = SK.GetEntity(i == 0 ? entityA : entityB);
+                Entity *e = sketch->GetEntity(i == 0 ? entityA : entityB);
                 Vector n = e->VectorGetNum();
                 n = n.WithMagnitude(25/SS.GW.scale);
                 Vector u = (gn.Cross(n)).WithMagnitude(4/SS.GW.scale);
@@ -846,10 +846,10 @@ void Constraint::DrawOrGetDistance(Vector *labelPos) {
         }
 
         case EQUAL_LINE_ARC_LEN: {
-            Entity *line = SK.GetEntity(entityA);
+            Entity *line = sketch->GetEntity(entityA);
             DoEqualLenTicks(
-                SK.GetEntity(line->point[0])->PointGetNum(),
-                SK.GetEntity(line->point[1])->PointGetNum(),
+                sketch->GetEntity(line->point[0])->PointGetNum(),
+                sketch->GetEntity(line->point[1])->PointGetNum(),
                 gn);
 
             DoEqualRadiusTicks(entityB);
@@ -861,9 +861,9 @@ void Constraint::DrawOrGetDistance(Vector *labelPos) {
         case EQUAL_LENGTH_LINES: {
             Vector a, b = Vector::From(0, 0, 0);
             for(int i = 0; i < 2; i++) {
-                Entity *e = SK.GetEntity(i == 0 ? entityA : entityB);
-                a = SK.GetEntity(e->point[0])->PointGetNum();
-                b = SK.GetEntity(e->point[1])->PointGetNum();
+                Entity *e = sketch->GetEntity(i == 0 ? entityA : entityB);
+                a = sketch->GetEntity(e->point[0])->PointGetNum();
+                b = sketch->GetEntity(e->point[1])->PointGetNum();
 
                 if(workplane.v != Entity::FREE_IN_3D.v) {
                     DoProjectedPoint(&a);
@@ -880,23 +880,23 @@ void Constraint::DrawOrGetDistance(Vector *labelPos) {
         }
 
         case EQ_LEN_PT_LINE_D: {
-            Entity *forLen = SK.GetEntity(entityA);
-            Vector a = SK.GetEntity(forLen->point[0])->PointGetNum(),
-                   b = SK.GetEntity(forLen->point[1])->PointGetNum();
+            Entity *forLen = sketch->GetEntity(entityA);
+            Vector a = sketch->GetEntity(forLen->point[0])->PointGetNum(),
+                   b = sketch->GetEntity(forLen->point[1])->PointGetNum();
             if(workplane.v != Entity::FREE_IN_3D.v) {
                 DoProjectedPoint(&a);
                 DoProjectedPoint(&b);
             }
             DoEqualLenTicks(a, b, gn);
 
-            Entity *ln = SK.GetEntity(entityB);
-            Vector la = SK.GetEntity(ln->point[0])->PointGetNum(),
-                   lb = SK.GetEntity(ln->point[1])->PointGetNum();
-            Vector pt = SK.GetEntity(ptA)->PointGetNum();
+            Entity *ln = sketch->GetEntity(entityB);
+            Vector la = sketch->GetEntity(ln->point[0])->PointGetNum(),
+                   lb = sketch->GetEntity(ln->point[1])->PointGetNum();
+            Vector pt = sketch->GetEntity(ptA)->PointGetNum();
             if(workplane.v != Entity::FREE_IN_3D.v) {
                 DoProjectedPoint(&pt);
-                la = la.ProjectInto(workplane);
-                lb = lb.ProjectInto(workplane);
+                la = la.ProjectInto(sketch, workplane);
+                lb = lb.ProjectInto(sketch, workplane);
             }
 
             Vector closest = pt.ClosestPointOnLine(la, lb.Minus(la));
@@ -907,16 +907,16 @@ void Constraint::DrawOrGetDistance(Vector *labelPos) {
 
         case EQ_PT_LN_DISTANCES: {
             for(int i = 0; i < 2; i++) {
-                Entity *ln = SK.GetEntity(i == 0 ? entityA : entityB);
-                Vector la = SK.GetEntity(ln->point[0])->PointGetNum(),
-                       lb = SK.GetEntity(ln->point[1])->PointGetNum();
-                Entity *pte = SK.GetEntity(i == 0 ? ptA : ptB);
+                Entity *ln = sketch->GetEntity(i == 0 ? entityA : entityB);
+                Vector la = sketch->GetEntity(ln->point[0])->PointGetNum(),
+                       lb = sketch->GetEntity(ln->point[1])->PointGetNum();
+                Entity *pte = sketch->GetEntity(i == 0 ? ptA : ptB);
                 Vector pt = pte->PointGetNum();
 
                 if(workplane.v != Entity::FREE_IN_3D.v) {
                     DoProjectedPoint(&pt);
-                    la = la.ProjectInto(workplane);
-                    lb = lb.ProjectInto(workplane);
+                    la = la.ProjectInto(sketch, workplane);
+                    lb = lb.ProjectInto(sketch, workplane);
                 }
 
                 Vector closest = pt.ClosestPointOnLine(la, lb.Minus(la));
@@ -929,25 +929,25 @@ void Constraint::DrawOrGetDistance(Vector *labelPos) {
 
         {
         case SYMMETRIC: 
-            n = SK.GetEntity(entityA)->Normal()->NormalN(); goto s;
+            n = sketch->GetEntity(entityA)->Normal()->NormalN(); goto s;
         case SYMMETRIC_HORIZ:
-            n = SK.GetEntity(workplane)->Normal()->NormalU(); goto s;
+            n = sketch->GetEntity(workplane)->Normal()->NormalU(); goto s;
         case SYMMETRIC_VERT:
-            n = SK.GetEntity(workplane)->Normal()->NormalV(); goto s;
+            n = sketch->GetEntity(workplane)->Normal()->NormalV(); goto s;
         case SYMMETRIC_LINE: {
-            Entity *ln = SK.GetEntity(entityA);
-            Vector la = SK.GetEntity(ln->point[0])->PointGetNum(),
-                   lb = SK.GetEntity(ln->point[1])->PointGetNum();
-            la = la.ProjectInto(workplane);
-            lb = lb.ProjectInto(workplane);
+            Entity *ln = sketch->GetEntity(entityA);
+            Vector la = sketch->GetEntity(ln->point[0])->PointGetNum(),
+                   lb = sketch->GetEntity(ln->point[1])->PointGetNum();
+            la = la.ProjectInto(sketch, workplane);
+            lb = lb.ProjectInto(sketch, workplane);
             n = lb.Minus(la);
-            Vector nw = SK.GetEntity(workplane)->Normal()->NormalN();
+            Vector nw = sketch->GetEntity(workplane)->Normal()->NormalN();
             n = n.RotatedAbout(nw, PI/2);
             goto s;
         }
 s:
-            Vector a = SK.GetEntity(ptA)->PointGetNum();
-            Vector b = SK.GetEntity(ptB)->PointGetNum();
+            Vector a = sketch->GetEntity(ptA)->PointGetNum();
+            Vector b = sketch->GetEntity(ptB)->PointGetNum();
 
             for(int i = 0; i < 2; i++) {
                 Vector tail = (i == 0) ? a : b;
@@ -977,14 +977,14 @@ s:
                 if(workplane.v == Entity::FREE_IN_3D.v) {
                     r = gr; u = gu; n = gn;
                 } else {
-                    r = SK.GetEntity(workplane)->Normal()->NormalU();
-                    u = SK.GetEntity(workplane)->Normal()->NormalV();
+                    r = sketch->GetEntity(workplane)->Normal()->NormalU();
+                    u = sketch->GetEntity(workplane)->Normal()->NormalV();
                     n = r.Cross(u);
                 }
                 // For "at midpoint", this branch is always taken.
-                Entity *e = SK.GetEntity(entityA);
-                Vector a = SK.GetEntity(e->point[0])->PointGetNum();
-                Vector b = SK.GetEntity(e->point[1])->PointGetNum();
+                Entity *e = sketch->GetEntity(entityA);
+                Vector a = sketch->GetEntity(e->point[0])->PointGetNum();
+                Vector b = sketch->GetEntity(e->point[1])->PointGetNum();
                 Vector m = (a.ScaledBy(0.5)).Plus(b.ScaledBy(0.5));
                 Vector offset = (a.Minus(b)).Cross(n);
                 offset = offset.WithMagnitude(13/SS.GW.scale);
@@ -1005,10 +1005,10 @@ s:
                     dogd.dmin = min(dogd.dmin, ref.DistanceTo(dogd.mp)-10);
                 }
             } else {
-                Vector a = SK.GetEntity(ptA)->PointGetNum();
-                Vector b = SK.GetEntity(ptB)->PointGetNum();
+                Vector a = sketch->GetEntity(ptA)->PointGetNum();
+                Vector b = sketch->GetEntity(ptB)->PointGetNum();
 
-                Entity *w = SK.GetEntity(workplane);
+                Entity *w = sketch->GetEntity(workplane);
                 Vector cu = w->Normal()->NormalU();
                 Vector cv = w->Normal()->NormalV();
                 Vector cn = w->Normal()->NormalN();
@@ -1043,15 +1043,15 @@ s:
 
         case COMMENT: {
             if(dogd.drawing && disp.style.v) {
-                ssglLineWidth(Style::Width(disp.style));
-                ssglColorRGB(Style::Color(disp.style));
+                ssglLineWidth(Style::Width(sketch, disp.style));
+                ssglColorRGB(Style::Color(sketch, disp.style));
             }
             Vector u, v;
             if(workplane.v == Entity::FREE_IN_3D.v) {
                 u = gr;
                 v = gu;
             } else {
-                EntityBase *norm = SK.GetEntity(workplane)->Normal();
+                EntityBase *norm = sketch->GetEntity(workplane)->Normal();
                 u = norm->NormalU();
                 v = norm->NormalV();
             }
@@ -1067,8 +1067,8 @@ void Constraint::Draw(void) {
     dogd.drawing = true;
     dogd.sel = NULL;
 
-    ssglLineWidth(Style::Width(Style::CONSTRAINT));
-    ssglColorRGB(Style::Color(Style::CONSTRAINT));
+    ssglLineWidth(Style::Width(sketch, Style::CONSTRAINT));
+    ssglColorRGB(Style::Color(sketch, Style::CONSTRAINT));
 
     DrawOrGetDistance(NULL);
 }

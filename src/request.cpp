@@ -91,7 +91,7 @@ void Request::Generate(IdList<Entity,hEntity> *entity,
     bool hasDistance = false;
     int i;
 
-    Entity e {};
+    Entity e { sketch };
     EntReqTable::GetRequestInfo(type, extraPoints,
                     &et, &points, &hasNormal, &hasDistance);
 
@@ -108,7 +108,7 @@ void Request::Generate(IdList<Entity,hEntity> *entity,
 
     // And generate entities for the points
     for(i = 0; i < points; i++) {
-        Entity p {};
+        Entity p { sketch };
         p.workplane = workplane;
         // points start from entity 1, except for datum point case
         p.h = h.entity(i+(et ? 1 : 0));
@@ -131,7 +131,7 @@ void Request::Generate(IdList<Entity,hEntity> *entity,
         e.point[i] = p.h;
     }
     if(hasNormal) {
-        Entity n {};
+        Entity n { sketch };
         n.workplane = workplane;
         n.h = h.entity(32);
         n.group = group;
@@ -155,7 +155,7 @@ void Request::Generate(IdList<Entity,hEntity> *entity,
         e.normal = n.h;
     }
     if(hasDistance) {
-        Entity d {};
+        Entity d { sketch };
         d.workplane = workplane;
         d.h = h.entity(64);
         d.group = group;

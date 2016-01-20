@@ -22,7 +22,7 @@ bool GraphicsWindow::Selection::IsEmpty(void) {
 bool GraphicsWindow::Selection::IsStylable(void) {
     if(entity.v) return true;
     if(constraint.v) {
-        Constraint *c = SK.GetConstraint(constraint);
+        Constraint *c = sketch->GetConstraint(constraint);
         if(c->type == Constraint::COMMENT) return true;
     }
     return false;
@@ -30,7 +30,7 @@ bool GraphicsWindow::Selection::IsStylable(void) {
 
 bool GraphicsWindow::Selection::HasEndpoints(void) {
     if(!entity.v) return false;
-    Entity *e = SK.GetEntity(entity);
+    Entity *e = sketch->GetEntity(entity);
     return e->HasEndpoints();
 }
 
@@ -42,12 +42,12 @@ void GraphicsWindow::Selection::Clear(void) {
 void GraphicsWindow::Selection::Draw(void) {
     Vector refp = Vector::From(0, 0, 0);
     if(entity.v) {
-        Entity *e = SK.GetEntity(entity);
+        Entity *e = sketch->GetEntity(entity);
         e->Draw();
         if(emphasized) refp = e->GetReferencePos();
     }
     if(constraint.v) {
-        Constraint *c = SK.GetConstraint(constraint);
+        Constraint *c = sketch->GetConstraint(constraint);
         c->Draw();
         if(emphasized) refp = c->GetReferencePos();
     }
@@ -61,7 +61,7 @@ void GraphicsWindow::Selection::Draw(void) {
         topLeft = topLeft.Minus(SS.GW.offset);
 
         ssglLineWidth(40);
-        RgbaColor rgb = Style::Color(Style::HOVERED);
+        RgbaColor rgb = Style::Color(sketch, Style::HOVERED);
         glColor4d(rgb.redF(), rgb.greenF(), rgb.blueF(), 0.2);
         glBegin(GL_LINES);
             ssglVertex3v(topLeft);
@@ -82,11 +82,11 @@ void GraphicsWindow::ClearNonexistentSelectionItems(void) {
     Selection *s;
     selection.ClearTags();
     for(s = selection.First(); s; s = selection.NextAfter(s)) {
-        if(s->constraint.v && !(SK.constraint.FindByIdNoOops(s->constraint))) {
+        if(s->constraint.v && !(sketch->constraint.FindByIdNoOops(s->constraint))) {
             s->tag = 1;
             change = true;
         }
-        if(s->entity.v && !(SK.entity.FindByIdNoOops(s->entity))) {
+        if(s->entity.v && !(sketch->entity.FindByIdNoOops(s->entity))) {
             s->tag = 1;
             change = true;
         }
@@ -99,7 +99,7 @@ void GraphicsWindow::ClearNonexistentSelectionItems(void) {
 // Is this entity/constraint selected?
 //-----------------------------------------------------------------------------
 bool GraphicsWindow::IsSelected(hEntity he) {
-    Selection s {};
+    Selection s { sketch };
     s.entity = he;
     return IsSelected(&s);
 }
@@ -120,7 +120,7 @@ bool GraphicsWindow::IsSelected(Selection *st) {
 // would otherwise be impossible to de-select the lower of the two.
 //-----------------------------------------------------------------------------
 void GraphicsWindow::MakeUnselected(hEntity he, bool coincidentPointTrick) {
-    Selection stog {};
+    Selection stog { sketch };
     stog.entity = he;
     MakeUnselected(&stog, coincidentPointTrick);
 }
@@ -141,13 +141,13 @@ void GraphicsWindow::MakeUnselected(Selection *stog, bool coincidentPointTrick){
     // them. But make sure to deselect both, to avoid mysterious seeming
     // inability to deselect if the bottom one did somehow get selected.
     if(stog->entity.v && coincidentPointTrick) {
-        Entity *e = SK.GetEntity(stog->entity);
+        Entity *e = sketch->GetEntity(stog->entity);
         if(e->IsPoint()) {
             Vector ep = e->PointGetNum();
             for(s = selection.First(); s; s = selection.NextAfter(s)) {
                 if(!s->entity.v) continue;
                 if(s->entity.v == stog->entity.v) continue;
-                Entity *se = SK.GetEntity(s->entity);
+                Entity *se = sketch->GetEntity(s->entity);
                 if(!se->IsPoint()) continue;
                 if(ep.Equals(se->PointGetNum())) {
                     s->tag = 1;
@@ -162,7 +162,7 @@ void GraphicsWindow::MakeUnselected(Selection *stog, bool coincidentPointTrick){
 // Select an item, if it isn't selected already.
 //-----------------------------------------------------------------------------
 void GraphicsWindow::MakeSelected(hEntity he) {
-    Selection stog {};
+    Selection stog { sketch };
     stog.entity = he;
     MakeSelected(&stog);
 }
@@ -170,7 +170,7 @@ void GraphicsWindow::MakeSelected(Selection *stog) {
     if(stog->IsEmpty()) return;
     if(IsSelected(stog)) return;
 
-    if(stog->entity.v != 0 && SK.GetEntity(stog->entity)->IsFace()) {
+    if(stog->entity.v != 0 && sketch->GetEntity(stog->entity)->IsFace()) {
         // In the interest of speed for the triangle drawing code,
         // only two faces may be selected at a time.
         int c = 0;
@@ -178,7 +178,7 @@ void GraphicsWindow::MakeSelected(Selection *stog) {
         selection.ClearTags();
         for(s = selection.First(); s; s = selection.NextAfter(s)) {
             hEntity he = s->entity;
-            if(he.v != 0 && SK.GetEntity(he)->IsFace()) {
+            if(he.v != 0 && sketch->GetEntity(he)->IsFace()) {
                 c++;
                 if(c >= 2) s->tag = 1;
             }
@@ -202,14 +202,14 @@ void GraphicsWindow::SelectByMarquee(void) {
            ymax = max(orig.mouse.y, begin.y);
 
     Entity *e;
-    for(e = SK.entity.First(); e; e = SK.entity.NextAfter(e)) {
+    for(e = sketch->entity.First(); e; e = sketch->entity.NextAfter(e)) {
         if(e->group.v != SS.GW.activeGroup.v) continue;
         if(e->IsFace() || e->IsDistance()) continue;
         if(!e->IsVisible()) continue;
 
         if(e->IsPoint() || e->IsNormal()) {
             Vector p = e->IsPoint() ? e->PointGetNum() :
-                                      SK.GetEntity(e->point[0])->PointGetNum();
+                                      sketch->GetEntity(e->point[0])->PointGetNum();
             Point2d pp = ProjectPoint(p);
             if(pp.x >= xmin && pp.x <= xmax &&
                pp.y >= ymin && pp.y <= ymax)
@@ -257,7 +257,7 @@ void GraphicsWindow::GroupSelection(void) {
         if(s->entity.v) {
             (gs.n)++;
 
-            Entity *e = SK.entity.FindById(s->entity);
+            Entity *e = sketch->entity.FindById(s->entity);
             // A list of points, and a list of all entities that aren't points.
             if(e->IsPoint()) {
                 gs.point[(gs.points)++] = s->entity;
@@ -305,7 +305,7 @@ void GraphicsWindow::GroupSelection(void) {
         }
         if(s->constraint.v) {
             gs.constraint[(gs.constraints)++] = s->constraint;
-            Constraint *c = SK.GetConstraint(s->constraint);
+            Constraint *c = sketch->GetConstraint(s->constraint);
             if(c->type == Constraint::COMMENT) {
                 (gs.stylables)++;
                 (gs.comments)++;
@@ -317,12 +317,12 @@ void GraphicsWindow::GroupSelection(void) {
 void GraphicsWindow::HitTestMakeSelection(Point2d mp) {
     int i;
     double d, dmin = 1e12;
-    Selection s {};
+    Selection s { sketch };
 
     // Always do the entities; we might be dragging something that should
     // be auto-constrained, and we need the hover for that.
-    for(i = 0; i < SK.entity.n; i++) {
-        Entity *e = &(SK.entity.elem[i]);
+    for(i = 0; i < sketch->entity.n; i++) {
+        Entity *e = &(sketch->entity.elem[i]);
         // Don't hover whatever's being dragged.
         if(e->h.request().v == pending.point.request().v) {
             // The one exception is when we're creating a new cubic; we
@@ -330,7 +330,7 @@ void GraphicsWindow::HitTestMakeSelection(Point2d mp) {
             // how we turn it into a periodic spline.
             if(!e->IsPoint()) continue;
             if(!e->h.isFromRequest()) continue;
-            Request *r = SK.GetRequest(e->h.request());
+            Request *r = sketch->GetRequest(e->h.request());
             if(r->type != Request::CUBIC) continue;
             if(r->extraPoints < 2) continue;
             if(e->h.v != r->h.entity(1).v) continue;
@@ -338,7 +338,7 @@ void GraphicsWindow::HitTestMakeSelection(Point2d mp) {
 
         d = e->GetDistance(mp);
         if(d < 10 && d < dmin) {
-            s = {};
+            s = Selection{ sketch };
             s.entity = e->h;
             dmin = d;
         }
@@ -347,18 +347,18 @@ void GraphicsWindow::HitTestMakeSelection(Point2d mp) {
     // The constraints and faces happen only when nothing's in progress.
     if(pending.operation == 0) {
         // Constraints
-        for(i = 0; i < SK.constraint.n; i++) {
-            d = SK.constraint.elem[i].GetDistance(mp);
+        for(i = 0; i < sketch->constraint.n; i++) {
+            d = sketch->constraint.elem[i].GetDistance(mp);
             if(d < 10 && d < dmin) {
-                s = {};
-                s.constraint = SK.constraint.elem[i].h;
+                s = Selection{ sketch };
+                s.constraint = sketch->constraint.elem[i].h;
                 dmin = d;
             }
         }
 
         // Faces, from the triangle mesh; these are lowest priority
         if(s.constraint.v == 0 && s.entity.v == 0 && showShaded && showFaces) {
-            Group *g = SK.GetGroup(activeGroup);
+            Group *g = sketch->GetGroup(activeGroup);
             SMesh *m = &(g->displayMesh);
 
             uint32_t v = m->FirstIntersectionWith(mp);
@@ -512,7 +512,7 @@ void GraphicsWindow::Paint(void) {
                      SS.backgroundColor.blueF(), 1.0f);
     } else {
         // Draw a different background whenever we're having solve problems.
-        RgbaColor rgb = Style::Color(Style::DRAW_ERROR);
+        RgbaColor rgb = Style::Color(sketch, Style::DRAW_ERROR);
         glClearColor(0.4f*rgb.redF(), 0.4f*rgb.greenF(), 0.4f*rgb.blueF(), 1.0f);
         // And show the text window, which has info to debug it
         ForceTextWindowShown();
@@ -608,10 +608,10 @@ void GraphicsWindow::Paint(void) {
 
     if(showSnapGrid && LockedInWorkplane()) {
         hEntity he = ActiveWorkplane();
-        EntityBase *wrkpl = SK.GetEntity(he),
+        EntityBase *wrkpl = sketch->GetEntity(he),
                    *norm  = wrkpl->Normal();
         Vector wu, wv, wn, wp;
-        wp = SK.GetEntity(wrkpl->point[0])->PointGetNum();
+        wp = sketch->GetEntity(wrkpl->point[0])->PointGetNum();
         wu = norm->NormalU();
         wv = norm->NormalV();
         wn = norm->NormalN();
@@ -661,7 +661,7 @@ void GraphicsWindow::Paint(void) {
         if(j0 > j1 || j1 - j0 > 400) goto nogrid;
 
         ssglLineWidth(1);
-        ssglColorRGBa(Style::Color(Style::DATUM), 0.3);
+        ssglColorRGBa(Style::Color(sketch, Style::DATUM), 0.3);
         glBegin(GL_LINES);
         for(i = i0 + 1; i < i1; i++) {
             ssglVertex3v(wp.Plus(wu.ScaledBy(i*g)).Plus(wv.ScaledBy(j0*g)));
@@ -680,18 +680,18 @@ nogrid:;
     }
 
     // Draw the active group; this does stuff like the mesh and edges.
-    (SK.GetGroup(activeGroup))->Draw();
+    (sketch->GetGroup(activeGroup))->Draw();
 
     // Now draw the entities
     if(showHdnLines) glDisable(GL_DEPTH_TEST);
-    Entity::DrawAll();
+    Entity::DrawAll(sketch);
 
     // Draw filled paths in all groups, when those filled paths were requested
     // specially by assigning a style with a fill color, or when the filled
     // paths are just being filled by default. This should go last, to make
     // the transparency work.
     Group *g;
-    for(g = SK.group.First(); g; g = SK.group.NextAfter(g)) {
+    for(g = sketch->group.First(); g; g = sketch->group.NextAfter(g)) {
         if(!(g->IsVisible())) continue;
         g->DrawFilledPaths();
     }
@@ -699,8 +699,8 @@ nogrid:;
 
     glDisable(GL_DEPTH_TEST);
     // Draw the constraints
-    for(i = 0; i < SK.constraint.n; i++) {
-        SK.constraint.elem[i].Draw();
+    for(i = 0; i < sketch->constraint.n; i++) {
+        sketch->constraint.elem[i].Draw();
     }
 
     // Draw the "pending" constraint, i.e. a constraint that would be
@@ -709,7 +709,7 @@ nogrid:;
         SuggestedConstraint suggested =
             SS.GW.SuggestLineConstraint(SS.GW.pending.request);
         if(suggested != GraphicsWindow::SUGGESTED_NONE) {
-            Constraint c {};
+            Constraint c { sketch };
             c.group = SS.GW.activeGroup;
             c.workplane = SS.GW.ActiveWorkplane();
             c.type = suggested;
@@ -725,8 +725,8 @@ nogrid:;
     }
 
     // Draw the traced path, if one exists
-    ssglLineWidth(Style::Width(Style::ANALYZE));
-    ssglColorRGB(Style::Color(Style::ANALYZE));
+    ssglLineWidth(Style::Width(sketch, Style::ANALYZE));
+    ssglColorRGB(Style::Color(sketch, Style::ANALYZE));
     SContour *sc = &(SS.traced.path);
     glBegin(GL_LINE_STRIP);
     for(i = 0; i < sc->l.n; i++) {
@@ -735,17 +735,17 @@ nogrid:;
     glEnd();
 
     // And the naked edges, if the user did Analyze -> Show Naked Edges.
-    ssglLineWidth(Style::Width(Style::DRAW_ERROR));
-    ssglColorRGB(Style::Color(Style::DRAW_ERROR));
+    ssglLineWidth(Style::Width(sketch, Style::DRAW_ERROR));
+    ssglColorRGB(Style::Color(sketch, Style::DRAW_ERROR));
     ssglDrawEdges(&(SS.nakedEdges), true);
 
     // Then redraw whatever the mouse is hovering over, highlighted.
     glDisable(GL_DEPTH_TEST);
-    ssglLockColorTo(Style::Color(Style::HOVERED));
+    ssglLockColorTo(Style::Color(sketch, Style::HOVERED));
     hover.Draw();
 
     // And finally draw the selection, same mechanism.
-    ssglLockColorTo(Style::Color(Style::SELECTED));
+    ssglLockColorTo(Style::Color(sketch, Style::SELECTED));
     for(Selection *s = selection.First(); s; s = selection.NextAfter(s)) {
         s->Draw();
     }
@@ -767,14 +767,14 @@ nogrid:;
                bl = UnProjectPoint(Point2d::From(xmin, ymax));
 
         ssglLineWidth((GLfloat)1.3);
-        ssglColorRGB(Style::Color(Style::HOVERED));
+        ssglColorRGB(Style::Color(sketch, Style::HOVERED));
         glBegin(GL_LINE_LOOP);
             ssglVertex3v(tl);
             ssglVertex3v(tr);
             ssglVertex3v(br);
             ssglVertex3v(bl);
         glEnd();
-        ssglColorRGBa(Style::Color(Style::HOVERED), 0.10);
+        ssglColorRGBa(Style::Color(sketch, Style::HOVERED), 0.10);
         glBegin(GL_QUADS);
             ssglVertex3v(tl);
             ssglVertex3v(tr);
@@ -787,7 +787,7 @@ nogrid:;
     // plane of the monitor.
     if(SS.extraLine.draw) {
         ssglLineWidth(1);
-        ssglLockColorTo(Style::Color(Style::DATUM));
+        ssglLockColorTo(Style::Color(sketch, Style::DATUM));
         glBegin(GL_LINES);
             ssglVertex3v(SS.extraLine.ptA);
             ssglVertex3v(SS.extraLine.ptB);
@@ -796,7 +796,7 @@ nogrid:;
 
     // A note to indicate the origin in the just-exported file.
     if(SS.justExportedInfo.draw) {
-        ssglColorRGB(Style::Color(Style::DATUM));
+        ssglColorRGB(Style::Color(sketch, Style::DATUM));
         Vector p = SS.justExportedInfo.pt,
                u = SS.justExportedInfo.u,
                v = SS.justExportedInfo.v;

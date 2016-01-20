@@ -9,7 +9,7 @@
 #include <slvs.h>
 
 Sketch SolveSpace::SK {};
-static System SYS;
+static System SYS { &SK };
 
 static int IsInit = 0;
 
@@ -100,7 +100,7 @@ void Slvs_Solve(Slvs_System *ssys, Slvs_hGroup shg)
 
     for(i = 0; i < ssys->entities; i++) {
         Slvs_Entity *se = &(ssys->entity[i]);
-        EntityBase e {};
+        EntityBase e { &SK };
 
         switch(se->type) {
 case SLVS_E_POINT_IN_3D:        e.type = Entity::POINT_IN_3D; break;
@@ -135,7 +135,7 @@ default: dbp("bad entity type %d", se->type); return;
 
     for(i = 0; i < ssys->constraints; i++) {
         Slvs_Constraint *sc = &(ssys->constraint[i]);
-        ConstraintBase c {};
+        ConstraintBase c { &SK };
 
         int t;
         switch(sc->type) {
@@ -202,7 +202,7 @@ default: dbp("bad constraint type %d", sc->type); return;
         }
     }
 
-    Group g {};
+    Group g { &SK };
     g.h.v = shg;
 
     List<hConstraint> bad {};

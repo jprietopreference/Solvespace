@@ -36,8 +36,8 @@ public:
         EDGE_OTHER        = 500
     };
 
-    static SBspUv *Alloc(void);
-    static SBspUv *From(SEdgeList *el, SSurface *srf);
+    static SBspUv *Alloc(Sketch *sk);
+    static SBspUv *From(Sketch *sk, SEdgeList *el, SSurface *srf);
 
     void ScalePoints(Point2d *pt, Point2d *a, Point2d *b, SSurface *srf);
     double ScaledSignedDistanceToLine(Point2d pt, Point2d a, Point2d b,
@@ -45,7 +45,7 @@ public:
     double ScaledDistanceToLine(Point2d pt, Point2d a, Point2d b, bool seg,
         SSurface *srf);
 
-    SBspUv *InsertEdge(Point2d a, Point2d b, SSurface *srf);
+    SBspUv *InsertEdge(Sketch *sk, Point2d a, Point2d b, SSurface *srf);
     int ClassifyPoint(Point2d p, Point2d eb, SSurface *srf);
     int ClassifyEdge(Point2d ea, Point2d eb, SSurface *srf);
     double MinimumDistanceToEdge(Point2d p, SSurface *srf);
@@ -355,6 +355,9 @@ public:
 
 class SShell {
 public:
+    Sketch *sketch = NULL;
+    SShell(Sketch *sk) : sketch(sk) { }
+    
     IdList<SCurve,hSCurve>      curve;
     IdList<SSurface,hSSurface>  surface;
 

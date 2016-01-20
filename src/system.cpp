@@ -41,7 +41,7 @@ bool System::WriteJacobian(int tag) {
         if(e->tag != tag) continue;
 
         mat.eq[i] = e->h;
-        Expr *f = e->e->DeepCopyWithParamsAsPointers(&param, &(SK.param));
+        Expr *f = e->e->DeepCopyWithParamsAsPointers(&param, &(sketch->param));
         f = f->FoldConstants();
 
         // Hash table (61 bits) to accelerate generation of zero partials.
@@ -53,9 +53,9 @@ bool System::WriteJacobian(int tag) {
             {
                 pd = f->PartialWrt(mat.param[j]);
                 pd = pd->FoldConstants();
-                pd = pd->DeepCopyWithParamsAsPointers(&param, &(SK.param));
+                pd = pd->DeepCopyWithParamsAsPointers(&param, &(sketch->param));
             } else {
-                pd = Expr::From(0.0);
+                pd = Expr::From(f->sketch, 0.0);
             }
             mat.A.sym[i][j] = pd;
         }
@@ -322,8 +322,8 @@ bool System::NewtonSolve(int tag) {
 void System::WriteEquationsExceptFor(hConstraint hc, Group *g) {
     int i;
     // Generate all the equations from constraints in this group
-    for(i = 0; i < SK.constraint.n; i++) {
-        ConstraintBase *c = &(SK.constraint.elem[i]);
+    for(i = 0; i < sketch->constraint.n; i++) {
+        ConstraintBase *c = &(sketch->constraint.elem[i]);
         if(c->group.v != g->h.v) continue;
         if(c->h.v == hc.v) continue;
 
@@ -345,8 +345,8 @@ void System::WriteEquationsExceptFor(hConstraint hc, Group *g) {
         c->Generate(&eq);
     }
     // And the equations from entities
-    for(i = 0; i < SK.entity.n; i++) {
-        EntityBase *e = &(SK.entity.elem[i]);
+    for(i = 0; i < sketch->entity.n; i++) {
+        EntityBase *e = &(sketch->entity.elem[i]);
         if(e->group.v != g->h.v) continue;
 
         e->GenerateEquations(&eq);
@@ -359,8 +359,8 @@ void System::FindWhichToRemoveToFixJacobian(Group *g, List<hConstraint> *bad) {
     int a, i;
 
     for(a = 0; a < 2; a++) {
-        for(i = 0; i < SK.constraint.n; i++) {
-            ConstraintBase *c = &(SK.constraint.elem[i]);
+        for(i = 0; i < sketch->constraint.n; i++) {
+            ConstraintBase *c = &(sketch->constraint.elem[i]);
             if(c->group.v != g->h.v) continue;
             if((c->type == Constraint::POINTS_COINCIDENT && a == 0) ||
                (c->type != Constraint::POINTS_COINCIDENT && a == 1))
@@ -496,7 +496,7 @@ int System::Solve(Group *g, int *dof, List<hConstraint> *bad,
         } else {
             val = p->val;
         }
-        Param *pp = SK.GetParam(p->h);
+        Param *pp = sketch->GetParam(p->h);
         pp->val = val;
         pp->known = true;
         pp->free = p->free;
@@ -504,14 +504,14 @@ int System::Solve(Group *g, int *dof, List<hConstraint> *bad,
     return System::SOLVED_OKAY;
 
 didnt_converge:
-    SK.constraint.ClearTags();
+    sketch->constraint.ClearTags();
     for(i = 0; i < eq.n; i++) {
         if(ffabs(mat.B.num[i]) > CONVERGE_TOLERANCE || isnan(mat.B.num[i])) {
             // This constraint is unsatisfied.
             if(!mat.eq[i].isFromConstraint()) continue;
 
             hConstraint hc = mat.eq[i].constraint();
-            ConstraintBase *c = SK.constraint.FindByIdNoOops(hc);
+            ConstraintBase *c = sketch->constraint.FindByIdNoOops(hc);
             if(!c) continue;
             // Don't double-show constraints that generated multiple
             // unsatisfied equations

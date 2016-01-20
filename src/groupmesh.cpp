@@ -16,8 +16,8 @@ void Group::AssembleLoops(bool *allClosed,
     SBezierList sbl {};
 
     int i;
-    for(i = 0; i < SK.entity.n; i++) {
-        Entity *e = &(SK.entity.elem[i]);
+    for(i = 0; i < sketch->entity.n; i++) {
+        Entity *e = &(sketch->entity.elem[i]);
         if(e->group.v != h.v) continue;
         if(e->construction) continue;
         if(e->forceHidden) continue;
@@ -74,7 +74,7 @@ void Group::GenerateLoops(void) {
             // The self-intersecting check is kind of slow, so don't run it
             // unless requested.
             if(SS.checkClosedContour) {
-                if(polyLoops.SelfIntersecting(&(polyError.errorPointAt))) {
+                if(polyLoops.SelfIntersecting(sketch, &(polyError.errorPointAt))) {
                     polyError.how = POLY_SELF_INTERSECTING;
                 }
             }
@@ -106,9 +106,8 @@ void SMesh::RemapFaces(Group *g, int remap) {
 
 template<class T>
 void Group::GenerateForStepAndRepeat(T *steps, T *outs) {
-    T workA, workB;
-    workA = {};
-    workB = {};
+    T workA { sketch };
+    T workB { sketch };
     T *soFar = &workA, *scratch = &workB;
 
     int n = (int)valA, a0 = 0;
@@ -120,17 +119,17 @@ void Group::GenerateForStepAndRepeat(T *steps, T *outs) {
         int ap = a*2 - (subtype == ONE_SIDED ? 0 : (n-1));
         int remap = (a == (n - 1)) ? REMAP_LAST : a;
 
-        T transd {};
+        T transd { sketch };
         if(type == TRANSLATE) {
-            Vector trans = Vector::From(h.param(0), h.param(1), h.param(2));
+            Vector trans = Vector::From(sketch, h.param(0), h.param(1), h.param(2));
             trans = trans.ScaledBy(ap);
             transd.MakeFromTransformationOf(steps,
                 trans, Quaternion::IDENTITY, 1.0);
         } else {
-            Vector trans = Vector::From(h.param(0), h.param(1), h.param(2));
-            double theta = ap * SK.GetParam(h.param(3))->val;
+            Vector trans = Vector::From(sketch, h.param(0), h.param(1), h.param(2));
+            double theta = ap * sketch->GetParam(h.param(3))->val;
             double c = cos(theta), s = sin(theta);
-            Vector axis = Vector::From(h.param(4), h.param(5), h.param(6));
+            Vector axis = Vector::From(sketch, h.param(4), h.param(5), h.param(6));
             Quaternion q = Quaternion::From(c, s*axis.x, s*axis.y, s*axis.z);
             // Rotation is centered at t; so A(x - t) + t = Ax + (t - At)
             transd.MakeFromTransformationOf(steps,
@@ -192,7 +191,7 @@ void Group::GenerateShellAndMesh(void) {
     // planar and not self-intersecting.
     bool haveSrc = true;
     if(type == EXTRUDE || type == LATHE) {
-        Group *src = SK.GetGroup(opA);
+        Group *src = sketch->GetGroup(opA);
         if(src->polyError.how != POLY_GOOD) {
             haveSrc = false;
         }
@@ -201,13 +200,13 @@ void Group::GenerateShellAndMesh(void) {
     if(type == TRANSLATE || type == ROTATE) {
         // A step and repeat gets merged against the group's prevous group,
         // not our own previous group.
-        srcg = SK.GetGroup(opA);
+        srcg = sketch->GetGroup(opA);
 
         GenerateForStepAndRepeat<SShell>(&(srcg->thisShell), &thisShell);
         GenerateForStepAndRepeat<SMesh> (&(srcg->thisMesh),  &thisMesh);
     } else if(type == EXTRUDE && haveSrc) {
-        Group *src = SK.GetGroup(opA);
-        Vector translate = Vector::From(h.param(0), h.param(1), h.param(2));
+        Group *src = sketch->GetGroup(opA);
+        Vector translate = Vector::From(sketch, h.param(0), h.param(1), h.param(2));
 
         Vector tbot, ttop;
         if(subtype == ONE_SIDED) {
@@ -252,12 +251,12 @@ void Group::GenerateShellAndMesh(void) {
                 if(ss->degm != 1 || ss->degn != 1) continue;
 
                 Entity *e;
-                for(e = SK.entity.First(); e; e = SK.entity.NextAfter(e)) {
+                for(e = sketch->entity.First(); e; e = sketch->entity.NextAfter(e)) {
                     if(e->group.v != opA.v) continue;
                     if(e->type != Entity::LINE_SEGMENT) continue;
 
-                    Vector a = SK.GetEntity(e->point[0])->PointGetNum(),
-                           b = SK.GetEntity(e->point[1])->PointGetNum();
+                    Vector a = sketch->GetEntity(e->point[0])->PointGetNum(),
+                           b = sketch->GetEntity(e->point[1])->PointGetNum();
                     a = a.Plus(ttop);
                     b = b.Plus(ttop);
                     // Could get taken backwards, so check all cases.
@@ -274,10 +273,10 @@ void Group::GenerateShellAndMesh(void) {
             }
         }
     } else if(type == LATHE && haveSrc) {
-        Group *src = SK.GetGroup(opA);
+        Group *src = sketch->GetGroup(opA);
 
-        Vector pt   = SK.GetEntity(predef.origin)->PointGetNum(),
-               axis = SK.GetEntity(predef.entityB)->VectorGetNum();
+        Vector pt   = sketch->GetEntity(predef.origin)->PointGetNum(),
+               axis = sketch->GetEntity(predef.entityB)->VectorGetNum();
         axis = axis.WithMagnitude(1);
 
         SBezierLoopSetSet *sblss = &(src->bezierLoops);
@@ -289,14 +288,14 @@ void Group::GenerateShellAndMesh(void) {
         // The imported shell or mesh are copied over, with the appropriate
         // transformation applied. We also must remap the face entities.
         Vector offset {
-            SK.GetParam(h.param(0))->val,
-            SK.GetParam(h.param(1))->val,
-            SK.GetParam(h.param(2))->val };
+            sketch->GetParam(h.param(0))->val,
+            sketch->GetParam(h.param(1))->val,
+            sketch->GetParam(h.param(2))->val };
         Quaternion q {
-            SK.GetParam(h.param(3))->val,
-            SK.GetParam(h.param(4))->val,
-            SK.GetParam(h.param(5))->val,
-            SK.GetParam(h.param(6))->val };
+            sketch->GetParam(h.param(3))->val,
+            sketch->GetParam(h.param(4))->val,
+            sketch->GetParam(h.param(5))->val,
+            sketch->GetParam(h.param(6))->val };
 
         thisMesh.MakeFromTransformationOf(&impMesh, offset, q, scale);
         thisMesh.RemapFaces(this, 0);
@@ -331,9 +330,8 @@ void Group::GenerateShellAndMesh(void) {
             SS.ScheduleShowTW();
         }
     } else {
-        SMesh prevm, thism;
-        prevm = {};
-        thism = {};
+        SMesh prevm { sketch };
+        SMesh thism { sketch };
 
         prevm.MakeFromCopyOf(&(prevg->runningMesh));
         prevg->runningShell.TriangulateInto(&prevm);
@@ -341,7 +339,7 @@ void Group::GenerateShellAndMesh(void) {
         thism.MakeFromCopyOf(&thisMesh);
         thisShell.TriangulateInto(&thism);
 
-        SMesh outm {};
+        SMesh outm { sketch };
         GenerateForBoolean<SMesh>(&prevm, &thism, &outm, srcg->meshCombine);
 
         // And make sure that the output mesh is vertex-to-vertex.
@@ -414,17 +412,17 @@ void Group::GenerateDisplayItems(void) {
 
 Group *Group::PreviousGroup(void) {
     int i;
-    for(i = 0; i < SK.group.n; i++) {
-        Group *g = &(SK.group.elem[i]);
+    for(i = 0; i < sketch->group.n; i++) {
+        Group *g = &(sketch->group.elem[i]);
         if(g->h.v == h.v) break;
     }
-    if(i == 0 || i >= SK.group.n) return NULL;
-    return &(SK.group.elem[i-1]);
+    if(i == 0 || i >= sketch->group.n) return NULL;
+    return &(sketch->group.elem[i-1]);
 }
 
 Group *Group::RunningMeshGroup(void) {
     if(type == TRANSLATE || type == ROTATE) {
-        return SK.GetGroup(opA)->RunningMeshGroup();
+        return sketch->GetGroup(opA)->RunningMeshGroup();
     } else {
         return PreviousGroup();
     }
@@ -435,7 +433,7 @@ void Group::DrawDisplayItems(int t) {
     bool useSpecColor;
     if(t == DRAWING_3D || t == DRAWING_WORKPLANE) {
         // force the color to something dim
-        specColor = Style::Color(Style::DIM_SOLID);
+        specColor = Style::Color(sketch, Style::DIM_SOLID);
         useSpecColor = true;
     } else {
         useSpecColor = false; // use the model color
@@ -449,7 +447,7 @@ void Group::DrawDisplayItems(int t) {
     // or hovered, in order to draw them differently.
     uint32_t mh = 0, ms1 = 0, ms2 = 0;
     hEntity he = SS.GW.hover.entity;
-    if(he.v != 0 && SK.GetEntity(he)->IsFace()) {
+    if(he.v != 0 && sketch->GetEntity(he)->IsFace()) {
         mh = he.v;
     }
     SS.GW.GroupSelection();
@@ -466,14 +464,14 @@ void Group::DrawDisplayItems(int t) {
         }
 
         glEnable(GL_LIGHTING);
-        ssglFillMesh(useSpecColor, specColor, &displayMesh, mh, ms1, ms2);
+        ssglFillMesh(sketch, useSpecColor, specColor, &displayMesh, mh, ms1, ms2);
         glDisable(GL_LIGHTING);
     }
 
     if(SS.GW.showEdges) {
         ssglDepthRangeOffset(2);
-        ssglColorRGB(Style::Color(Style::SOLID_EDGE));
-        ssglLineWidth(Style::Width(Style::SOLID_EDGE));
+        ssglColorRGB(Style::Color(sketch, Style::SOLID_EDGE));
+        ssglLineWidth(Style::Width(sketch, Style::SOLID_EDGE));
         ssglDrawEdges(&displayEdges, false);
     }
 
@@ -497,13 +495,13 @@ void Group::Draw(void) {
         // it's just a nuisance.
         if(type == DRAWING_WORKPLANE) {
             glDisable(GL_DEPTH_TEST);
-            ssglColorRGBa(Style::Color(Style::DRAW_ERROR), 0.2);
-            ssglLineWidth (Style::Width(Style::DRAW_ERROR));
+            ssglColorRGBa(Style::Color(sketch, Style::DRAW_ERROR), 0.2);
+            ssglLineWidth (Style::Width(sketch, Style::DRAW_ERROR));
             glBegin(GL_LINES);
                 ssglVertex3v(polyError.notClosedAt.a);
                 ssglVertex3v(polyError.notClosedAt.b);
             glEnd();
-            ssglColorRGB(Style::Color(Style::DRAW_ERROR));
+            ssglColorRGB(Style::Color(sketch, Style::DRAW_ERROR));
             ssglWriteText("not closed contour, or not all same style!",
                 DEFAULT_TEXT_HEIGHT,
                 polyError.notClosedAt.b, SS.GW.projRight, SS.GW.projUp,
@@ -517,7 +515,7 @@ void Group::Draw(void) {
         // These errors occur at points, not lines
         if(type == DRAWING_WORKPLANE) {
             glDisable(GL_DEPTH_TEST);
-            ssglColorRGB(Style::Color(Style::DRAW_ERROR));
+            ssglColorRGB(Style::Color(sketch, Style::DRAW_ERROR));
             const char *msg;
             if(polyError.how == POLY_NOT_COPLANAR) {
                 msg = "points not all coplanar!";
@@ -554,7 +552,7 @@ void Group::DrawFilledPaths(void) {
         // matter which one we grab.
         SBezier *sb = &(sbls->l.elem[0].l.elem[0]);
         hStyle hs { (uint32_t)sb->auxA };
-        Style *s = Style::Get(hs);
+        Style *s = Style::Get(sketch, hs);
         if(s->filled) {
             // This is a filled loop, where the user specified a fill color.
             ssglColorRGBa(s->fillColor, 1);
@@ -566,7 +564,7 @@ void Group::DrawFilledPaths(void) {
                 // If this is the active group, and we are supposed to check
                 // for closed contours, and we do indeed have a closed and
                 // non-intersecting contour, then fill it dimly.
-                ssglColorRGBa(Style::Color(Style::CONTOUR_FILL), 0.5);
+                ssglColorRGBa(Style::Color(sketch, Style::CONTOUR_FILL), 0.5);
                 ssglDepthRangeOffset(1);
                 FillLoopSetAsPolygon(sbls);
                 ssglDepthRangeOffset(0);

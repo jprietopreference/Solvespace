@@ -9,6 +9,7 @@
 #define __EXPR_H
 
 class Expr;
+class Sketch;
 
 class Expr {
 public:
@@ -48,6 +49,7 @@ public:
 
     int op  = UNKNOWN;
     Expr *a = NULL;
+    Sketch *sketch = NULL;
     union {
         double  v;
         uint32_t  parhv;
@@ -64,8 +66,9 @@ public:
     static inline Expr *AllocExpr(void)
         { return (Expr *)AllocTemporary(sizeof(Expr)); }
 
-    static Expr *From(hParam p);
-    static Expr *From(double v);
+    static Expr *From(Sketch *sk, hParam p);
+    static Expr *From(Sketch *sk, double v);
+    static Expr *From(Sketch *sk);
 
     Expr *AnyOp(int op, Expr *b);
     inline Expr *Plus (Expr *b_) { return AnyOp(PLUS,  b_); }
@@ -109,8 +112,8 @@ public:
     Expr *DeepCopyWithParamsAsPointers(IdList<Param,hParam> *firstTry,
         IdList<Param,hParam> *thenTry);
 
-    static Expr *From(const char *in, bool popUpError);
-    static void  Lex(const char *in);
+    static Expr *From(Sketch *sk, const char *in, bool popUpError);
+    static void  Lex(Sketch *sk, const char *in);
     static Expr *Next(void);
     static void  Consume(void);
 
@@ -125,7 +128,7 @@ public:
     static int Precedence(Expr *e);
 
     static int Precedence(int op);
-    static void Parse(void);
+    static void Parse(Sketch *sk);
 };
 
 class ExprVector {
@@ -133,9 +136,9 @@ public:
     Expr *x, *y, *z;
 
     static ExprVector From(Expr *x, Expr *y, Expr *z);
-    static ExprVector From(Vector vn);
-    static ExprVector From(hParam x, hParam y, hParam z);
-    static ExprVector From(double x, double y, double z);
+    static ExprVector From(Sketch *sk, Vector vn);
+    static ExprVector From(Sketch *sk, hParam x, hParam y, hParam z);
+    static ExprVector From(Sketch *sk, double x, double y, double z);
 
     ExprVector Plus(ExprVector b);
     ExprVector Minus(ExprVector b);
@@ -153,8 +156,8 @@ public:
     Expr *w, *vx, *vy, *vz;
 
     static ExprQuaternion From(Expr *w, Expr *vx, Expr *vy, Expr *vz);
-    static ExprQuaternion From(Quaternion qn);
-    static ExprQuaternion From(hParam w, hParam vx, hParam vy, hParam vz);
+    static ExprQuaternion From(Sketch *sk, Quaternion qn);
+    static ExprQuaternion From(Sketch *sk, hParam w, hParam vx, hParam vy, hParam vz);
 
     ExprVector RotationU(void);
     ExprVector RotationV(void);

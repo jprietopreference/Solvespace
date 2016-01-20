@@ -13,6 +13,7 @@ class SPolygon;
 class SContour;
 class SMesh;
 class SBsp3;
+class Sketch;
 
 class SEdge {
 public:
@@ -51,7 +52,7 @@ public:
     SEdge       *se;
     SEdgeLl     *next;
 
-    static SEdgeLl *Alloc(void);
+    static SEdgeLl *Alloc(Sketch *sk);
 };
 
 class SKdNodeEdges {
@@ -63,9 +64,9 @@ public:
 
     SEdgeLl         *edges;
 
-    static SKdNodeEdges *From(SEdgeList *sel);
-    static SKdNodeEdges *From(SEdgeLl *sell);
-    static SKdNodeEdges *Alloc(void);
+    static SKdNodeEdges *From(Sketch *sk, SEdgeList *sel);
+    static SKdNodeEdges *From(Sketch *sk, SEdgeLl *sell);
+    static SKdNodeEdges *Alloc(Sketch *sk);
     int AnyEdgeCrossings(Vector a, Vector b, int cnt,
         Vector *pi=NULL, SPointList *spl=NULL);
 };
@@ -139,7 +140,7 @@ public:
     void MakeEdgesInto(SEdgeList *el);
     void FixContourDirections(void);
     void Clear(void);
-    bool SelfIntersecting(Vector *intersectsAt);
+    bool SelfIntersecting(Sketch *sk, Vector *intersectsAt);
     bool IsEmpty(void);
     Vector AnyPoint(void);
     void OffsetInto(SPolygon *dest, double r);
@@ -180,8 +181,8 @@ public:
     void InsertTriangleHow(int how, STriangle *tr, SMesh *m, SBsp3 *bsp3);
     void InsertTriangle(STriangle *tr, SMesh *m, SBsp3 *bsp3);
     Vector IntersectionWith(Vector a, Vector b);
-    SBsp2 *InsertEdge(SEdge *nedge, Vector nnp, Vector out);
-    static SBsp2 *Alloc(void);
+    SBsp2 *InsertEdge(Sketch *sk, SEdge *nedge, Vector nnp, Vector out);
+    static SBsp2 *Alloc(Sketch *sk);
 
     void DebugDraw(Vector n, double d);
 };
@@ -199,18 +200,18 @@ public:
 
     SBsp2       *edges;
 
-    static SBsp3 *Alloc(void);
+    static SBsp3 *Alloc(Sketch *sk);
     static SBsp3 *FromMesh(SMesh *m);
 
     Vector IntersectionWith(Vector a, Vector b);
 
     enum { POS = 100, NEG = 101, COPLANAR = 200 };
-    void InsertHow(int how, STriangle *str, SMesh *instead);
-    SBsp3 *Insert(STriangle *str, SMesh *instead);
+    void InsertHow(Sketch *sk, int how, STriangle *str, SMesh *instead);
+    SBsp3 *Insert(Sketch *sk, STriangle *str, SMesh *instead);
 
-    void InsertConvexHow(int how, STriMeta meta, Vector *vertex, int n,
+    void InsertConvexHow(Sketch *sk, int how, STriMeta meta, Vector *vertex, int n,
                                 SMesh *instead);
-    SBsp3 *InsertConvex(STriMeta meta, Vector *vertex, int n, SMesh *instead);
+    SBsp3 *InsertConvex(Sketch *sk, STriMeta meta, Vector *vertex, int n, SMesh *instead);
 
     void InsertInPlane(bool pos2, STriangle *tr, SMesh *m);
 
@@ -221,6 +222,9 @@ public:
 
 class SMesh {
 public:
+    Sketch      *sketch = NULL;
+    SMesh(Sketch *sk) : sketch(sk) { }
+    
     List<STriangle>     l;
 
     bool    flipNormal              = false;
@@ -262,7 +266,7 @@ public:
 
     STriangleLl     *next;
 
-    static STriangleLl *Alloc(void);
+    static STriangleLl *Alloc(Sketch *sk);
 };
 
 class SKdNode {
@@ -275,11 +279,11 @@ public:
 
     STriangleLl  *tris;
 
-    static SKdNode *Alloc(void);
+    static SKdNode *Alloc(Sketch *sk);
     static SKdNode *From(SMesh *m);
-    static SKdNode *From(STriangleLl *tll);
+    static SKdNode *From(Sketch *sk, STriangleLl *tll);
 
-    void AddTriangle(STriangle *tr);
+    void AddTriangle(Sketch *sk, STriangle *tr);
     void MakeMeshInto(SMesh *m);
     void ClearTags(void);
 
@@ -292,7 +296,7 @@ public:
         TURNING_EDGES              = 300,
         EMPHASIZED_EDGES           = 400
     };
-    void MakeCertainEdgesInto(SEdgeList *sel, int how, bool coplanarIsInter,
+    void MakeCertainEdgesInto(Sketch *sk, SEdgeList *sel, int how, bool coplanarIsInter,
                                                 bool *inter, bool *leaky);
 
     void OcclusionTestLine(SEdge orig, SEdgeList *sel, int cnt);

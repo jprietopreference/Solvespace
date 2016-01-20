@@ -21,21 +21,21 @@ void SolveSpaceUI::ClearExisting(void) {
     UndoClearStack(&undo);
 
     Group *g;
-    for(g = SK.group.First(); g; g = SK.group.NextAfter(g)) {
+    for(g = sketch->group.First(); g; g = sketch->group.NextAfter(g)) {
         g->Clear();
     }
 
-    SK.constraint.Clear();
-    SK.request.Clear();
-    SK.group.Clear();
-    SK.style.Clear();
+    sketch->constraint.Clear();
+    sketch->request.Clear();
+    sketch->group.Clear();
+    sketch->style.Clear();
 
-    SK.entity.Clear();
-    SK.param.Clear();
+    sketch->entity.Clear();
+    sketch->param.Clear();
 }
 
 hGroup SolveSpaceUI::CreateDefaultDrawingGroup(void) {
-    Group g {};
+    Group g { sketch };
 
     // And an empty group, for the first stuff the user draws.
     g.visible = true;
@@ -45,8 +45,8 @@ hGroup SolveSpaceUI::CreateDefaultDrawingGroup(void) {
     hRequest hr = Request::HREQUEST_REFERENCE_XY;
     g.predef.origin = hr.entity(1);
     g.name = "sketch-in-plane";
-    SK.group.AddAndAssignId(&g);
-    SK.GetGroup(g.h)->activeWorkplane = g.h.entity(0);
+    sketch->group.AddAndAssignId(&g);
+    sketch->GetGroup(g.h)->activeWorkplane = g.h.entity(0);
     return g.h;
 }
 
@@ -54,28 +54,28 @@ void SolveSpaceUI::NewFile(void) {
     ClearExisting();
 
     // Our initial group, that contains the references.
-    Group g {};
+    Group g { sketch };
     g.visible = true;
     g.name = "#references";
     g.type = Group::DRAWING_3D;
     g.h = Group::HGROUP_REFERENCES;
-    SK.group.Add(&g);
+    sketch->group.Add(&g);
 
     // Let's create three two-d coordinate systems, for the coordinate
     // planes; these are our references, present in every sketch.
-    Request r {};
+    Request r { sketch };
     r.type = Request::WORKPLANE;
     r.group = Group::HGROUP_REFERENCES;
     r.workplane = Entity::FREE_IN_3D;
 
     r.h = Request::HREQUEST_REFERENCE_XY;
-    SK.request.Add(&r);
+    sketch->request.Add(&r);
 
     r.h = Request::HREQUEST_REFERENCE_YZ;
-    SK.request.Add(&r);
+    sketch->request.Add(&r);
 
     r.h = Request::HREQUEST_REFERENCE_ZX;
-    SK.request.Add(&r);
+    sketch->request.Add(&r);
 
     CreateDefaultDrawingGroup();
 }
@@ -265,39 +265,39 @@ bool SolveSpaceUI::SaveToFile(const std::string &filename) {
     fprintf(fh, "%s\n\n\n", VERSION_STRING);
 
     int i, j;
-    for(i = 0; i < SK.group.n; i++) {
-        sv.g = SK.group.elem[i];
+    for(i = 0; i < sketch->group.n; i++) {
+        sv.g = sketch->group.elem[i];
         SaveUsingTable('g');
         fprintf(fh, "AddGroup\n\n");
     }
 
-    for(i = 0; i < SK.param.n; i++) {
-        sv.p = SK.param.elem[i];
+    for(i = 0; i < sketch->param.n; i++) {
+        sv.p = sketch->param.elem[i];
         SaveUsingTable('p');
         fprintf(fh, "AddParam\n\n");
     }
 
-    for(i = 0; i < SK.request.n; i++) {
-        sv.r = SK.request.elem[i];
+    for(i = 0; i < sketch->request.n; i++) {
+        sv.r = sketch->request.elem[i];
         SaveUsingTable('r');
         fprintf(fh, "AddRequest\n\n");
     }
 
-    for(i = 0; i < SK.entity.n; i++) {
-        (SK.entity.elem[i]).CalculateNumerical(true);
-        sv.e = SK.entity.elem[i];
+    for(i = 0; i < sketch->entity.n; i++) {
+        (sketch->entity.elem[i]).CalculateNumerical(true);
+        sv.e = sketch->entity.elem[i];
         SaveUsingTable('e');
         fprintf(fh, "AddEntity\n\n");
     }
 
-    for(i = 0; i < SK.constraint.n; i++) {
-        sv.c = SK.constraint.elem[i];
+    for(i = 0; i < sketch->constraint.n; i++) {
+        sv.c = sketch->constraint.elem[i];
         SaveUsingTable('c');
         fprintf(fh, "AddConstraint\n\n");
     }
 
-    for(i = 0; i < SK.style.n; i++) {
-        sv.s = SK.style.elem[i];
+    for(i = 0; i < sketch->style.n; i++) {
+        sv.s = sketch->style.elem[i];
         if(sv.s.h.v >= Style::FIRST_CUSTOM) {
             SaveUsingTable('s');
             fprintf(fh, "AddStyle\n\n");
@@ -307,7 +307,7 @@ bool SolveSpaceUI::SaveToFile(const std::string &filename) {
     // A group will have either a mesh or a shell, but not both; but the code
     // to print either of those just does nothing if the mesh/shell is empty.
 
-    SMesh *m = &(SK.group.elem[SK.group.n-1].runningMesh);
+    SMesh *m = &(sketch->group.elem[sketch->group.n-1].runningMesh);
     for(i = 0; i < m->l.n; i++) {
         STriangle *tr = &(m->l.elem[i]);
         fprintf(fh, "Triangle %08x %08x "
@@ -316,7 +316,7 @@ bool SolveSpaceUI::SaveToFile(const std::string &filename) {
             CO(tr->a), CO(tr->b), CO(tr->c));
     }
 
-    SShell *s = &(SK.group.elem[SK.group.n-1].runningShell);
+    SShell *s = &(sketch->group.elem[sketch->group.n-1].runningShell);
     SSurface *srf;
     for(srf = s->surface.First(); srf; srf = s->surface.NextAfter(srf)) {
         fprintf(fh, "Surface %08x %08x %08x %d %d\n",
@@ -430,7 +430,7 @@ bool SolveSpaceUI::LoadFromFile(const std::string &filename) {
 
     ClearExisting();
 
-    sv = {};
+    sv = {sketch};
     sv.g.scale = 1; // default is 1, not 0; so legacy files need this
 
     char line[1024];
@@ -450,24 +450,24 @@ bool SolveSpaceUI::LoadFromFile(const std::string &filename) {
             char *key = line, *val = e+1;
             LoadUsingTable(key, val);
         } else if(strcmp(line, "AddGroup")==0) {
-            SK.group.Add(&(sv.g));
-            sv.g = {};
+            sketch->group.Add(&(sv.g));
+            sv.g = Group{ sv.sketch };
             sv.g.scale = 1; // default is 1, not 0; so legacy files need this
         } else if(strcmp(line, "AddParam")==0) {
             // params are regenerated, but we want to preload the values
             // for initial guesses
-            SK.param.Add(&(sv.p));
+            sketch->param.Add(&(sv.p));
             sv.p = {};
         } else if(strcmp(line, "AddEntity")==0) {
             // entities are regenerated
         } else if(strcmp(line, "AddRequest")==0) {
-            SK.request.Add(&(sv.r));
-            sv.r = {};
+            sketch->request.Add(&(sv.r));
+            sv.r = Request{ sv.sketch };
         } else if(strcmp(line, "AddConstraint")==0) {
-            SK.constraint.Add(&(sv.c));
-            sv.c = {};
+            sketch->constraint.Add(&(sv.c));
+            sv.c = Constraint{ sv.sketch };
         } else if(strcmp(line, "AddStyle")==0) {
-            SK.style.Add(&(sv.s));
+            sketch->style.Add(&(sv.s));
             sv.s = {};
         } else if(strcmp(line, VERSION_STRING)==0) {
             // do nothing, version string
@@ -493,7 +493,7 @@ bool SolveSpaceUI::LoadFromFile(const std::string &filename) {
         Error("Unrecognized data in file. This file may be corrupt, or "
               "from a new version of the program.");
         // At least leave the program in a non-crashing state.
-        if(SK.group.n == 0) {
+        if(sketch->group.n == 0) {
             NewFile();
         }
     }
@@ -511,7 +511,7 @@ bool SolveSpaceUI::LoadEntitiesFromFile(const std::string &filename, EntityList 
     if(!fh) return false;
 
     le->Clear();
-    sv = {};
+    sv = {sketch};
 
     char line[1024];
     while(fgets(line, (int)sizeof(line), fh)) {
@@ -537,7 +537,7 @@ bool SolveSpaceUI::LoadEntitiesFromFile(const std::string &filename, EntityList 
 
         } else if(strcmp(line, "AddEntity")==0) {
             le->Add(&(sv.e));
-            sv.e = {};
+            sv.e = Entity{ sv.sketch };
         } else if(strcmp(line, "AddRequest")==0) {
 
         } else if(strcmp(line, "AddConstraint")==0) {
@@ -770,8 +770,8 @@ void SolveSpaceUI::ReloadAllImported(void)
     allConsistent = false;
 
     int i;
-    for(i = 0; i < SK.group.n; i++) {
-        Group *g = &(SK.group.elem[i]);
+    for(i = 0; i < sketch->group.n; i++) {
+        Group *g = &(sketch->group.elem[i]);
         if(g->type != Group::IMPORTED) continue;
 
         if(isalpha(g->impFile[0]) && g->impFile[1] == ':') {

@@ -20,7 +20,7 @@ void TextWindow::ShowHeader(bool withNav) {
     std::string desc;
     if(SS.GW.LockedInWorkplane()) {
         header = "in plane: ";
-        desc = SK.GetEntity(SS.GW.ActiveWorkplane())->DescriptionString();
+        desc = sketch->GetEntity(SS.GW.ActiveWorkplane())->DescriptionString();
     } else {
         header = "drawing / constraining in 3d";
         desc = "";
@@ -48,17 +48,19 @@ void TextWindow::ScreenSelectGroup(int link, uint32_t v) {
     SS.TW.shown.group.v = v;
 }
 void TextWindow::ScreenToggleGroupShown(int link, uint32_t v) {
+    Sketch *sk = SS.sketch;
     hGroup hg { v };
-    Group *g = SK.GetGroup(hg);
+    Group *g = sk->GetGroup(hg);
     g->visible = !(g->visible);
     // If a group was just shown, then it might not have been generated
     // previously, so regenerate.
     SS.GenerateAll();
 }
 void TextWindow::ScreenShowGroupsSpecial(int link, uint32_t v) {
+    Sketch *sk = SS.sketch;
     int i;
-    for(i = 0; i < SK.group.n; i++) {
-        Group *g = &(SK.group.elem[i]);
+    for(i = 0; i < sk->group.n; i++) {
+        Group *g = &(sk->group.elem[i]);
 
         if(link == 's') {
             g->visible = true;
@@ -68,11 +70,12 @@ void TextWindow::ScreenShowGroupsSpecial(int link, uint32_t v) {
     }
 }
 void TextWindow::ScreenActivateGroup(int link, uint32_t v) {
+    Sketch *sk = SS.sketch;
     hGroup hg { v };
-    Group *g = SK.GetGroup(hg);
+    Group *g = sk->GetGroup(hg);
     g->visible = true;
     SS.GW.activeGroup.v = v;
-    SK.GetGroup(SS.GW.activeGroup)->Activate();
+    sk->GetGroup(SS.GW.activeGroup)->Activate();
     SS.GW.ClearSuper();
 }
 void TextWindow::ReportHowGroupSolved(hGroup hg) {
@@ -107,8 +110,8 @@ void TextWindow::ShowListOfGroups(void) {
     Printf(false, "%Ft    shown ok  group-name%E");
     int i;
     bool afterActive = false;
-    for(i = 0; i < SK.group.n; i++) {
-        Group *g = &(SK.group.elem[i]);
+    for(i = 0; i < sketch->group.n; i++) {
+        Group *g = &(sketch->group.elem[i]);
         std::string s = g->DescriptionString();
         bool active = (g->h.v == SS.GW.activeGroup.v);
         bool shown = g->visible;
@@ -156,10 +159,11 @@ void TextWindow::ShowListOfGroups(void) {
 // user to edit various things about it.
 //-----------------------------------------------------------------------------
 void TextWindow::ScreenHoverConstraint(int link, uint32_t v) {
+    Sketch *sk = SS.sketch;
     if(!SS.GW.showConstraints) return;
 
     hConstraint hc { v };
-    Constraint *c = SK.GetConstraint(hc);
+    Constraint *c = sk->GetConstraint(hc);
     if(c->group.v != SS.GW.activeGroup.v) {
         // Only constraints in the active group are visible
         return;
@@ -175,22 +179,25 @@ void TextWindow::ScreenHoverRequest(int link, uint32_t v) {
     SS.GW.hover.emphasized = true;
 }
 void TextWindow::ScreenSelectConstraint(int link, uint32_t v) {
+    Sketch *sk = SS.sketch;
     SS.GW.ClearSelection();
-    GraphicsWindow::Selection sel {};
+    GraphicsWindow::Selection sel { sk };
     sel.constraint.v = v;
     SS.GW.selection.Add(&sel);
 }
 void TextWindow::ScreenSelectRequest(int link, uint32_t v) {
+    Sketch *sk = SS.sketch;
     SS.GW.ClearSelection();
-    GraphicsWindow::Selection sel {};
+    GraphicsWindow::Selection sel { sk };
     hRequest hr { v };
     sel.entity = hr.entity(0);
     SS.GW.selection.Add(&sel);
 }
 
 void TextWindow::ScreenChangeGroupOption(int link, uint32_t v) {
+    Sketch *sk = SS.sketch;
     SS.UndoRemember();
-    Group *g = SK.GetGroup(SS.TW.shown.group);
+    Group *g = sk->GetGroup(SS.TW.shown.group);
 
     switch(link) {
         case 's': g->subtype = Group::ONE_SIDED; break;
@@ -218,14 +225,16 @@ void TextWindow::ScreenChangeGroupOption(int link, uint32_t v) {
 }
 
 void TextWindow::ScreenColor(int link, uint32_t v) {
+    Sketch *sk = SS.sketch;
     SS.UndoRemember();
 
-    Group *g = SK.GetGroup(SS.TW.shown.group);
+    Group *g = sk->GetGroup(SS.TW.shown.group);
     SS.TW.ShowEditControlWithColorPicker(v, 3, g->color);
     SS.TW.edit.meaning = EDIT_GROUP_COLOR;
 }
 void TextWindow::ScreenOpacity(int link, uint32_t v) {
-    Group *g = SK.GetGroup(SS.TW.shown.group);
+    Sketch *sk = SS.sketch;
+    Group *g = sk->GetGroup(SS.TW.shown.group);
 
     char str[1024];
     sprintf(str, "%.2f", g->color.alphaF());
@@ -234,7 +243,8 @@ void TextWindow::ScreenOpacity(int link, uint32_t v) {
     SS.TW.edit.group.v = g->h.v;
 }
 void TextWindow::ScreenChangeExprA(int link, uint32_t v) {
-    Group *g = SK.GetGroup(SS.TW.shown.group);
+    Sketch *sk = SS.sketch;
+    Group *g = sk->GetGroup(SS.TW.shown.group);
 
     // There's an extra line for the skipFirst parameter in one-sided groups.
     int r = (g->subtype == Group::ONE_SIDED) ? 16 : 14;
@@ -246,19 +256,22 @@ void TextWindow::ScreenChangeExprA(int link, uint32_t v) {
     SS.TW.edit.group.v = v;
 }
 void TextWindow::ScreenChangeGroupName(int link, uint32_t v) {
-    Group *g = SK.GetGroup(SS.TW.shown.group);
+    Sketch *sk = SS.sketch;
+    Group *g = sk->GetGroup(SS.TW.shown.group);
     SS.TW.ShowEditControl(7, 12, g->DescriptionString().substr(5));
     SS.TW.edit.meaning = EDIT_GROUP_NAME;
     SS.TW.edit.group.v = v;
 }
 void TextWindow::ScreenChangeGroupScale(int link, uint32_t v) {
-    Group *g = SK.GetGroup(SS.TW.shown.group);
+    Sketch *sk = SS.sketch;
+    Group *g = sk->GetGroup(SS.TW.shown.group);
 
     SS.TW.ShowEditControl(14, 13, ssprintf("%.3f", g->scale));
     SS.TW.edit.meaning = EDIT_GROUP_SCALE;
     SS.TW.edit.group.v = v;
 }
 void TextWindow::ScreenDeleteGroup(int link, uint32_t v) {
+    Sketch *sk = SS.sketch;
     SS.UndoRemember();
 
     hGroup hg = SS.TW.shown.group;
@@ -267,14 +280,14 @@ void TextWindow::ScreenDeleteGroup(int link, uint32_t v) {
               "before proceeding.");
         return;
     }
-    SK.group.RemoveById(SS.TW.shown.group);
+    sk->group.RemoveById(SS.TW.shown.group);
     // This is a major change, so let's re-solve everything.
     SS.TW.ClearSuper();
     SS.GW.ClearSuper();
     SS.GenerateAll(0, INT_MAX);
 }
 void TextWindow::ShowGroupInfo(void) {
-    Group *g = SK.group.FindById(shown.group);
+    Group *g = sketch->group.FindById(shown.group);
     const char *s = "???";
 
     if(shown.group.v == Group::HGROUP_REFERENCES.v) {
@@ -421,8 +434,8 @@ list_items:
     Printf(false, "%Ft requests in group");
 
     int i, a = 0;
-    for(i = 0; i < SK.request.n; i++) {
-        Request *r = &(SK.request.elem[i]);
+    for(i = 0; i < sketch->request.n; i++) {
+        Request *r = &(sketch->request.elem[i]);
 
         if(r->group.v == shown.group.v) {
             std::string s = r->DescriptionString();
@@ -438,8 +451,8 @@ list_items:
     a = 0;
     Printf(false, "");
     Printf(false, "%Ft constraints in group (%d DOF)", g->solved.dof);
-    for(i = 0; i < SK.constraint.n; i++) {
-        Constraint *c = &(SK.constraint.elem[i]);
+    for(i = 0; i < sketch->constraint.n; i++) {
+        Constraint *c = &(sketch->constraint.elem[i]);
 
         if(c->group.v == shown.group.v) {
             std::string s = c->DescriptionString();
@@ -460,7 +473,7 @@ list_items:
 // constraints that could be removed to fix it.
 //-----------------------------------------------------------------------------
 void TextWindow::ShowGroupSolveInfo(void) {
-    Group *g = SK.group.FindById(shown.group);
+    Group *g = sketch->group.FindById(shown.group);
     if(g->solved.how == System::SOLVED_OKAY) {
         // Go back to the default group info screen
         shown.screen = SCREEN_GROUP_INFO;
@@ -487,7 +500,7 @@ void TextWindow::ShowGroupSolveInfo(void) {
 
     for(int i = 0; i < g->solved.remove.n; i++) {
         hConstraint hc = g->solved.remove.elem[i];
-        Constraint *c = SK.constraint.FindByIdNoOops(hc);
+        Constraint *c = sketch->constraint.FindByIdNoOops(hc);
         if(!c) continue;
 
         Printf(false, "%Bp   %Fl%Ll%D%f%h%s%E",
@@ -521,14 +534,15 @@ void TextWindow::ScreenStepDimSteps(int link, uint32_t v) {
     SS.TW.ShowEditControl(14, 12, ssprintf("%d", SS.TW.shown.dimSteps));
 }
 void TextWindow::ScreenStepDimGo(int link, uint32_t v) {
+    Sketch *sk = SS.sketch;
     hConstraint hc = SS.TW.shown.constraint;
-    Constraint *c = SK.constraint.FindByIdNoOops(hc);
+    Constraint *c = sk->constraint.FindByIdNoOops(hc);
     if(c) {
         SS.UndoRemember();
         double start = c->valA, finish = SS.TW.shown.dimFinish;
         int i, n = SS.TW.shown.dimSteps;
         for(i = 1; i <= n; i++) {
-            c = SK.GetConstraint(hc);
+            c = sk->GetConstraint(hc);
             c->valA = start + ((finish - start)*i)/n;
             SS.MarkGroupDirty(c->group);
             SS.GenerateAll();
@@ -543,7 +557,7 @@ void TextWindow::ScreenStepDimGo(int link, uint32_t v) {
     SS.TW.GoToScreen(SCREEN_LIST_OF_GROUPS);
 }
 void TextWindow::ShowStepDimension(void) {
-    Constraint *c = SK.constraint.FindByIdNoOops(shown.constraint);
+    Constraint *c = sketch->constraint.FindByIdNoOops(shown.constraint);
     if(!c) {
         shown.screen = SCREEN_LIST_OF_GROUPS;
         Show();
@@ -621,7 +635,7 @@ void TextWindow::EditControlDone(const char *s) {
 
     switch(edit.meaning) {
         case EDIT_TIMES_REPEATED: {
-            Expr *e = Expr::From(s, true);
+            Expr *e = Expr::From(sketch, s, true);
             if(e) {
                 SS.UndoRemember();
 
@@ -635,13 +649,13 @@ void TextWindow::EditControlDone(const char *s) {
                     break;
                 }
 
-                Group *g = SK.GetGroup(edit.group);
+                Group *g = sketch->GetGroup(edit.group);
                 g->valA = ev;
 
                 if(g->type == Group::ROTATE) {
                     int i, c = 0;
-                    for(i = 0; i < SK.constraint.n; i++) {
-                        if(SK.constraint.elem[i].group.v == g->h.v) c++;
+                    for(i = 0; i < sketch->constraint.n; i++) {
+                        if(sketch->constraint.elem[i].group.v == g->h.v) c++;
                     }
                     // If the group does not contain any constraints, then
                     // set the numerical guess to space the copies uniformly
@@ -650,7 +664,7 @@ void TextWindow::EditControlDone(const char *s) {
                     // convergence.
                     if(c == 0) {
                         double copies = (g->skipFirst) ? (ev + 1) : ev;
-                        SK.GetParam(g->h.param(3))->val = PI/(2*copies);
+                        sketch->GetParam(g->h.param(3))->val = PI/(2*copies);
                     }
                 }
 
@@ -665,19 +679,19 @@ void TextWindow::EditControlDone(const char *s) {
             } else {
                 SS.UndoRemember();
 
-                Group *g = SK.GetGroup(edit.group);
+                Group *g = sketch->GetGroup(edit.group);
                 g->name = s;
             }
             break;
         }
         case EDIT_GROUP_SCALE: {
-            Expr *e = Expr::From(s, true);
+            Expr *e = Expr::From(sketch, s, true);
             if(e) {
                 double ev = e->Eval();
                 if(fabs(ev) < 1e-6) {
                     Error("Scale cannot be zero.");
                 } else {
-                    Group *g = SK.GetGroup(edit.group);
+                    Group *g = sketch->GetGroup(edit.group);
                     g->scale = ev;
                     SS.MarkGroupDirty(g->h);
                     SS.ScheduleGenerateAll();
@@ -690,7 +704,7 @@ void TextWindow::EditControlDone(const char *s) {
             if(sscanf(s, "%lf, %lf, %lf", &rgb.x, &rgb.y, &rgb.z)==3) {
                 rgb = rgb.ClampWithin(0, 1);
 
-                Group *g = SK.group.FindByIdNoOops(SS.TW.shown.group);
+                Group *g = sketch->group.FindByIdNoOops(SS.TW.shown.group);
                 if(!g) break;
                 g->color = RGBf(rgb.x, rgb.y, rgb.z);
 
@@ -703,13 +717,13 @@ void TextWindow::EditControlDone(const char *s) {
             break;
         }
         case EDIT_GROUP_OPACITY: {
-            Expr *e = Expr::From(s, true);
+            Expr *e = Expr::From(sketch, s, true);
             if(e) {
                 double alpha = e->Eval();
                 if(alpha < 0 || alpha > 1) {
                     Error("Opacity must be between zero and one.");
                 } else {
-                    Group *g = SK.GetGroup(edit.group);
+                    Group *g = sketch->GetGroup(edit.group);
                     g->color.alpha = (int)(255.1f * alpha);
                     SS.MarkGroupDirty(g->h);
                     SS.ScheduleGenerateAll();
@@ -720,7 +734,7 @@ void TextWindow::EditControlDone(const char *s) {
         }
         case EDIT_TTF_TEXT: {
             SS.UndoRemember();
-            Request *r = SK.request.FindByIdNoOops(edit.request);
+            Request *r = sketch->request.FindByIdNoOops(edit.request);
             if(r) {
                 r->str = s;
                 SS.MarkGroupDirty(r->group);
@@ -729,7 +743,7 @@ void TextWindow::EditControlDone(const char *s) {
             break;
         }
         case EDIT_STEP_DIM_FINISH: {
-            Expr *e = Expr::From(s, true);
+            Expr *e = Expr::From(sketch, s, true);
             if(!e) {
                 break;
             }
@@ -745,7 +759,7 @@ void TextWindow::EditControlDone(const char *s) {
             break;
 
         case EDIT_TANGENT_ARC_RADIUS: {
-            Expr *e = Expr::From(s, true);
+            Expr *e = Expr::From(sketch, s, true);
             if(!e) break;
             if(e->Eval() < LENGTH_EPS) {
                 Error("Radius cannot be zero or negative.");

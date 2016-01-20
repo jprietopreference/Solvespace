@@ -270,11 +270,11 @@ static void StippleTriangle(STriangle *tr, bool s, RgbaColor rgb)
     glBegin(GL_TRIANGLES);
 }
 
-void ssglFillMesh(bool useSpecColor, RgbaColor specColor,
+void ssglFillMesh(Sketch *sk, bool useSpecColor, RgbaColor specColor,
                   SMesh *m, uint32_t h, uint32_t s1, uint32_t s2)
 {
-    RgbaColor rgbHovered  = Style::Color(Style::HOVERED),
-             rgbSelected = Style::Color(Style::SELECTED);
+    RgbaColor rgbHovered  = Style::Color(sk, Style::HOVERED),
+             rgbSelected = Style::Color(sk, Style::SELECTED);
 
     glEnable(GL_NORMALIZE);
     bool hasMaterial = false;

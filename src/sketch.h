@@ -19,6 +19,8 @@ class hEquation;
 class Entity;
 class Param;
 class Equation;
+class Sketch;
+class GraphicsWindow;
 
 
 // All of the hWhatever handles are a 32-bit ID, that is used to represent
@@ -98,6 +100,19 @@ public:
 // A set of requests. Every request must have an associated group.
 class Group {
 public:
+    Sketch          *sketch;
+
+    Group() : Group(NULL) { }
+    explicit Group(Sketch *sk) : 
+        sketch(sk),
+        thisMesh(sk),
+        runningMesh(sk),
+        displayMesh(sk),
+        impMesh(sk),
+        thisShell(sk),
+        runningShell(sk),
+        impShell(sk) { }
+ 
     static const hGroup     HGROUP_REFERENCES;
 
     int         tag = 0;
@@ -181,14 +196,14 @@ public:
 
     bool            booleanFailed = false;
 
-    SShell          thisShell       = {};
-    SShell          runningShell    = {};
+    SShell          thisShell;
+    SShell          runningShell;
 
-    SMesh           thisMesh        = {};
-    SMesh           runningMesh     = {};
+    SMesh           thisMesh;
+    SMesh           runningMesh;
 
     bool            displayDirty = false;
-    SMesh           displayMesh     = {};
+    SMesh           displayMesh;
     SEdgeList       displayEdges    = {};
 
     enum {
@@ -206,8 +221,8 @@ public:
 
     std::string impFile;
     std::string impFileRel;
-    SMesh       impMesh     = {};
-    SShell      impShell    = {};
+    SMesh       impMesh;
+    SShell      impShell;
     EntityList  impEntity   = {};
 
     std::string     name;
@@ -271,6 +286,11 @@ public:
 // line, or a step and repeat.
 class Request {
 public:
+    Sketch *sketch;
+
+    Request() : Request(NULL) { }
+    explicit Request(Sketch *sk) : sketch(sk) { }
+
     // Some predefined requests, that are present in every sketch.
     static const hRequest   HREQUEST_REFERENCE_XY;
     static const hRequest   HREQUEST_REFERENCE_YZ;
@@ -314,6 +334,13 @@ public:
 #define MAX_POINTS_IN_ENTITY (12)
 class EntityBase {
 public:
+    Sketch      *sketch;
+
+    EntityBase() : EntityBase(NULL) { }
+    explicit EntityBase(Sketch *sk) : sketch(sk) {
+        
+    }
+
     int         tag = 0;
     hEntity     h;
 
@@ -455,6 +482,9 @@ public:
 
 class Entity : public EntityBase {
 public:
+    Entity() : Entity(NULL) { }
+    explicit Entity(Sketch *sk) : EntityBase(sk) { }
+
     // An imported entity that was hidden in the source file ends up hidden
     // here too.
     bool        forceHidden = false;
@@ -492,7 +522,7 @@ public:
     void GenerateBezierCurves(SBezierList *sbl);
     void GenerateEdges(SEdgeList *el, bool includingConstruction=false);
 
-    static void DrawAll(void);
+    static void DrawAll(Sketch *sk);
     void Draw(void);
     double GetDistance(Point2d mp);
     Vector GetReferencePos(void);
@@ -556,6 +586,11 @@ public:
 
 class ConstraintBase {
 public:
+    Sketch *sketch;
+
+    ConstraintBase() : ConstraintBase(NULL) { }
+    explicit ConstraintBase(Sketch *sk) : sketch(sk) { }
+
     int         tag = 0;
     hConstraint h;
 
@@ -627,20 +662,20 @@ public:
     // Some helpers when generating symbolic constraint equations
     void ModifyToSatisfy(void);
     void AddEq(IdList<Equation,hEquation> *l, Expr *expr, int index);
-    static Expr *DirectionCosine(hEntity wrkpl, ExprVector ae, ExprVector be);
-    static Expr *Distance(hEntity workplane, hEntity pa, hEntity pb);
-    static Expr *PointLineDistance(hEntity workplane, hEntity pt, hEntity ln);
-    static Expr *PointPlaneDistance(ExprVector p, hEntity plane);
+    static Expr *DirectionCosine(Sketch *sk, hEntity wrkpl, ExprVector ae, ExprVector be);
+    static Expr *Distance(Sketch *sk, hEntity workplane, hEntity pa, hEntity pb);
+    static Expr *PointLineDistance(Sketch *sk, hEntity workplane, hEntity pt, hEntity ln);
+    static Expr *PointPlaneDistance(Sketch *sk, ExprVector p, hEntity plane);
     static Expr *VectorsParallel(int eq, ExprVector a, ExprVector b);
-    static ExprVector PointInThreeSpace(hEntity workplane, Expr *u, Expr *v);
+    static ExprVector PointInThreeSpace(Sketch *sk, hEntity workplane, Expr *u, Expr *v);
 
     void Clear(void) {}
 };
 
 class Constraint : public ConstraintBase {
 public:
-    // See Entity::Entity().
-    Constraint() : ConstraintBase({}), disp(), dogd() {}
+    Constraint() : Constraint(NULL) { }
+    explicit Constraint(Sketch *sk) : ConstraintBase(sk) {}
 
     // These define how the constraint is drawn on-screen.
     struct Disp {
@@ -681,14 +716,14 @@ public:
 
     std::string DescriptionString(void);
 
-    static void AddConstraint(Constraint *c, bool rememberForUndo);
-    static void AddConstraint(Constraint *c);
+    static void AddConstraint(Sketch *sk, Constraint *c, bool rememberForUndo);
+    static void AddConstraint(Sketch *sk, Constraint *c);
     static void MenuConstrain(int id);
-    static void DeleteAllConstraintsFor(int type, hEntity entityA, hEntity ptA);
+    static void DeleteAllConstraintsFor(Sketch *sk, int type, hEntity entityA, hEntity ptA);
 
-    static void ConstrainCoincident(hEntity ptA, hEntity ptB);
-    static void Constrain(int type, hEntity ptA, hEntity ptB, hEntity entityA);
-    static void Constrain(int type, hEntity ptA, hEntity ptB,
+    static void ConstrainCoincident(Sketch *sk, hEntity ptA, hEntity ptB);
+    static void Constrain(Sketch *sk, int type, hEntity ptA, hEntity ptB, hEntity entityA);
+    static void Constrain(Sketch *sk, int type, hEntity ptA, hEntity ptB,
                                     hEntity entityA, hEntity entityB,
                                     bool other, bool other2);
 };
@@ -781,26 +816,26 @@ public:
     static std::string CnfWidth(const std::string &prefix);
     static std::string CnfPrefixToName(const std::string &prefix);
 
-    static void CreateAllDefaultStyles(void);
-    static void CreateDefaultStyle(hStyle h);
-    static void FreezeDefaultStyles(void);
-    static void LoadFactoryDefaults(void);
+    static void CreateAllDefaultStyles(Sketch *sk);
+    static void CreateDefaultStyle(Sketch *sk, hStyle h);
+    static void FreezeDefaultStyles(Sketch *sk);
+    static void LoadFactoryDefaults(Sketch *sk);
 
-    static void AssignSelectionToStyle(uint32_t v);
-    static uint32_t CreateCustomStyle(void);
+    static void AssignSelectionToStyle(Sketch *sk, uint32_t v);
+    static uint32_t CreateCustomStyle(Sketch *sk);
 
     static RgbaColor RewriteColor(RgbaColor rgb);
 
-    static Style *Get(hStyle hs);
-    static RgbaColor Color(hStyle hs, bool forExport=false);
-    static RgbaColor FillColor(hStyle hs, bool forExport=false);
-    static float Width(hStyle hs);
-    static RgbaColor Color(int hs, bool forExport=false);
-    static float Width(int hs);
-    static double WidthMm(int hs);
-    static double TextHeight(hStyle hs);
-    static bool Exportable(int hs);
-    static hStyle ForEntity(hEntity he);
+    static Style *Get(Sketch *sk, hStyle hs);
+    static RgbaColor Color(Sketch *sk, hStyle hs, bool forExport=false);
+    static RgbaColor FillColor(Sketch *sk, hStyle hs, bool forExport=false);
+    static float Width(Sketch *sk, hStyle hs);
+    static RgbaColor Color(Sketch *sk, int hs, bool forExport=false);
+    static float Width(Sketch *sk, int hs);
+    static double WidthMm(Sketch *sk, int hs);
+    static double TextHeight(Sketch *sk, hStyle hs);
+    static bool Exportable(Sketch *sk, int hs);
+    static hStyle ForEntity(Sketch *sk, hEntity he);
 
     std::string DescriptionString(void);
 

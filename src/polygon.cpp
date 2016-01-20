@@ -299,29 +299,29 @@ void SEdgeList::CullExtraneousEdges(void) {
 // Make a kd-tree of edges. This is used for O(log(n)) implementations of stuff
 // that would naively be O(n).
 //-----------------------------------------------------------------------------
-SKdNodeEdges *SKdNodeEdges::Alloc(void) {
+SKdNodeEdges *SKdNodeEdges::Alloc(Sketch *sk) {
     SKdNodeEdges *ne = (SKdNodeEdges *)AllocTemporary(sizeof(SKdNodeEdges));
     *ne = {};
     return ne;
 }
-SEdgeLl *SEdgeLl::Alloc(void) {
+SEdgeLl *SEdgeLl::Alloc(Sketch *sk) {
     SEdgeLl *sell = (SEdgeLl *)AllocTemporary(sizeof(SEdgeLl));
     *sell = {};
     return sell;
 }
-SKdNodeEdges *SKdNodeEdges::From(SEdgeList *sel) {
+SKdNodeEdges *SKdNodeEdges::From(Sketch *sk, SEdgeList *sel) {
     SEdgeLl *sell = NULL;
     SEdge *se;
     for(se = sel->l.First(); se; se = sel->l.NextAfter(se)) {
-        SEdgeLl *n = SEdgeLl::Alloc();
+        SEdgeLl *n = SEdgeLl::Alloc(sk);
         n->se = se;
         n->next = sell;
         sell = n;
     }
-    return SKdNodeEdges::From(sell);
+    return SKdNodeEdges::From(sk, sell);
 }
-SKdNodeEdges *SKdNodeEdges::From(SEdgeLl *sell) {
-    SKdNodeEdges *n = SKdNodeEdges::Alloc();
+SKdNodeEdges *SKdNodeEdges::From(Sketch *sk, SEdgeLl *sell) {
+    SKdNodeEdges *n = SKdNodeEdges::Alloc(sk);
 
     // Compute the midpoints (just mean, though median would be better) of
     // each component.
@@ -378,7 +378,7 @@ SKdNodeEdges *SKdNodeEdges::From(SEdgeLl *sell) {
         if(flip->se->a.Element(n->which) < n->c + KDTREE_EPS ||
            flip->se->b.Element(n->which) < n->c + KDTREE_EPS)
         {
-            SEdgeLl *selln = SEdgeLl::Alloc();
+            SEdgeLl *selln = SEdgeLl::Alloc(sk);
             selln->se = flip->se;
             selln->next = ltl;
             ltl = selln;
@@ -386,15 +386,15 @@ SKdNodeEdges *SKdNodeEdges::From(SEdgeLl *sell) {
         if(flip->se->a.Element(n->which) > n->c - KDTREE_EPS ||
            flip->se->b.Element(n->which) > n->c - KDTREE_EPS)
         {
-            SEdgeLl *selln = SEdgeLl::Alloc();
+            SEdgeLl *selln = SEdgeLl::Alloc(sk);
             selln->se = flip->se;
             selln->next = gtl;
             gtl = selln;
         }
     }
 
-    n->lt = SKdNodeEdges::From(ltl);
-    n->gt = SKdNodeEdges::From(gtl);
+    n->lt = SKdNodeEdges::From(sk, ltl);
+    n->gt = SKdNodeEdges::From(sk, gtl);
     return n;
 }
 
@@ -704,10 +704,10 @@ Vector SPolygon::AnyPoint(void) {
     return l.elem[0].l.elem[0].p;
 }
 
-bool SPolygon::SelfIntersecting(Vector *intersectsAt) {
+bool SPolygon::SelfIntersecting(Sketch *sk, Vector *intersectsAt) {
     SEdgeList el {};
     MakeEdgesInto(&el);
-    SKdNodeEdges *kdtree = SKdNodeEdges::From(&el);
+    SKdNodeEdges *kdtree = SKdNodeEdges::From(sk, &el);
 
     int cnt = 1;
     el.l.ClearTags();

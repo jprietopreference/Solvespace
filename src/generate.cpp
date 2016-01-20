@@ -9,15 +9,15 @@
 #include "solvespace.h"
 
 void SolveSpaceUI::MarkGroupDirtyByEntity(hEntity he) {
-    Entity *e = SK.GetEntity(he);
+    Entity *e = sketch->GetEntity(he);
     MarkGroupDirty(e->group);
 }
 
 void SolveSpaceUI::MarkGroupDirty(hGroup hg) {
     int i;
     bool go = false;
-    for(i = 0; i < SK.group.n; i++) {
-        Group *g = &(SK.group.elem[i]);
+    for(i = 0; i < sketch->group.n; i++) {
+        Group *g = &(sketch->group.elem[i]);
         if(g->h.v == hg.v) {
             go = true;
         }
@@ -30,23 +30,23 @@ void SolveSpaceUI::MarkGroupDirty(hGroup hg) {
 
 bool SolveSpaceUI::PruneOrphans(void) {
     int i;
-    for(i = 0; i < SK.request.n; i++) {
-        Request *r = &(SK.request.elem[i]);
+    for(i = 0; i < sketch->request.n; i++) {
+        Request *r = &(sketch->request.elem[i]);
         if(GroupExists(r->group)) continue;
 
         (deleted.requests)++;
-        SK.request.RemoveById(r->h);
+        sketch->request.RemoveById(r->h);
         return true;
     }
 
-    for(i = 0; i < SK.constraint.n; i++) {
-        Constraint *c = &(SK.constraint.elem[i]);
+    for(i = 0; i < sketch->constraint.n; i++) {
+        Constraint *c = &(sketch->constraint.elem[i]);
         if(GroupExists(c->group)) continue;
 
         (deleted.constraints)++;
         (deleted.nonTrivialConstraints)++;
 
-        SK.constraint.RemoveById(c->h);
+        sketch->constraint.RemoveById(c->h);
         return true;
     }
     return false;
@@ -58,8 +58,8 @@ bool SolveSpaceUI::GroupsInOrder(hGroup before, hGroup after) {
 
     int beforep = -1, afterp = -1;
     int i;
-    for(i = 0; i < SK.group.n; i++) {
-        Group *g = &(SK.group.elem[i]);
+    for(i = 0; i < sketch->group.n; i++) {
+        Group *g = &(sketch->group.elem[i]);
         if(g->h.v == before.v) beforep = i;
         if(g->h.v == after.v)  afterp  = i;
     }
@@ -70,17 +70,17 @@ bool SolveSpaceUI::GroupsInOrder(hGroup before, hGroup after) {
 
 bool SolveSpaceUI::GroupExists(hGroup hg) {
     // A nonexistent group is not acceptable
-    return SK.group.FindByIdNoOops(hg) ? true : false;
+    return sketch->group.FindByIdNoOops(hg) ? true : false;
 }
 bool SolveSpaceUI::EntityExists(hEntity he) {
     // A nonexstient entity is acceptable, though, usually just means it
     // doesn't apply.
     if(he.v == Entity::NO_ENTITY.v) return true;
-    return SK.entity.FindByIdNoOops(he) ? true : false;
+    return sketch->entity.FindByIdNoOops(he) ? true : false;
 }
 
 bool SolveSpaceUI::PruneGroups(hGroup hg) {
-    Group *g = SK.GetGroup(hg);
+    Group *g = sketch->GetGroup(hg);
     if(GroupsInOrder(g->opA, hg) &&
        EntityExists(g->predef.origin) &&
        EntityExists(g->predef.entityB) &&
@@ -89,14 +89,14 @@ bool SolveSpaceUI::PruneGroups(hGroup hg) {
         return false;
     }
     (deleted.groups)++;
-    SK.group.RemoveById(g->h);
+    sketch->group.RemoveById(g->h);
     return true;
 }
 
 bool SolveSpaceUI::PruneRequests(hGroup hg) {
     int i;
-    for(i = 0; i < SK.entity.n; i++) {
-        Entity *e = &(SK.entity.elem[i]);
+    for(i = 0; i < sketch->entity.n; i++) {
+        Entity *e = &(sketch->entity.elem[i]);
         if(e->group.v != hg.v) continue;
 
         if(EntityExists(e->workplane)) continue;
@@ -104,7 +104,7 @@ bool SolveSpaceUI::PruneRequests(hGroup hg) {
         if(!e->h.isFromRequest()) oops();
 
         (deleted.requests)++;
-        SK.request.RemoveById(e->h.request());
+        sketch->request.RemoveById(e->h.request());
         return true;
     }
     return false;
@@ -112,8 +112,8 @@ bool SolveSpaceUI::PruneRequests(hGroup hg) {
 
 bool SolveSpaceUI::PruneConstraints(hGroup hg) {
     int i;
-    for(i = 0; i < SK.constraint.n; i++) {
-        Constraint *c = &(SK.constraint.elem[i]);
+    for(i = 0; i < sketch->constraint.n; i++) {
+        Constraint *c = &(sketch->constraint.elem[i]);
         if(c->group.v != hg.v) continue;
 
         if(EntityExists(c->workplane) &&
@@ -135,7 +135,7 @@ bool SolveSpaceUI::PruneConstraints(hGroup hg) {
             (deleted.nonTrivialConstraints)++;
         }
 
-        SK.constraint.RemoveById(c->h);
+        sketch->constraint.RemoveById(c->h);
         return true;
     }
     return false;
@@ -146,8 +146,8 @@ void SolveSpaceUI::GenerateAll(void) {
     int firstDirty = INT_MAX, lastVisible = 0;
     // Start from the first dirty group, and solve until the active group,
     // since all groups after the active group are hidden.
-    for(i = 0; i < SK.group.n; i++) {
-        Group *g = &(SK.group.elem[i]);
+    for(i = 0; i < sketch->group.n; i++) {
+        Group *g = &(sketch->group.elem[i]);
         g->order = i;
         if((!g->clean) || (g->solved.how != System::SOLVED_OKAY)) {
             firstDirty = min(firstDirty, i);
@@ -176,26 +176,26 @@ void SolveSpaceUI::GenerateAll(int first, int last, bool andFindFree) {
 
     // Don't lose our numerical guesses when we regenerate.
     IdList<Param,hParam> prev {};
-    SK.param.MoveSelfInto(&prev);
-    SK.entity.Clear();
+    sketch->param.MoveSelfInto(&prev);
+    sketch->entity.Clear();
 
     int64_t inTime = GetMilliseconds();
 
     bool displayedStatusMessage = false;
-    for(i = 0; i < SK.group.n; i++) {
-        Group *g = &(SK.group.elem[i]);
+    for(i = 0; i < sketch->group.n; i++) {
+        Group *g = &(sketch->group.elem[i]);
 
         int64_t now = GetMilliseconds();
         // Display the status message if we've taken more than 400 ms, or
         // if we've taken 200 ms but we're not even halfway done, or if
         // we've already started displaying the status message.
         if( (now - inTime > 400) ||
-           ((now - inTime > 200) && i < (SK.group.n / 2)) ||
+           ((now - inTime > 200) && i < (sketch->group.n / 2)) ||
            displayedStatusMessage)
         {
             displayedStatusMessage = true;
             char msg[1024];
-            sprintf(msg, "generating group %d/%d", i, SK.group.n);
+            sprintf(msg, "generating group %d/%d", i, sketch->group.n);
 
             int w, h;
             GetGraphicsWindowSize(&w, &h);
@@ -230,13 +230,13 @@ void SolveSpaceUI::GenerateAll(int first, int last, bool andFindFree) {
         if(PruneGroups(g->h))
             goto pruned;
 
-        for(j = 0; j < SK.request.n; j++) {
-            Request *r = &(SK.request.elem[j]);
+        for(j = 0; j < sketch->request.n; j++) {
+            Request *r = &(sketch->request.elem[j]);
             if(r->group.v != g->h.v) continue;
 
-            r->Generate(&(SK.entity), &(SK.param));
+            r->Generate(&(sketch->entity), &(sketch->param));
         }
-        g->Generate(&(SK.entity), &(SK.param));
+        g->Generate(&(sketch->entity), &(sketch->param));
 
         // The requests and constraints depend on stuff in this or the
         // previous group, so check them after generating.
@@ -245,8 +245,8 @@ void SolveSpaceUI::GenerateAll(int first, int last, bool andFindFree) {
 
         // Use the previous values for params that we've seen before, as
         // initial guesses for the solver.
-        for(j = 0; j < SK.param.n; j++) {
-            Param *newp = &(SK.param.elem[j]);
+        for(j = 0; j < sketch->param.n; j++) {
+            Param *newp = &(sketch->param.elem[j]);
             if(newp->known) continue;
 
             Param *prevp = prev.FindByIdNoOops(newp->h);
@@ -269,8 +269,8 @@ void SolveSpaceUI::GenerateAll(int first, int last, bool andFindFree) {
                 // The group falls outside the range, so just assume that
                 // it's good wherever we left it. The mesh is unchanged,
                 // and the parameters must be marked as known.
-                for(j = 0; j < SK.param.n; j++) {
-                    Param *newp = &(SK.param.elem[j]);
+                for(j = 0; j < sketch->param.n; j++) {
+                    Param *newp = &(sketch->param.elem[j]);
 
                     Param *prevp = prev.FindByIdNoOops(newp->h);
                     if(prevp) newp->known = true;
@@ -280,20 +280,20 @@ void SolveSpaceUI::GenerateAll(int first, int last, bool andFindFree) {
     }
 
     // And update any reference dimensions with their new values
-    for(i = 0; i < SK.constraint.n; i++) {
-        Constraint *c = &(SK.constraint.elem[i]);
+    for(i = 0; i < sketch->constraint.n; i++) {
+        Constraint *c = &(sketch->constraint.elem[i]);
         if(c->reference) {
             c->ModifyToSatisfy();
         }
     }
 
     // Make sure the point that we're tracing exists.
-    if(traced.point.v && !SK.entity.FindByIdNoOops(traced.point)) {
+    if(traced.point.v && !sketch->entity.FindByIdNoOops(traced.point)) {
         traced.point = Entity::NO_ENTITY;
     }
     // And if we're tracing a point, add its new value to the path
     if(traced.point.v) {
-        Entity *pt = SK.GetEntity(traced.point);
+        Entity *pt = sketch->GetEntity(traced.point);
         traced.path.AddPoint(pt->PointGetNum());
     }
 
@@ -346,8 +346,8 @@ void SolveSpaceUI::GenerateAll(int first, int last, bool andFindFree) {
 
 pruned:
     // Restore the numerical guesses
-    SK.param.Clear();
-    prev.MoveSelfInto(&(SK.param));
+    sketch->param.Clear();
+    prev.MoveSelfInto(&(sketch->param));
     // Try again
     GenerateAll(first, last);
 }
@@ -367,20 +367,20 @@ void SolveSpaceUI::ForceReferences(void) {
     };
     for(int i = 0; i < 3; i++) {
         hRequest hr = Quat[i].hr;
-        Entity *wrkpl = SK.GetEntity(hr.entity(0));
+        Entity *wrkpl = sketch->GetEntity(hr.entity(0));
         // The origin for our coordinate system, always zero
-        Entity *origin = SK.GetEntity(wrkpl->point[0]);
+        Entity *origin = sketch->GetEntity(wrkpl->point[0]);
         origin->PointForceTo(Vector::From(0, 0, 0));
-        SK.GetParam(origin->param[0])->known = true;
-        SK.GetParam(origin->param[1])->known = true;
-        SK.GetParam(origin->param[2])->known = true;
+        sketch->GetParam(origin->param[0])->known = true;
+        sketch->GetParam(origin->param[1])->known = true;
+        sketch->GetParam(origin->param[2])->known = true;
         // The quaternion that defines the rotation, from the table.
-        Entity *normal = SK.GetEntity(wrkpl->normal);
+        Entity *normal = sketch->GetEntity(wrkpl->normal);
         normal->NormalForceTo(Quat[i].q);
-        SK.GetParam(normal->param[0])->known = true;
-        SK.GetParam(normal->param[1])->known = true;
-        SK.GetParam(normal->param[2])->known = true;
-        SK.GetParam(normal->param[3])->known = true;
+        sketch->GetParam(normal->param[0])->known = true;
+        sketch->GetParam(normal->param[1])->known = true;
+        sketch->GetParam(normal->param[2])->known = true;
+        sketch->GetParam(normal->param[3])->known = true;
     }
 }
 
@@ -399,7 +399,7 @@ void SolveSpaceUI::MarkDraggedParams(void) {
         // The pending point could be one in a group that has not yet
         // been processed, in which case the lookup will fail; but
         // that's not an error.
-        Entity *pt = SK.entity.FindByIdNoOops(hp);
+        Entity *pt = sketch->entity.FindByIdNoOops(hp);
         if(pt) {
             switch(pt->type) {
                 case Entity::POINT_N_TRANS:
@@ -417,9 +417,9 @@ void SolveSpaceUI::MarkDraggedParams(void) {
         }
     }
     if(SS.GW.pending.circle.v) {
-        Entity *circ = SK.entity.FindByIdNoOops(SS.GW.pending.circle);
+        Entity *circ = sketch->entity.FindByIdNoOops(SS.GW.pending.circle);
         if(circ) {
-            Entity *dist = SK.GetEntity(circ->distance);
+            Entity *dist = sketch->GetEntity(circ->distance);
             switch(dist->type) {
                 case Entity::DISTANCE:
                     sys.dragged.Add(&(dist->param[0]));
@@ -428,7 +428,7 @@ void SolveSpaceUI::MarkDraggedParams(void) {
         }
     }
     if(SS.GW.pending.normal.v) {
-        Entity *norm = SK.entity.FindByIdNoOops(SS.GW.pending.normal);
+        Entity *norm = sketch->entity.FindByIdNoOops(SS.GW.pending.normal);
         if(norm) {
             switch(norm->type) {
                 case Entity::NORMAL_IN_3D:
@@ -450,20 +450,20 @@ void SolveSpaceUI::SolveGroup(hGroup hg, bool andFindFree) {
     sys.param.Clear();
     sys.eq.Clear();
     // And generate all the params for requests in this group
-    for(i = 0; i < SK.request.n; i++) {
-        Request *r = &(SK.request.elem[i]);
+    for(i = 0; i < sketch->request.n; i++) {
+        Request *r = &(sketch->request.elem[i]);
         if(r->group.v != hg.v) continue;
 
         r->Generate(&(sys.entity), &(sys.param));
     }
     // And for the group itself
-    Group *g = SK.GetGroup(hg);
+    Group *g = sketch->GetGroup(hg);
     g->Generate(&(sys.entity), &(sys.param));
     // Set the initial guesses for all the params
     for(i = 0; i < sys.param.n; i++) {
         Param *p = &(sys.param.elem[i]);
         p->known = false;
-        p->val = SK.GetParam(p->h)->val;
+        p->val = sketch->GetParam(p->h)->val;
     }
 
     MarkDraggedParams();
@@ -482,8 +482,8 @@ void SolveSpaceUI::SolveGroup(hGroup hg, bool andFindFree) {
 bool SolveSpaceUI::AllGroupsOkay(void) {
     int i;
     bool allOk = true;
-    for(i = 0; i < SK.group.n; i++) {
-        if(SK.group.elem[i].solved.how != System::SOLVED_OKAY) {
+    for(i = 0; i < sketch->group.n; i++) {
+        if(sketch->group.elem[i].solved.how != System::SOLVED_OKAY) {
             allOk = false;
         }
     }

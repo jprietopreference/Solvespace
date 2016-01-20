@@ -293,7 +293,7 @@ void StepFileWriter::WriteFooter(void) {
 }
 
 void StepFileWriter::ExportSurfacesTo(const std::string &filename) {
-    Group *g = SK.GetGroup(SS.GW.activeGroup);
+    Group *g = sketch->GetGroup(SS.GW.activeGroup);
     SShell *shell = &(g->runningShell);
 
     if(shell->surface.n == 0) {

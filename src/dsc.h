@@ -14,6 +14,7 @@ class Vector4;
 class Point2d;
 class hEntity;
 class hParam;
+class Sketch;
 
 class Quaternion {
 public:
@@ -29,7 +30,7 @@ public:
     static const Quaternion IDENTITY;
 
     static Quaternion From(double w, double vx, double vy, double vz);
-    static Quaternion From(hParam w, hParam vx, hParam vy, hParam vz);
+    static Quaternion From(Sketch *sk, hParam w, hParam vx, hParam vy, hParam vz);
     static Quaternion From(Vector u, Vector v);
     static Quaternion From(Vector axis, double dtheta);
 
@@ -63,7 +64,7 @@ public:
     Vector(double nx, double ny, double nz) : x(nx), y(ny), z(nz) { }
 
     static Vector From(double x, double y, double z);
-    static Vector From(hParam x, hParam y, hParam z);
+    static Vector From(Sketch *sk, hParam x, hParam y, hParam z);
     static Vector AtIntersectionOfPlanes(Vector n1, double d1,
                                          Vector n2, double d2);
     static Vector AtIntersectionOfLines(Vector a0, Vector a1,
@@ -101,8 +102,8 @@ public:
     double MagSquared(void);
     Vector WithMagnitude(double s);
     Vector ScaledBy(double s);
-    Vector ProjectInto(hEntity wrkpl);
-    Vector ProjectVectorInto(hEntity wrkpl);
+    Vector ProjectInto(Sketch *sk, hEntity wrkpl);
+    Vector ProjectVectorInto(Sketch *sk, hEntity wrkpl);
     double DivPivoting(Vector delta);
     Vector ClosestOrtho(void);
     void MakeMaxMin(Vector *maxv, Vector *minv);

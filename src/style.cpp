@@ -44,14 +44,14 @@ std::string Style::CnfPrefixToName(const std::string &prefix) {
     return name;
 }
 
-void Style::CreateAllDefaultStyles(void) {
+void Style::CreateAllDefaultStyles(Sketch *sk) {
     const Default *d;
     for(d = &(Defaults[0]); d->h.v; d++) {
-        (void)Get(d->h);
+        (void)Get(sk, d->h);
     }
 }
 
-void Style::CreateDefaultStyle(hStyle h) {
+void Style::CreateDefaultStyle(Sketch *sk, hStyle h) {
     bool isDefaultStyle = true;
     const Default *d;
     for(d = &(Defaults[0]); d->h.v; d++) {
@@ -83,13 +83,13 @@ void Style::CreateDefaultStyle(hStyle h) {
         ns.name = "new-custom-style";
     }
 
-    SK.style.Add(&ns);
+    sk->style.Add(&ns);
 }
 
-void Style::LoadFactoryDefaults(void) {
+void Style::LoadFactoryDefaults(Sketch *sk) {
     const Default *d;
     for(d = &(Defaults[0]); d->h.v; d++) {
-        Style *s = Get(d->h);
+        Style *s = Get(sk, d->h);
 
         s->color        = d->color;
         s->width        = d->width;
@@ -109,23 +109,23 @@ void Style::LoadFactoryDefaults(void) {
     SS.bgImage.fromFile = NULL;
 }
 
-void Style::FreezeDefaultStyles(void) {
+void Style::FreezeDefaultStyles(Sketch *sk) {
     const Default *d;
     for(d = &(Defaults[0]); d->h.v; d++) {
-        CnfFreezeColor(Color(d->h), CnfColor(d->cnfPrefix));
-        CnfFreezeFloat((float)Width(d->h), CnfWidth(d->cnfPrefix));
+        CnfFreezeColor(Color(sk, d->h), CnfColor(d->cnfPrefix));
+        CnfFreezeFloat((float)Width(sk, d->h), CnfWidth(d->cnfPrefix));
     }
 }
 
-uint32_t Style::CreateCustomStyle(void) {
+uint32_t Style::CreateCustomStyle(Sketch *sk) {
     SS.UndoRemember();
-    uint32_t vs = max((uint32_t)Style::FIRST_CUSTOM, SK.style.MaximumId() + 1);
+    uint32_t vs = max((uint32_t)Style::FIRST_CUSTOM, sk->style.MaximumId() + 1);
     hStyle hs { vs };
-    (void)Style::Get(hs);
+    (void)Style::Get(sk, hs);
     return hs.v;
 }
 
-void Style::AssignSelectionToStyle(uint32_t v) {
+void Style::AssignSelectionToStyle(Sketch *sk, uint32_t v) {
     bool showError = false;
     SS.GW.GroupSelection();
 
@@ -139,13 +139,13 @@ void Style::AssignSelectionToStyle(uint32_t v) {
         }
 
         hRequest hr = he.request();
-        Request *r = SK.GetRequest(hr);
+        Request *r = sk->GetRequest(hr);
         r->style.v = v;
         SS.MarkGroupDirty(r->group);
     }
     for(i = 0; i < SS.GW.gs.constraints; i++) {
         hConstraint hc = SS.GW.gs.constraint[i];
-        Constraint *c = SK.GetConstraint(hc);
+        Constraint *c = sk->GetConstraint(hc);
         if(c->type != Constraint::COMMENT) continue;
 
         c->disp.style.v = v;
@@ -170,17 +170,17 @@ void Style::AssignSelectionToStyle(uint32_t v) {
 // Look up a style by its handle. If that style does not exist, then create
 // the style, according to our table of default styles.
 //-----------------------------------------------------------------------------
-Style *Style::Get(hStyle h) {
+Style *Style::Get(Sketch *sk, hStyle h) {
     if(h.v == 0) h.v = ACTIVE_GRP;
 
-    Style *s = SK.style.FindByIdNoOops(h);
+    Style *s = sk->style.FindByIdNoOops(h);
     if(s) {
         // It exists, good.
         return s;
     } else {
         // It doesn't exist; so we should create it and then return that.
-        CreateDefaultStyle(h);
-        return SK.style.FindById(h);
+        CreateDefaultStyle(sk, h);
+        return sk->style.FindById(h);
     }
 }
 
@@ -188,13 +188,13 @@ Style *Style::Get(hStyle h) {
 // A couple of wrappers, so that I can call these functions with either an
 // hStyle or with the integer corresponding to that hStyle.v.
 //-----------------------------------------------------------------------------
-RgbaColor Style::Color(int s, bool forExport) {
+RgbaColor Style::Color(Sketch *sk, int s, bool forExport) {
     hStyle hs { (uint32_t)s };
-    return Color(hs, forExport);
+    return Color(sk, hs, forExport);
 }
-float Style::Width(int s) {
+float Style::Width(Sketch *sk, int s) {
     hStyle hs { (uint32_t)s };
-    return Width(hs);
+    return Width(sk, hs);
 }
 
 //-----------------------------------------------------------------------------
@@ -218,8 +218,8 @@ RgbaColor Style::RewriteColor(RgbaColor rgbin) {
 //-----------------------------------------------------------------------------
 // Return the stroke color associated with our style as 8-bit RGB.
 //-----------------------------------------------------------------------------
-RgbaColor Style::Color(hStyle h, bool forExport) {
-    Style *s = Get(h);
+RgbaColor Style::Color(Sketch *sk, hStyle h, bool forExport) {
+    Style *s = Get(sk, h);
     if(forExport) {
         return RewriteColor(s->color);
     } else {
@@ -230,8 +230,8 @@ RgbaColor Style::Color(hStyle h, bool forExport) {
 //-----------------------------------------------------------------------------
 // Return the fill color associated with our style as 8-bit RGB.
 //-----------------------------------------------------------------------------
-RgbaColor Style::FillColor(hStyle h, bool forExport) {
-    Style *s = Get(h);
+RgbaColor Style::FillColor(Sketch *sk, hStyle h, bool forExport) {
+    Style *s = Get(sk, h);
     if(forExport) {
         return RewriteColor(s->fillColor);
     } else {
@@ -242,9 +242,9 @@ RgbaColor Style::FillColor(hStyle h, bool forExport) {
 //-----------------------------------------------------------------------------
 // Return the width associated with our style in pixels..
 //-----------------------------------------------------------------------------
-float Style::Width(hStyle h) {
+float Style::Width(Sketch *sk, hStyle h) {
     double r = 1.0;
-    Style *s = Get(h);
+    Style *s = Get(sk, h);
     if(s->widthAs == UNITS_AS_MM) {
         r = s->width * SS.GW.scale;
     } else if(s->widthAs == UNITS_AS_PIXELS) {
@@ -257,16 +257,16 @@ float Style::Width(hStyle h) {
 //-----------------------------------------------------------------------------
 // Return the width associated with our style in millimeters..
 //-----------------------------------------------------------------------------
-double Style::WidthMm(int hs) {
-    double widthpx = Width(hs);
+double Style::WidthMm(Sketch *sk, int hs) {
+    double widthpx = Width(sk, hs);
     return widthpx / SS.GW.scale;
 }
 
 //-----------------------------------------------------------------------------
 // Return the associated text height, in pixels.
 //-----------------------------------------------------------------------------
-double Style::TextHeight(hStyle hs) {
-    Style *s = Get(hs);
+double Style::TextHeight(Sketch *sk, hStyle hs) {
+    Style *s = Get(sk, hs);
     if(s->textHeightAs == UNITS_AS_MM) {
         return s->textHeight * SS.GW.scale;
     } else if(s->textHeightAs == UNITS_AS_PIXELS) {
@@ -280,9 +280,9 @@ double Style::TextHeight(hStyle hs) {
 // Should lines and curves from this style appear in the output file? Only
 // if it's both shown and exportable.
 //-----------------------------------------------------------------------------
-bool Style::Exportable(int si) {
+bool Style::Exportable(Sketch *sk, int si) {
     hStyle hs { (uint32_t)si };
-    Style *s = Get(hs);
+    Style *s = Get(sk, hs);
     return (s->exportable) && (s->visible);
 }
 
@@ -291,8 +291,8 @@ bool Style::Exportable(int si) {
 // explicitly assigned, then it's that style. Otherwise it's the appropriate
 // default style.
 //-----------------------------------------------------------------------------
-hStyle Style::ForEntity(hEntity he) {
-    Entity *e = SK.GetEntity(he);
+hStyle Style::ForEntity(Sketch *sk, hEntity he) {
+    Entity *e = sk->GetEntity(he);
     // If the entity has a special style, use that. If that style doesn't
     // exist yet, then it will get created automatically later.
     if(e->style.v != 0) {
@@ -329,12 +329,14 @@ void TextWindow::ScreenShowStyleInfo(int link, uint32_t v) {
 }
 
 void TextWindow::ScreenLoadFactoryDefaultStyles(int link, uint32_t v) {
-    Style::LoadFactoryDefaults();
+    Sketch *sk = SS.sketch;
+    Style::LoadFactoryDefaults(sk);
     SS.TW.GoToScreen(SCREEN_LIST_OF_STYLES);
 }
 
 void TextWindow::ScreenCreateCustomStyle(int link, uint32_t v) {
-    Style::CreateCustomStyle();
+    Sketch *sk = SS.sketch;
+    Style::CreateCustomStyle(sk);
 }
 
 void TextWindow::ScreenChangeBackgroundColor(int link, uint32_t v) {
@@ -428,7 +430,7 @@ void TextWindow::ShowListOfStyles(void) {
 
     bool darkbg = false;
     Style *s;
-    for(s = SK.style.First(); s; s = SK.style.NextAfter(s)) {
+    for(s = sketch->style.First(); s; s = sketch->style.NextAfter(s)) {
         Printf(false, "%Bp  %Bz   %Bp   %Fl%Ll%f%D%s%E",
             darkbg ? 'd' : 'a',
             &s->color,
@@ -476,19 +478,21 @@ void TextWindow::ShowListOfStyles(void) {
 
 
 void TextWindow::ScreenChangeStyleName(int link, uint32_t v) {
+    Sketch *sk = SS.sketch;
     hStyle hs { v };
-    Style *s = Style::Get(hs);
+    Style *s = Style::Get(sk, hs);
     SS.TW.ShowEditControl(10, 12, s->name.c_str());
     SS.TW.edit.style = hs;
     SS.TW.edit.meaning = EDIT_STYLE_NAME;
 }
 
 void TextWindow::ScreenDeleteStyle(int link, uint32_t v) {
+    Sketch *sk = SS.sketch;
     SS.UndoRemember();
     hStyle hs { v };
-    Style *s = SK.style.FindByIdNoOops(hs);
+    Style *s = sk->style.FindByIdNoOops(hs);
     if(s) {
-        SK.style.RemoveById(hs);
+        sk->style.RemoveById(hs);
         // And it will get recreated automatically if something is still using
         // the style, so no need to do anything else.
     }
@@ -497,8 +501,9 @@ void TextWindow::ScreenDeleteStyle(int link, uint32_t v) {
 }
 
 void TextWindow::ScreenChangeStyleWidthOrTextHeight(int link, uint32_t v) {
+    Sketch *sk = SS.sketch;
     hStyle hs { v };
-    Style *s = Style::Get(hs);
+    Style *s = Style::Get(sk, hs);
     double val   = (link == 't') ? s->textHeight   : s->width;
     int    units = (link == 't') ? s->textHeightAs : s->widthAs;
 
@@ -524,16 +529,18 @@ void TextWindow::ScreenChangeStyleWidthOrTextHeight(int link, uint32_t v) {
 }
 
 void TextWindow::ScreenChangeStyleTextAngle(int link, uint32_t v) {
+    Sketch *sk = SS.sketch;
     hStyle hs { v };
-    Style *s = Style::Get(hs);
+    Style *s = Style::Get(sk, hs);
     SS.TW.ShowEditControl(37, 9, ssprintf("%.2f", s->textAngle));
     SS.TW.edit.style = hs;
     SS.TW.edit.meaning = EDIT_STYLE_TEXT_ANGLE;
 }
 
 void TextWindow::ScreenChangeStyleColor(int link, uint32_t v) {
+    Sketch *sk = SS.sketch;
     hStyle hs { v };
-    Style *s = Style::Get(hs);
+    Style *s = Style::Get(sk, hs);
     // Same function used for stroke and fill colors
     int row, col, em;
     RgbaColor rgb;
@@ -554,9 +561,10 @@ void TextWindow::ScreenChangeStyleColor(int link, uint32_t v) {
 }
 
 void TextWindow::ScreenChangeStyleYesNo(int link, uint32_t v) {
+    Sketch *sk = SS.sketch;
     SS.UndoRemember();
     hStyle hs { v };
-    Style *s = Style::Get(hs);
+    Style *s = Style::Get(sk, hs);
     switch(link) {
         // Units for the width
         case 'w':
@@ -636,7 +644,7 @@ bool TextWindow::EditControlDoneForStyles(const char *str) {
         case EDIT_STYLE_TEXT_HEIGHT:
         case EDIT_STYLE_WIDTH: {
             SS.UndoRemember();
-            s = Style::Get(edit.style);
+            s = Style::Get(sketch, edit.style);
 
             double v;
             int units = (edit.meaning == EDIT_STYLE_TEXT_HEIGHT) ?
@@ -656,7 +664,7 @@ bool TextWindow::EditControlDoneForStyles(const char *str) {
         }
         case EDIT_STYLE_TEXT_ANGLE:
             SS.UndoRemember();
-            s = Style::Get(edit.style);
+            s = Style::Get(sketch, edit.style);
             s->textAngle = WRAP_SYMMETRIC(atof(str), 360);
             break;
 
@@ -668,11 +676,11 @@ bool TextWindow::EditControlDoneForStyles(const char *str) {
                 rgb = rgb.ClampWithin(0, 1);
                 if(edit.meaning == EDIT_STYLE_COLOR) {
                     SS.UndoRemember();
-                    s = Style::Get(edit.style);
+                    s = Style::Get(sketch, edit.style);
                     s->color = RGBf(rgb.x, rgb.y, rgb.z);
                 } else if(edit.meaning == EDIT_STYLE_FILL_COLOR) {
                     SS.UndoRemember();
-                    s = Style::Get(edit.style);
+                    s = Style::Get(sketch, edit.style);
                     s->fillColor = RGBf(rgb.x, rgb.y, rgb.z);
                 } else {
                     SS.backgroundColor = RGBf(rgb.x, rgb.y, rgb.z);
@@ -687,13 +695,13 @@ bool TextWindow::EditControlDoneForStyles(const char *str) {
                 Error("Style name cannot be empty");
             } else {
                 SS.UndoRemember();
-                s = Style::Get(edit.style);
+                s = Style::Get(sketch, edit.style);
                 s->name = str;
             }
             break;
 
         case EDIT_BACKGROUND_IMG_SCALE: {
-            Expr *e = Expr::From(str, true);
+            Expr *e = Expr::From(sketch, str, true);
             if(e) {
                 double ev = e->Eval();
                 if(ev < 0.001 || isnan(ev)) {
@@ -712,7 +720,7 @@ bool TextWindow::EditControlDoneForStyles(const char *str) {
 void TextWindow::ShowStyleInfo(void) {
     Printf(true, "%Fl%f%Ll(back to list of styles)%E", &ScreenShowListOfStyles);
 
-    Style *s = Style::Get(shown.style);
+    Style *s = Style::Get(sketch, shown.style);
 
     if(s->h.v < Style::FIRST_CUSTOM) {
         Printf(true, "%FtSTYLE  %E%s ", s->DescriptionString().c_str());
@@ -855,6 +863,7 @@ void TextWindow::ShowStyleInfo(void) {
 }
 
 void TextWindow::ScreenAssignSelectionToStyle(int link, uint32_t v) {
-    Style::AssignSelectionToStyle(v);
+    Sketch *sk = SS.sketch;
+    Style::AssignSelectionToStyle(sk, v);
 }
 

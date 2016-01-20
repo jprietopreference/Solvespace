@@ -9,10 +9,10 @@
 
 std::string Entity::DescriptionString(void) {
     if(h.isFromRequest()) {
-        Request *r = SK.GetRequest(h.request());
+        Request *r = sketch->GetRequest(h.request());
         return r->DescriptionString();
     } else {
-        Group *g = SK.GetGroup(h.group());
+        Group *g = sketch->GetGroup(h.group());
         return g->DescriptionString();
     }
 }
@@ -45,7 +45,7 @@ void Entity::LineDrawOrGetDistance(Vector a, Vector b, bool maybeFat) {
     dogd.refp = (a.Plus(b)).ScaledBy(0.5);
 }
 
-void Entity::DrawAll(void) {
+void Entity::DrawAll(Sketch *sk) {
     // This handles points and line segments as a special case, because I
     // seem to be able to get a huge speedup that way, by consolidating
     // stuff to gl.
@@ -54,13 +54,13 @@ void Entity::DrawAll(void) {
         double s = 3.5/SS.GW.scale;
         Vector r = SS.GW.projRight.ScaledBy(s);
         Vector d = SS.GW.projUp.ScaledBy(s);
-        ssglColorRGB(Style::Color(Style::DATUM));
+        ssglColorRGB(Style::Color(sk, Style::DATUM));
         ssglDepthRangeOffset(6);
         glBegin(GL_QUADS);
-        for(i = 0; i < SK.entity.n; i++) {
-            Entity *e = &(SK.entity.elem[i]);
+        for(i = 0; i < sk->entity.n; i++) {
+            Entity *e = &(sk->entity.elem[i]);
             if(!e->IsPoint()) continue;
-            if(!(SK.GetGroup(e->group)->IsVisible())) continue;
+            if(!(sk->GetGroup(e->group)->IsVisible())) continue;
             if(e->forceHidden) continue;
 
             Vector v = e->PointGetNum();
@@ -70,26 +70,26 @@ void Entity::DrawAll(void) {
             // free to move.
             bool free = false;
             if(e->type == POINT_IN_3D) {
-                Param *px = SK.GetParam(e->param[0]),
-                      *py = SK.GetParam(e->param[1]),
-                      *pz = SK.GetParam(e->param[2]);
+                Param *px = sk->GetParam(e->param[0]),
+                      *py = sk->GetParam(e->param[1]),
+                      *pz = sk->GetParam(e->param[2]);
 
                 free = (px->free) || (py->free) || (pz->free);
             } else if(e->type == POINT_IN_2D) {
-                Param *pu = SK.GetParam(e->param[0]),
-                      *pv = SK.GetParam(e->param[1]);
+                Param *pu = sk->GetParam(e->param[0]),
+                      *pv = sk->GetParam(e->param[1]);
 
                 free = (pu->free) || (pv->free);
             }
             if(free) {
                 Vector re = r.ScaledBy(2.5), de = d.ScaledBy(2.5);
 
-                ssglColorRGB(Style::Color(Style::ANALYZE));
+                ssglColorRGB(Style::Color(sk, Style::ANALYZE));
                 ssglVertex3v(v.Plus (re).Plus (de));
                 ssglVertex3v(v.Plus (re).Minus(de));
                 ssglVertex3v(v.Minus(re).Minus(de));
                 ssglVertex3v(v.Minus(re).Plus (de));
-                ssglColorRGB(Style::Color(Style::DATUM));
+                ssglColorRGB(Style::Color(sk, Style::DATUM));
             }
 
             ssglVertex3v(v.Plus (r).Plus (d));
@@ -101,8 +101,8 @@ void Entity::DrawAll(void) {
         ssglDepthRangeOffset(0);
     }
 
-    for(i = 0; i < SK.entity.n; i++) {
-        Entity *e = &(SK.entity.elem[i]);
+    for(i = 0; i < sk->entity.n; i++) {
+        Entity *e = &(sk->entity.elem[i]);
         if(e->IsPoint())
         {
             continue; // already handled
@@ -112,10 +112,10 @@ void Entity::DrawAll(void) {
 }
 
 void Entity::Draw(void) {
-    hStyle hs = Style::ForEntity(h);
-    dogd.lineWidth = Style::Width(hs);
+    hStyle hs = Style::ForEntity(sketch, h);
+    dogd.lineWidth = Style::Width(sketch, hs);
     ssglLineWidth((float)dogd.lineWidth);
-    ssglColorRGB(Style::Color(hs));
+    ssglColorRGB(Style::Color(sketch, hs));
 
     dogd.drawing = true;
     DrawOrGetDistance();
@@ -162,7 +162,7 @@ Vector Entity::GetReferencePos(void) {
 }
 
 bool Entity::IsVisible(void) {
-    Group *g = SK.GetGroup(group);
+    Group *g = sketch->GetGroup(group);
 
     if(g->h.v == Group::HGROUP_REFERENCES.v && IsNormal()) {
         // The reference normals are always shown
@@ -185,7 +185,7 @@ bool Entity::IsVisible(void) {
     }
 
     if(style.v) {
-        Style *s = Style::Get(style);
+        Style *s = Style::Get(sketch, style);
         if(!s->visible) return false;
     }
 
@@ -242,18 +242,18 @@ void Entity::ComputeInterpolatingSpline(SBezierList *sbl, bool periodic) {
     Vector pt[MAX_N+4];
     if(periodic) {
         for(i = 0; i < ep + 3; i++) {
-            pt[i] = SK.GetEntity(point[i])->PointGetNum();
+            pt[i] = sketch->GetEntity(point[i])->PointGetNum();
         }
-        pt[i++] = SK.GetEntity(point[0])->PointGetNum();
+        pt[i++] = sketch->GetEntity(point[0])->PointGetNum();
     } else {
-        ctrl_s = SK.GetEntity(point[1])->PointGetNum();
-        ctrl_f = SK.GetEntity(point[ep+2])->PointGetNum();
+        ctrl_s = sketch->GetEntity(point[1])->PointGetNum();
+        ctrl_f = sketch->GetEntity(point[ep+2])->PointGetNum();
         j = 0;
-        pt[j++] = SK.GetEntity(point[0])->PointGetNum();
+        pt[j++] = sketch->GetEntity(point[0])->PointGetNum();
         for(i = 2; i <= ep + 1; i++) {
-            pt[j++] = SK.GetEntity(point[i])->PointGetNum();
+            pt[j++] = sketch->GetEntity(point[i])->PointGetNum();
         }
-        pt[j++] = SK.GetEntity(point[ep+3])->PointGetNum();
+        pt[j++] = sketch->GetEntity(point[ep+3])->PointGetNum();
     }
 
     // The unknowns that we will be solving for, a set for each coordinate.
@@ -363,8 +363,8 @@ void Entity::GenerateBezierCurves(SBezierList *sbl) {
 
     switch(type) {
         case LINE_SEGMENT: {
-            Vector a = SK.GetEntity(point[0])->PointGetNum();
-            Vector b = SK.GetEntity(point[1])->PointGetNum();
+            Vector a = sketch->GetEntity(point[0])->PointGetNum();
+            Vector b = sketch->GetEntity(point[1])->PointGetNum();
             sb = SBezier::From(a, b);
             sbl->l.Add(&sb);
             break;
@@ -379,8 +379,8 @@ void Entity::GenerateBezierCurves(SBezierList *sbl) {
 
         case CIRCLE:
         case ARC_OF_CIRCLE: {
-            Vector center = SK.GetEntity(point[0])->PointGetNum();
-            Quaternion q = SK.GetEntity(normal)->NormalGetNum();
+            Vector center = sketch->GetEntity(point[0])->PointGetNum();
+            Quaternion q = sketch->GetEntity(normal)->NormalGetNum();
             Vector u = q.RotationU(), v = q.RotationV();
             double r = CircleGetRadiusNum();
             double thetaa, thetab, dtheta;
@@ -440,8 +440,8 @@ void Entity::GenerateBezierCurves(SBezierList *sbl) {
         }
 
         case TTF_TEXT: {
-            Vector topLeft = SK.GetEntity(point[0])->PointGetNum();
-            Vector botLeft = SK.GetEntity(point[1])->PointGetNum();
+            Vector topLeft = sketch->GetEntity(point[0])->PointGetNum();
+            Vector botLeft = sketch->GetEntity(point[1])->PointGetNum();
             Vector n = Normal()->NormalN();
             Vector v = topLeft.Minus(botLeft);
             Vector u = (v.Cross(n)).WithMagnitude(v.Magnitude());
@@ -464,7 +464,7 @@ void Entity::GenerateBezierCurves(SBezierList *sbl) {
 void Entity::DrawOrGetDistance(void) {
     if(!IsVisible()) return;
 
-    Group *g = SK.GetGroup(group);
+    Group *g = sketch->GetGroup(group);
 
     switch(type) {
         case POINT_N_COPY:
@@ -481,7 +481,7 @@ void Entity::DrawOrGetDistance(void) {
                 Vector r = SS.GW.projRight.ScaledBy(s/SS.GW.scale);
                 Vector d = SS.GW.projUp.ScaledBy(s/SS.GW.scale);
 
-                ssglColorRGB(Style::Color(Style::DATUM));
+                ssglColorRGB(Style::Color(sketch, Style::DATUM));
                 ssglDepthRangeOffset(6);
                 glBegin(GL_QUADS);
                     ssglVertex3v(v.Plus (r).Plus (d));
@@ -527,14 +527,14 @@ void Entity::DrawOrGetDistance(void) {
                         ssglColorRGB(RGBi(0, f, 0));
                 } else {
                     if(dogd.drawing)
-                        ssglColorRGB(Style::Color(Style::NORMALS));
+                        ssglColorRGB(Style::Color(sketch, Style::NORMALS));
                     if(i > 0) break;
                 }
 
                 Quaternion q = NormalGetNum();
                 Vector tail;
                 if(i == 0) {
-                    tail = SK.GetEntity(point[0])->PointGetNum();
+                    tail = sketch->GetEntity(point[0])->PointGetNum();
                     if(dogd.drawing)
                         ssglLineWidth(1);
                 } else {
@@ -573,7 +573,7 @@ void Entity::DrawOrGetDistance(void) {
 
         case WORKPLANE: {
             Vector p;
-            p = SK.GetEntity(point[0])->PointGetNum();
+            p = sketch->GetEntity(point[0])->PointGetNum();
 
             Vector u = Normal()->NormalU();
             Vector v = Normal()->NormalV();
@@ -590,7 +590,7 @@ void Entity::DrawOrGetDistance(void) {
 
             if(dogd.drawing) {
                 ssglLineWidth(1);
-                ssglColorRGB(Style::Color(Style::NORMALS));
+                ssglColorRGB(Style::Color(sketch, Style::NORMALS));
                 glEnable(GL_LINE_STIPPLE);
                 glLineStipple(3, 0x1111);
             }

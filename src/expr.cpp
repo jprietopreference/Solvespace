@@ -13,27 +13,27 @@ ExprVector ExprVector::From(Expr *x, Expr *y, Expr *z) {
     return r;
 }
 
-ExprVector ExprVector::From(Vector vn) {
+ExprVector ExprVector::From(Sketch *sk, Vector vn) {
     ExprVector ve;
-    ve.x = Expr::From(vn.x);
-    ve.y = Expr::From(vn.y);
-    ve.z = Expr::From(vn.z);
+    ve.x = Expr::From(sk, vn.x);
+    ve.y = Expr::From(sk, vn.y);
+    ve.z = Expr::From(sk, vn.z);
     return ve;
 }
 
-ExprVector ExprVector::From(hParam x, hParam y, hParam z) {
+ExprVector ExprVector::From(Sketch *sk, hParam x, hParam y, hParam z) {
     ExprVector ve;
-    ve.x = Expr::From(x);
-    ve.y = Expr::From(y);
-    ve.z = Expr::From(z);
+    ve.x = Expr::From(sk, x);
+    ve.y = Expr::From(sk, y);
+    ve.z = Expr::From(sk, z);
     return ve;
 }
 
-ExprVector ExprVector::From(double x, double y, double z) {
+ExprVector ExprVector::From(Sketch *sk, double x, double y, double z) {
     ExprVector ve;
-    ve.x = Expr::From(x);
-    ve.y = Expr::From(y);
-    ve.z = Expr::From(z);
+    ve.x = Expr::From(sk, x);
+    ve.y = Expr::From(sk, y);
+    ve.z = Expr::From(sk, z);
     return ve;
 }
 
@@ -98,12 +98,12 @@ Vector ExprVector::Eval(void) {
     return r;
 }
 
-ExprQuaternion ExprQuaternion::From(hParam w, hParam vx, hParam vy, hParam vz) {
+ExprQuaternion ExprQuaternion::From(Sketch *sk, hParam w, hParam vx, hParam vy, hParam vz) {
     ExprQuaternion q;
-    q.w  = Expr::From(w);
-    q.vx = Expr::From(vx);
-    q.vy = Expr::From(vy);
-    q.vz = Expr::From(vz);
+    q.w  = Expr::From(sk, w);
+    q.vx = Expr::From(sk, vx);
+    q.vy = Expr::From(sk, vy);
+    q.vz = Expr::From(sk, vz);
     return q;
 }
 
@@ -117,18 +117,18 @@ ExprQuaternion ExprQuaternion::From(Expr *w, Expr *vx, Expr *vy, Expr *vz)
     return q;
 }
 
-ExprQuaternion ExprQuaternion::From(Quaternion qn) {
+ExprQuaternion ExprQuaternion::From(Sketch *sk, Quaternion qn) {
     ExprQuaternion qe;
-    qe.w = Expr::From(qn.w);
-    qe.vx = Expr::From(qn.vx);
-    qe.vy = Expr::From(qn.vy);
-    qe.vz = Expr::From(qn.vz);
+    qe.w = Expr::From(sk, qn.w);
+    qe.vx = Expr::From(sk, qn.vx);
+    qe.vy = Expr::From(sk, qn.vy);
+    qe.vz = Expr::From(sk, qn.vz);
     return qe;
 }
 
 ExprVector ExprQuaternion::RotationU(void) {
     ExprVector u;
-    Expr *two = Expr::From(2);
+    Expr *two = Expr::From(w->sketch, 2.0);
 
     u.x = w->Square();
     u.x = (u.x)->Plus(vx->Square());
@@ -146,7 +146,7 @@ ExprVector ExprQuaternion::RotationU(void) {
 
 ExprVector ExprQuaternion::RotationV(void) {
     ExprVector v;
-    Expr *two = Expr::From(2);
+    Expr *two = Expr::From(w->sketch, 2.0);
 
     v.x = two->Times(vx->Times(vy));
     v.x = (v.x)->Minus(two->Times(w->Times(vz)));
@@ -164,7 +164,7 @@ ExprVector ExprQuaternion::RotationV(void) {
 
 ExprVector ExprQuaternion::RotationN(void) {
     ExprVector n;
-    Expr *two = Expr::From(2);
+    Expr *two = Expr::From(w->sketch, 2.0);
 
     n.x =              two->Times( w->Times(vy));
     n.x = (n.x)->Plus (two->Times(vx->Times(vz)));
@@ -211,51 +211,37 @@ Expr *ExprQuaternion::Magnitude(void) {
 }
 
 
-Expr *Expr::From(hParam p) {
+Expr *Expr::From(Sketch *sk, hParam p) {
+    if(sk == NULL) oops();
     Expr *r = AllocExpr();
+    r->sketch = sk;
     r->op = PARAM;
     r->parhv = p.v;
     return r;
 }
 
-Expr *Expr::From(double v) {
-    // Statically allocate common constants.
-    // Note: this is only valid because AllocExpr() uses AllocTemporary(),
-    // and Expr* is never explicitly freed.
-
-    if(v == 0.0) {
-        static Expr zero(0.0);
-        return &zero;
-    }
-
-    if(v == 1.0) {
-        static Expr one(1.0);
-        return &one;
-    }
-
-    if(v == -1.0) {
-        static Expr mone(-1.0);
-        return &mone;
-    }
-
-    if(v == 0.5) {
-        static Expr half(0.5);
-        return &half;
-    }
-
-    if(v == -0.5) {
-        static Expr mhalf(-0.5);
-        return &mhalf;
-    }
-
+Expr *Expr::From(Sketch *sk, double v) {
+    if(sk == NULL) oops();
     Expr *r = AllocExpr();
+    r->sketch = sk;
     r->op = CONSTANT;
     r->v = v;
     return r;
 }
 
-Expr *Expr::AnyOp(int newOp, Expr *b) {
+Expr *Expr::From(Sketch *sk) {
+    if(sk == NULL) oops();
     Expr *r = AllocExpr();
+    r->sketch = sk;
+    r->op = UNKNOWN;
+    return r;
+}
+
+Expr *Expr::AnyOp(int newOp, Expr *b) {
+    Sketch *sk = (sketch) ? sketch : b->sketch;
+    if(sk == NULL) oops();
+    Expr *r = AllocExpr();
+    r->sketch = sk;
     r->op = newOp;
     r->a = this;
     r->b = b;
@@ -310,6 +296,7 @@ Expr *Expr::DeepCopyWithParamsAsPointers(IdList<Param,hParam> *firstTry,
     IdList<Param,hParam> *thenTry)
 {
     Expr *n = AllocExpr();
+    n->sketch = sketch;
     if(op == PARAM) {
         // A param that is referenced by its hParam gets rewritten to go
         // straight in to the parameter table with a pointer, or simply
@@ -335,7 +322,7 @@ Expr *Expr::DeepCopyWithParamsAsPointers(IdList<Param,hParam> *firstTry,
 
 double Expr::Eval(void) {
     switch(op) {
-        case PARAM:         return SK.GetParam(hParam{parhv})->val;
+        case PARAM:         return sketch->GetParam(hParam{parhv})->val;
         case PARAM_PTR:     return parp->val;
 
         case CONSTANT:      return v;
@@ -361,10 +348,10 @@ Expr *Expr::PartialWrt(hParam p) {
     Expr *da, *db;
 
     switch(op) {
-        case PARAM_PTR: return From(p.v == parp->h.v ? 1 : 0);
-        case PARAM:     return From(p.v == parhv ? 1 : 0);
+        case PARAM_PTR: return From(sketch, p.v == parp->h.v ? 1 : 0);
+        case PARAM:     return From(sketch, p.v == parhv ? 1 : 0);
 
-        case CONSTANT:  return From(0.0);
+        case CONSTANT:  return From(sketch, 0.0);
 
         case PLUS:      return (a->PartialWrt(p))->Plus(b->PartialWrt(p));
         case MINUS:     return (a->PartialWrt(p))->Minus(b->PartialWrt(p));
@@ -380,20 +367,20 @@ Expr *Expr::PartialWrt(hParam p) {
             return ((da->Times(b))->Minus(a->Times(db)))->Div(b->Square());
 
         case SQRT:
-            return (From(0.5)->Div(a->Sqrt()))->Times(a->PartialWrt(p));
+            return (From(sketch, 0.5)->Div(a->Sqrt()))->Times(a->PartialWrt(p));
 
         case SQUARE:
-            return (From(2.0)->Times(a))->Times(a->PartialWrt(p));
+            return (From(sketch, 2.0)->Times(a))->Times(a->PartialWrt(p));
 
         case NEGATE:    return (a->PartialWrt(p))->Negate();
         case SIN:       return (a->Cos())->Times(a->PartialWrt(p));
         case COS:       return ((a->Sin())->Times(a->PartialWrt(p)))->Negate();
 
         case ASIN:
-            return (From(1)->Div((From(1)->Minus(a->Square()))->Sqrt()))
+            return (From(sketch, 1)->Div((From(sketch, 1)->Minus(a->Square()))->Sqrt()))
                         ->Times(a->PartialWrt(p));
         case ACOS:
-            return (From(-1)->Div((From(1)->Minus(a->Square()))->Sqrt()))
+            return (From(sketch, -1)->Div((From(sketch, 1)->Minus(a->Square()))->Sqrt()))
                         ->Times(a->PartialWrt(p));
 
         default: oops();
@@ -662,8 +649,8 @@ c:
 
         case 'n': n = PopOperand()->Negate(); break;
         case 'q': n = PopOperand()->Sqrt(); break;
-        case 's': n = (PopOperand()->Times(Expr::From(PI/180)))->Sin(); break;
-        case 'c': n = (PopOperand()->Times(Expr::From(PI/180)))->Cos(); break;
+        case 's': n = (PopOperand()->Times(Expr::From(op->sketch, PI/180)))->Sin(); break;
+        case 'c': n = (PopOperand()->Times(Expr::From(op->sketch, PI/180)))->Cos(); break;
 
         default: oops();
     }
@@ -677,8 +664,10 @@ void Expr::ReduceAndPush(Expr *n) {
     PushOperator(n);
 }
 
-void Expr::Parse(void) {
+void Expr::Parse(Sketch *sk) {
+    if(sk == NULL) oops();
     Expr *e = AllocExpr();
+    e->sketch = sk;
     e->op = ALL_RESOLVED;
     PushOperator(e);
 
@@ -691,7 +680,7 @@ void Expr::Parse(void) {
             Consume();
         } else if(n->op == PAREN && n->c == '(') {
             Consume();
-            Parse();
+            Parse(sk);
             n = Next();
             if(n->op != PAREN || n->c != ')') throw "expected: )";
             Consume();
@@ -726,7 +715,7 @@ void Expr::Parse(void) {
     PopOperator(); // discard the ALL_RESOLVED marker
 }
 
-void Expr::Lex(const char *in) {
+void Expr::Lex(Sketch *sk, const char *in) {
     while(*in) {
         if(UnparsedCnt >= MAX_UNPARSED) throw "too long";
 
@@ -740,9 +729,7 @@ void Expr::Lex(const char *in) {
                 in++;
             }
             number[len++] = '\0';
-            Expr *e = AllocExpr();
-            e->op = CONSTANT;
-            e->v = atof(number);
+            Expr *e = Expr::From(sk, atof(number));
             Unparsed[UnparsedCnt++] = e;
         } else if(isalpha(c) || c == '_') {
             char name[70];
@@ -753,7 +740,7 @@ void Expr::Lex(const char *in) {
             }
             name[len++] = '\0';
 
-            Expr *e = AllocExpr();
+            Expr *e = Expr::From(sk);
             if(strcmp(name, "sqrt")==0) {
                 e->op = UNARY_OP;
                 e->c = 'q';
@@ -771,7 +758,7 @@ void Expr::Lex(const char *in) {
             }
             Unparsed[UnparsedCnt++] = e;
         } else if(strchr("+-*/()", c)) {
-            Expr *e = AllocExpr();
+            Expr *e = Expr::From(sk);
             e->op = (c == '(' || c == ')') ? PAREN : BINARY_OP;
             e->c = c;
             Unparsed[UnparsedCnt++] = e;
@@ -786,7 +773,7 @@ void Expr::Lex(const char *in) {
     }
 }
 
-Expr *Expr::From(const char *in, bool popUpError) {
+Expr *Expr::From(Sketch *sk, const char *in, bool popUpError) {
     UnparsedCnt = 0;
     UnparsedP = 0;
     OperandsP = 0;
@@ -794,8 +781,8 @@ Expr *Expr::From(const char *in, bool popUpError) {
 
     Expr *r;
     try {
-        Lex(in);
-        Parse();
+        Lex(sk, in);
+        Parse(sk);
         r = PopOperand();
     } catch (const char *e) {
         dbp("exception: parse/lex error: %s", e);

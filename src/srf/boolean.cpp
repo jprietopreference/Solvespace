@@ -445,7 +445,7 @@ SSurface SSurface::MakeCopyTrimAgainst(SShell *parent,
     ret.MakeEdgesInto(into, &orig, AS_UV);
     ret.trim.Clear();
     // which means that we can't necessarily use the old BSP...
-    SBspUv *origBsp = SBspUv::From(&orig, &ret);
+    SBspUv *origBsp = SBspUv::From(parent->sketch, &orig, &ret);
 
     // And now intersect the other shell against us
     SEdgeList inter {};
@@ -776,14 +776,14 @@ void SSurface::MakeClassifyingBsp(SShell *shell, SShell *useCurvesFrom) {
     SEdgeList el {};
 
     MakeEdgesInto(shell, &el, AS_UV, useCurvesFrom);
-    bsp = SBspUv::From(&el, this);
+    bsp = SBspUv::From(shell->sketch, &el, this);
     el.Clear();
 
     edges = {};
     MakeEdgesInto(shell, &edges, AS_XYZ, useCurvesFrom);
 }
 
-SBspUv *SBspUv::Alloc(void) {
+SBspUv *SBspUv::Alloc(Sketch *sk) {
     return (SBspUv *)AllocTemporary(sizeof(SBspUv));
 }
 
@@ -799,7 +799,7 @@ static int ByLength(const void *av, const void *bv)
     // stability for the normals.
     return (la < lb) ? 1 : -1;
 }
-SBspUv *SBspUv::From(SEdgeList *el, SSurface *srf) {
+SBspUv *SBspUv::From(Sketch *sk, SEdgeList *el, SSurface *srf) {
     SEdgeList work {};
 
     SEdge *se;
@@ -810,7 +810,7 @@ SBspUv *SBspUv::From(SEdgeList *el, SSurface *srf) {
 
     SBspUv *bsp = NULL;
     for(se = work.l.First(); se; se = work.l.NextAfter(se)) {
-        bsp = bsp->InsertEdge((se->a).ProjectXy(), (se->b).ProjectXy(), srf);
+        bsp = bsp->InsertEdge(sk, (se->a).ProjectXy(), (se->b).ProjectXy(), srf);
     }
 
     work.Clear();
@@ -853,9 +853,9 @@ double SBspUv::ScaledDistanceToLine(Point2d pt, Point2d a, Point2d b, bool seg,
     return pt.DistanceToLine(a, b, seg);
 }
 
-SBspUv *SBspUv::InsertEdge(Point2d ea, Point2d eb, SSurface *srf) {
+SBspUv *SBspUv::InsertEdge(Sketch *sk, Point2d ea, Point2d eb, SSurface *srf) {
     if(!this) {
-        SBspUv *ret = Alloc();
+        SBspUv *ret = Alloc(sk);
         ret->a = ea;
         ret->b = eb;
         return ret;
@@ -866,7 +866,7 @@ SBspUv *SBspUv::InsertEdge(Point2d ea, Point2d eb, SSurface *srf) {
 
     if(fabs(dea) < LENGTH_EPS && fabs(deb) < LENGTH_EPS) {
         // Line segment is coincident with this one, store in same node
-        SBspUv *m = Alloc();
+        SBspUv *m = Alloc(sk);
         m->a = ea;
         m->b = eb;
         m->more = more;
@@ -874,21 +874,21 @@ SBspUv *SBspUv::InsertEdge(Point2d ea, Point2d eb, SSurface *srf) {
     } else if(fabs(dea) < LENGTH_EPS) {
         // Point A lies on this lie, but point B does not
         if(deb > 0) {
-            pos = pos->InsertEdge(ea, eb, srf);
+            pos = pos->InsertEdge(sk, ea, eb, srf);
         } else {
-            neg = neg->InsertEdge(ea, eb, srf);
+            neg = neg->InsertEdge(sk, ea, eb, srf);
         }
     } else if(fabs(deb) < LENGTH_EPS) {
         // Point B lies on this lie, but point A does not
         if(dea > 0) {
-            pos = pos->InsertEdge(ea, eb, srf);
+            pos = pos->InsertEdge(sk, ea, eb, srf);
         } else {
-            neg = neg->InsertEdge(ea, eb, srf);
+            neg = neg->InsertEdge(sk, ea, eb, srf);
         }
     } else if(dea > 0 && deb > 0) {
-        pos = pos->InsertEdge(ea, eb, srf);
+        pos = pos->InsertEdge(sk, ea, eb, srf);
     } else if(dea < 0 && deb < 0) {
-        neg = neg->InsertEdge(ea, eb, srf);
+        neg = neg->InsertEdge(sk, ea, eb, srf);
     } else {
         // New edge crosses this one; we need to split.
         Point2d n = ((b.Minus(a)).Normal()).WithMagnitude(1);
@@ -896,11 +896,11 @@ SBspUv *SBspUv::InsertEdge(Point2d ea, Point2d eb, SSurface *srf) {
         double t = (d - n.Dot(ea)) / (n.Dot(eb.Minus(ea)));
         Point2d pi = ea.Plus((eb.Minus(ea)).ScaledBy(t));
         if(dea > 0) {
-            pos = pos->InsertEdge(ea, pi, srf);
-            neg = neg->InsertEdge(pi, eb, srf);
+            pos = pos->InsertEdge(sk, ea, pi, srf);
+            neg = neg->InsertEdge(sk, pi, eb, srf);
         } else {
-            neg = neg->InsertEdge(ea, pi, srf);
-            pos = pos->InsertEdge(pi, eb, srf);
+            neg = neg->InsertEdge(sk, ea, pi, srf);
+            pos = pos->InsertEdge(sk, pi, eb, srf);
         }
     }
     return this;

@@ -62,7 +62,7 @@ void SMesh::GetBounding(Vector *vmax, Vector *vmin) {
 // within the plane n dot p = d.
 //----------------------------------------------------------------------------
 void SMesh::MakeEdgesInPlaneInto(SEdgeList *sel, Vector n, double d) {
-    SMesh m {};
+    SMesh m { sketch };
     m.MakeFromCopyOf(this);
 
     // Delete all triangles in the mesh that do not lie in our export plane.
@@ -83,7 +83,7 @@ void SMesh::MakeEdgesInPlaneInto(SEdgeList *sel, Vector n, double d) {
     // Select the naked edges in our resulting open mesh.
     SKdNode *root = SKdNode::From(&m);
     root->SnapToMesh(&m);
-    root->MakeCertainEdgesInto(sel, SKdNode::NAKED_OR_SELF_INTER_EDGES,
+    root->MakeCertainEdgesInto(sketch, sel, SKdNode::NAKED_OR_SELF_INTER_EDGES,
                                 false, NULL, NULL);
 
     m.Clear();
@@ -91,7 +91,7 @@ void SMesh::MakeEdgesInPlaneInto(SEdgeList *sel, Vector n, double d) {
 
 void SMesh::MakeEmphasizedEdgesInto(SEdgeList *sel) {
     SKdNode *root = SKdNode::From(this);
-    root->MakeCertainEdgesInto(sel, SKdNode::EMPHASIZED_EDGES,
+    root->MakeCertainEdgesInto(sketch, sel, SKdNode::EMPHASIZED_EDGES,
                                 false, NULL, NULL);
 }
 
@@ -247,7 +247,7 @@ void SMesh::AddAgainstBsp(SMesh *srcm, SBsp3 *bsp3) {
         STriangle *st = &(srcm->l.elem[i]);
         int pn = l.n;
         atLeastOneDiscarded = false;
-        bsp3->Insert(st, this);
+        bsp3->Insert(srcm->sketch, st, this);
         if(!atLeastOneDiscarded && (l.n != (pn+1))) {
             l.n = pn;
             if(flipNormal) {
@@ -354,9 +354,9 @@ uint32_t SMesh::FirstIntersectionWith(Point2d mp) {
     return face;
 }
 
-STriangleLl *STriangleLl::Alloc(void)
+STriangleLl *STriangleLl::Alloc(Sketch *sk)
     { return (STriangleLl *)AllocTemporary(sizeof(STriangleLl)); }
-SKdNode *SKdNode::Alloc(void)
+SKdNode *SKdNode::Alloc(Sketch *sk)
     { return (SKdNode *)AllocTemporary(sizeof(SKdNode)); }
 
 SKdNode *SKdNode::From(SMesh *m) {
@@ -377,18 +377,18 @@ SKdNode *SKdNode::From(SMesh *m) {
 
     STriangleLl *tll = NULL;
     for(i = 0; i < m->l.n; i++) {
-        STriangleLl *tn = STriangleLl::Alloc();
+        STriangleLl *tn = STriangleLl::Alloc(m->sketch);
         tn->tri = &(tra[i]);
         tn->next = tll;
         tll = tn;
     }
 
-    return SKdNode::From(tll);
+    return SKdNode::From(m->sketch, tll);
 }
 
-SKdNode *SKdNode::From(STriangleLl *tll) {
+SKdNode *SKdNode::From(Sketch *sk, STriangleLl *tll) {
     int which = 0;
-    SKdNode *ret = Alloc();
+    SKdNode *ret = Alloc(sk);
 
     int i;
     int gtc[3] { 0, 0, 0 }, ltc[3] { 0, 0, 0 }, allc = 0;
@@ -459,7 +459,7 @@ SKdNode *SKdNode::From(STriangleLl *tll) {
            b < split[which] + KDTREE_EPS ||
            c < split[which] + KDTREE_EPS)
         {
-            STriangleLl *n = STriangleLl::Alloc();
+            STriangleLl *n = STriangleLl::Alloc(sk);
             *n = *ll;
             n->next = llt;
             llt = n;
@@ -468,7 +468,7 @@ SKdNode *SKdNode::From(STriangleLl *tll) {
            b > split[which] - KDTREE_EPS ||
            c > split[which] - KDTREE_EPS)
         {
-            STriangleLl *n = STriangleLl::Alloc();
+            STriangleLl *n = STriangleLl::Alloc(sk);
             *n = *ll;
             n->next = lgt;
             lgt = n;
@@ -477,8 +477,8 @@ SKdNode *SKdNode::From(STriangleLl *tll) {
 
     ret->which = which;
     ret->c = split[which];
-    ret->gt = SKdNode::From(lgt);
-    ret->lt = SKdNode::From(llt);
+    ret->gt = SKdNode::From(sk, lgt);
+    ret->lt = SKdNode::From(sk, llt);
     return ret;
 
 leaf:
@@ -498,7 +498,7 @@ void SKdNode::ClearTags(void) {
     }
 }
 
-void SKdNode::AddTriangle(STriangle *tr) {
+void SKdNode::AddTriangle(Sketch *sk, STriangle *tr) {
     if(gt && lt) {
         double ta = (tr->a).Element(which),
                tb = (tr->b).Element(which),
@@ -507,16 +507,16 @@ void SKdNode::AddTriangle(STriangle *tr) {
            tb < c + KDTREE_EPS ||
            tc < c + KDTREE_EPS)
         {
-            lt->AddTriangle(tr);
+            lt->AddTriangle(sk, tr);
         }
         if(ta > c - KDTREE_EPS ||
            tb > c - KDTREE_EPS ||
            tc > c - KDTREE_EPS)
         {
-            gt->AddTriangle(tr);
+            gt->AddTriangle(sk, tr);
         }
     } else {
-        STriangleLl *tn = STriangleLl::Alloc();
+        STriangleLl *tn = STriangleLl::Alloc(sk);
         tn->tri = tr;
         tn->next = tris;
         tris = tn;
@@ -622,13 +622,13 @@ void SKdNode::SnapToMesh(SMesh *m) {
                        ((j == 1) ? tr->b :
                                    tr->c));
 
-            SMesh extra {};
+            SMesh extra { m->sketch };
             SnapToVertex(v, &extra);
 
             for(k = 0; k < extra.l.n; k++) {
                 STriangle *tra = (STriangle *)AllocTemporary(sizeof(*tra));
                 *tra = extra.l.elem[k];
-                AddTriangle(tra);
+                AddTriangle(m->sketch, tra);
             }
             extra.Clear();
         }
@@ -895,13 +895,13 @@ void SKdNode::FindEdgeOn(Vector a, Vector b, int *n, int cnt,
 //    * emphasized edges (i.e., edges where a triangle from one face joins
 //      a triangle from a different face)
 //-----------------------------------------------------------------------------
-void SKdNode::MakeCertainEdgesInto(SEdgeList *sel, int how,
+void SKdNode::MakeCertainEdgesInto(Sketch *sk, SEdgeList *sel, int how,
                                 bool coplanarIsInter, bool *inter, bool *leaky)
 {
     if(inter) *inter = false;
     if(leaky) *leaky = false;
 
-    SMesh m {};
+    SMesh m { sk };
     ClearTags();
     MakeMeshInto(&m);
 

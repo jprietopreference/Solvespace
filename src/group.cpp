@@ -51,7 +51,8 @@ bool Group::IsVisible(void) {
 }
 
 void Group::MenuGroup(int id) {
-    Group g {};
+    Sketch *sk = SS.sketch;
+    Group g { sk };
     g.visible = true;
     g.color = RGBi(100, 100, 100);
     g.scale = 1;
@@ -89,8 +90,8 @@ void Group::MenuGroup(int id) {
                 g.predef.entityB = gs.entity[0];
                 g.predef.entityC = gs.entity[1];
 
-                Vector ut = SK.GetEntity(g.predef.entityB)->VectorGetNum();
-                Vector vt = SK.GetEntity(g.predef.entityC)->VectorGetNum();
+                Vector ut = sk->GetEntity(g.predef.entityB)->VectorGetNum();
+                Vector vt = sk->GetEntity(g.predef.entityC)->VectorGetNum();
                 ut = ut.WithMagnitude(1);
                 vt = vt.WithMagnitude(1);
 
@@ -130,7 +131,7 @@ void Group::MenuGroup(int id) {
                 g.predef.origin = gs.point[0];
                 g.predef.entityB = gs.vector[0];
             } else if(gs.lineSegments == 1 && gs.n == 1) {
-                g.predef.origin = SK.GetEntity(gs.entity[0])->point[0];
+                g.predef.origin = sk->GetEntity(gs.entity[0])->point[0];
                 g.predef.entityB = gs.entity[0];
                 // since a line segment is a vector
             } else {
@@ -150,7 +151,7 @@ void Group::MenuGroup(int id) {
         case GraphicsWindow::MNU_GROUP_ROT: {
             if(gs.points == 1 && gs.n == 1 && SS.GW.LockedInWorkplane()) {
                 g.predef.origin = gs.point[0];
-                Entity *w = SK.GetEntity(SS.GW.ActiveWorkplane());
+                Entity *w = sk->GetEntity(SS.GW.ActiveWorkplane());
                 g.predef.entityB = w->Normal()->h;
                 g.activeWorkplane = w->h;
             } else if(gs.points == 1 && gs.vectors == 1 && gs.n == 2) {
@@ -226,8 +227,8 @@ void Group::MenuGroup(int id) {
     SS.GW.ClearSelection();
     SS.UndoRemember();
 
-    SK.group.AddAndAssignId(&g);
-    Group *gg = SK.GetGroup(g.h);
+    sk->group.AddAndAssignId(&g);
+    Group *gg = sk->GetGroup(g.h);
 
     if(gg->type == IMPORTED) {
         SS.ReloadAllImported();
@@ -258,20 +259,20 @@ void Group::TransformImportedBy(Vector t, Quaternion q) {
     qy = h.param(5);
     qz = h.param(6);
 
-    Quaternion qg = Quaternion::From(qw, qx, qy, qz);
+    Quaternion qg = Quaternion::From(sketch, qw, qx, qy, qz);
     qg = q.Times(qg);
 
-    Vector tg = Vector::From(tx, ty, tz);
+    Vector tg = Vector::From(sketch, tx, ty, tz);
     tg = tg.Plus(t);
 
-    SK.GetParam(tx)->val = tg.x;
-    SK.GetParam(ty)->val = tg.y;
-    SK.GetParam(tz)->val = tg.z;
+    sketch->GetParam(tx)->val = tg.x;
+    sketch->GetParam(ty)->val = tg.y;
+    sketch->GetParam(tz)->val = tg.z;
 
-    SK.GetParam(qw)->val = qg.w;
-    SK.GetParam(qx)->val = qg.vx;
-    SK.GetParam(qy)->val = qg.vy;
-    SK.GetParam(qz)->val = qg.vz;
+    sketch->GetParam(qw)->val = qg.w;
+    sketch->GetParam(qx)->val = qg.vx;
+    sketch->GetParam(qy)->val = qg.vy;
+    sketch->GetParam(qz)->val = qg.vz;
 }
 
 std::string Group::DescriptionString(void) {
@@ -309,8 +310,8 @@ void Group::Generate(IdList<Entity,hEntity> *entity,
         case DRAWING_WORKPLANE: {
             Quaternion q;
             if(subtype == WORKPLANE_BY_LINE_SEGMENTS) {
-                Vector u = SK.GetEntity(predef.entityB)->VectorGetNum();
-                Vector v = SK.GetEntity(predef.entityC)->VectorGetNum();
+                Vector u = sketch->GetEntity(predef.entityB)->VectorGetNum();
+                Vector v = sketch->GetEntity(predef.entityC)->VectorGetNum();
                 u = u.WithMagnitude(1);
                 Vector n = u.Cross(v);
                 v = (n.Cross(u)).WithMagnitude(1);
@@ -324,7 +325,7 @@ void Group::Generate(IdList<Entity,hEntity> *entity,
                 q = predef.q;
             } else oops();
 
-            Entity normal {};
+            Entity normal { sketch };
             normal.type = Entity::NORMAL_N_COPY;
             normal.numNormal = q;
             normal.point[0] = h.entity(2);
@@ -332,14 +333,14 @@ void Group::Generate(IdList<Entity,hEntity> *entity,
             normal.h = h.entity(1);
             entity->Add(&normal);
 
-            Entity point {};
+            Entity point { sketch };
             point.type = Entity::POINT_N_COPY;
-            point.numPoint = SK.GetEntity(predef.origin)->PointGetNum();
+            point.numPoint = sketch->GetEntity(predef.origin)->PointGetNum();
             point.group = h;
             point.h = h.entity(2);
             entity->Add(&point);
 
-            Entity wp {};
+            Entity wp { sketch };
             wp.type = Entity::WORKPLANE;
             wp.normal = normal.h;
             wp.point[0] = point.h;
@@ -373,11 +374,11 @@ void Group::Generate(IdList<Entity,hEntity> *entity,
                 hEntity he = e->h; e = NULL;
                 // As soon as I call CopyEntity, e may become invalid! That
                 // adds entities, which may cause a realloc.
-                CopyEntity(entity, SK.GetEntity(he), ai, REMAP_BOTTOM,
+                CopyEntity(entity, sketch->GetEntity(he), ai, REMAP_BOTTOM,
                     h.param(0), h.param(1), h.param(2),
                     NO_PARAM, NO_PARAM, NO_PARAM, NO_PARAM,
                     true, false);
-                CopyEntity(entity, SK.GetEntity(he), af, REMAP_TOP,
+                CopyEntity(entity, sketch->GetEntity(he), af, REMAP_TOP,
                     h.param(0), h.param(1), h.param(2),
                     NO_PARAM, NO_PARAM, NO_PARAM, NO_PARAM,
                     true, false);
@@ -488,21 +489,21 @@ void Group::GenerateEquations(IdList<Equation,hEquation> *l) {
     if(type == IMPORTED) {
         // Normalize the quaternion
         ExprQuaternion q {
-            Expr::From(h.param(3)),
-            Expr::From(h.param(4)),
-            Expr::From(h.param(5)),
-            Expr::From(h.param(6)) };
-        AddEq(l, (q.Magnitude())->Minus(Expr::From(1)), 0);
+            Expr::From(sketch, h.param(3)),
+            Expr::From(sketch, h.param(4)),
+            Expr::From(sketch, h.param(5)),
+            Expr::From(sketch, h.param(6)) };
+        AddEq(l, (q.Magnitude())->Minus(Expr::From(sketch, 1)), 0);
     } else if(type == ROTATE) {
         // The axis and center of rotation are specified numerically
-#define EC(x) (Expr::From(x))
-#define EP(x) (Expr::From(h.param(x)))
-        ExprVector orig = SK.GetEntity(predef.origin)->PointGetExprs();
+#define EC(x) (Expr::From(sketch, x))
+#define EP(x) (Expr::From(sketch, h.param(x)))
+        ExprVector orig = sketch->GetEntity(predef.origin)->PointGetExprs();
         AddEq(l, (orig.x)->Minus(EP(0)), 0);
         AddEq(l, (orig.y)->Minus(EP(1)), 1);
         AddEq(l, (orig.z)->Minus(EP(2)), 2);
         // param 3 is the angle, which is free
-        Vector axis = SK.GetEntity(predef.entityB)->VectorGetNum();
+        Vector axis = sketch->GetEntity(predef.entityB)->VectorGetNum();
         axis = axis.WithMagnitude(1);
         AddEq(l, (EC(axis.x))->Minus(EP(4)), 3);
         AddEq(l, (EC(axis.y))->Minus(EP(5)), 4);
@@ -513,23 +514,23 @@ void Group::GenerateEquations(IdList<Equation,hEquation> *l) {
         if(predef.entityB.v != Entity::FREE_IN_3D.v) {
             // The extrusion path is locked along a line, normal to the
             // specified workplane.
-            Entity *w = SK.GetEntity(predef.entityB);
+            Entity *w = sketch->GetEntity(predef.entityB);
             ExprVector u = w->Normal()->NormalExprsU();
             ExprVector v = w->Normal()->NormalExprsV();
             ExprVector extruden {
-                Expr::From(h.param(0)),
-                Expr::From(h.param(1)),
-                Expr::From(h.param(2)) };
+                Expr::From(sketch, h.param(0)),
+                Expr::From(sketch, h.param(1)),
+                Expr::From(sketch, h.param(2)) };
 
             AddEq(l, u.Dot(extruden), 0);
             AddEq(l, v.Dot(extruden), 1);
         }
     } else if(type == TRANSLATE) {
         if(predef.entityB.v != Entity::FREE_IN_3D.v) {
-            Entity *w = SK.GetEntity(predef.entityB);
+            Entity *w = sketch->GetEntity(predef.entityB);
             ExprVector n = w->Normal()->NormalExprsN();
             ExprVector trans;
-            trans = ExprVector::From(h.param(0), h.param(1), h.param(2));
+            trans = ExprVector::From(sketch, h.param(0), h.param(1), h.param(2));
 
             // The translation vector is parallel to the workplane
             AddEq(l, trans.Dot(n), 0);
@@ -565,9 +566,9 @@ hEntity Group::Remap(hEntity in, int copyNumber) {
 }
 
 void Group::MakeExtrusionLines(IdList<Entity,hEntity> *el, hEntity in) {
-    Entity *ep = SK.GetEntity(in);
+    Entity *ep = sketch->GetEntity(in);
 
-    Entity en {};
+    Entity en { sketch };
     if(ep->IsPoint()) {
         // A point gets extruded to form a line segment
         en.point[0] = Remap(ep->h, REMAP_TOP);
@@ -581,8 +582,8 @@ void Group::MakeExtrusionLines(IdList<Entity,hEntity> *el, hEntity in) {
     } else if(ep->type == Entity::LINE_SEGMENT) {
         // A line gets extruded to form a plane face; an endpoint of the
         // original line is a point in the plane, and the line is in the plane.
-        Vector a = SK.GetEntity(ep->point[0])->PointGetNum();
-        Vector b = SK.GetEntity(ep->point[1])->PointGetNum();
+        Vector a = sketch->GetEntity(ep->point[0])->PointGetNum();
+        Vector b = sketch->GetEntity(ep->point[1])->PointGetNum();
         Vector ab = b.Minus(a);
 
         en.param[0] = h.param(0);
@@ -603,10 +604,10 @@ void Group::MakeExtrusionLines(IdList<Entity,hEntity> *el, hEntity in) {
 void Group::MakeExtrusionTopBottomFaces(IdList<Entity,hEntity> *el, hEntity pt)
 {
     if(pt.v == 0) return;
-    Group *src = SK.GetGroup(opA);
+    Group *src = sketch->GetGroup(opA);
     Vector n = src->polyLoops.normal;
 
-    Entity en {};
+    Entity en { sketch };
     en.type = Entity::FACE_NORMAL_PT;
     en.group = h;
 
@@ -626,7 +627,7 @@ void Group::CopyEntity(IdList<Entity,hEntity> *el,
                        hParam qw, hParam qvx, hParam qvy, hParam qvz,
                        bool asTrans, bool asAxisAngle)
 {
-    Entity en {};
+    Entity en { sketch };
     en.type = ep->type;
     en.extraPoints = ep->extraPoints;
     en.h = Remap(ep->h, remap);

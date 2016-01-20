@@ -11,8 +11,9 @@ void TextWindow::ScreenUnselectAll(int link, uint32_t v) {
 }
 
 void TextWindow::ScreenEditTtfText(int link, uint32_t v) {
+    Sketch *sk = SS.sketch;
     hRequest hr { v };
-    Request *r = SK.GetRequest(hr);
+    Request *r = sk->GetRequest(hr);
 
     SS.TW.ShowEditControl(13, 10, r->str.c_str());
     SS.TW.edit.meaning = EDIT_TTF_TEXT;
@@ -21,6 +22,7 @@ void TextWindow::ScreenEditTtfText(int link, uint32_t v) {
 
 #define gs (SS.GW.gs)
 void TextWindow::ScreenSetTtfFont(int link, uint32_t v) {
+    Sketch *sk = SS.sketch;
     int i = (int)v;
     if(i < 0) return;
     if(i >= SS.fonts.l.n) return;
@@ -28,10 +30,10 @@ void TextWindow::ScreenSetTtfFont(int link, uint32_t v) {
     SS.GW.GroupSelection();
     if(gs.entities != 1 || gs.n != 1) return;
 
-    Entity *e = SK.entity.FindByIdNoOops(gs.entity[0]);
+    Entity *e = sk->entity.FindByIdNoOops(gs.entity[0]);
     if(!e || e->type != Entity::TTF_TEXT || !e->h.isFromRequest()) return;
 
-    Request *r = SK.request.FindByIdNoOops(e->h.request());
+    Request *r = sk->request.FindByIdNoOops(e->h.request());
     if(!r) return;
 
     SS.UndoRemember();
@@ -42,8 +44,9 @@ void TextWindow::ScreenSetTtfFont(int link, uint32_t v) {
 }
 
 void TextWindow::ScreenConstraintShowAsRadius(int link, uint32_t v) {
+    Sketch *sk = SS.sketch;
     hConstraint hc { v };
-    Constraint *c = SK.GetConstraint(hc);
+    Constraint *c = sk->GetConstraint(hc);
 
     SS.UndoRemember();
     c->other = !c->other;
@@ -58,7 +61,7 @@ void TextWindow::DescribeSelection(void) {
     Printf(false, "");
 
     if(gs.n == 1 && (gs.points == 1 || gs.entities == 1)) {
-        e = SK.GetEntity(gs.points == 1 ? gs.point[0] : gs.entity[0]);
+        e = sketch->GetEntity(gs.points == 1 ? gs.point[0] : gs.entity[0]);
 
 #define COSTR(p) \
     SS.MmToString((p).x).c_str(), \
@@ -93,7 +96,7 @@ void TextWindow::DescribeSelection(void) {
                 break;
             }
             case Entity::WORKPLANE: {
-                p = SK.GetEntity(e->point[0])->PointGetNum();
+                p = sketch->GetEntity(e->point[0])->PointGetNum();
                 Printf(false, "%FtWORKPLANE%E");
                 Printf(true, "   origin = " PT_AS_STR, COSTR(p));
                 Quaternion q = e->Normal()->NormalGetNum();
@@ -102,11 +105,11 @@ void TextWindow::DescribeSelection(void) {
                 break;
             }
             case Entity::LINE_SEGMENT: {
-                Vector p0 = SK.GetEntity(e->point[0])->PointGetNum();
+                Vector p0 = sketch->GetEntity(e->point[0])->PointGetNum();
                 p = p0;
                 Printf(false, "%FtLINE SEGMENT%E");
                 Printf(true,  "   thru " PT_AS_STR, COSTR(p));
-                Vector p1 = SK.GetEntity(e->point[1])->PointGetNum();
+                Vector p1 = sketch->GetEntity(e->point[1])->PointGetNum();
                 p = p1;
                 Printf(false, "        " PT_AS_STR, COSTR(p));
                 Printf(true,  "   len = %Fi%s%E",
@@ -127,18 +130,18 @@ void TextWindow::DescribeSelection(void) {
                     pts = 4;
                 }
                 for(i = 0; i < pts; i++) {
-                    p = SK.GetEntity(e->point[i])->PointGetNum();
+                    p = sketch->GetEntity(e->point[i])->PointGetNum();
                     Printf((i==0), "   p%d = " PT_AS_STR, i, COSTR(p));
                 }
                 break;
 
             case Entity::ARC_OF_CIRCLE: {
                 Printf(false, "%FtARC OF A CIRCLE%E");
-                p = SK.GetEntity(e->point[0])->PointGetNum();
+                p = sketch->GetEntity(e->point[0])->PointGetNum();
                 Printf(true,  "     center = " PT_AS_STR, COSTR(p));
-                p = SK.GetEntity(e->point[1])->PointGetNum();
+                p = sketch->GetEntity(e->point[1])->PointGetNum();
                 Printf(true,  "  endpoints = " PT_AS_STR, COSTR(p));
-                p = SK.GetEntity(e->point[2])->PointGetNum();
+                p = sketch->GetEntity(e->point[2])->PointGetNum();
                 Printf(false, "              " PT_AS_STR, COSTR(p));
                 double r = e->CircleGetRadiusNum();
                 Printf(true, "   diameter =  %Fi%s", SS.MmToString(r*2).c_str());
@@ -150,7 +153,7 @@ void TextWindow::DescribeSelection(void) {
             }
             case Entity::CIRCLE: {
                 Printf(false, "%FtCIRCLE%E");
-                p = SK.GetEntity(e->point[0])->PointGetNum();
+                p = sketch->GetEntity(e->point[0])->PointGetNum();
                 Printf(true,  "     center = " PT_AS_STR, COSTR(p));
                 double r = e->CircleGetRadiusNum();
                 Printf(true,  "   diameter =  %Fi%s", SS.MmToString(r*2).c_str());
@@ -203,17 +206,17 @@ void TextWindow::DescribeSelection(void) {
                 break;
         }
 
-        Group *g = SK.GetGroup(e->group);
+        Group *g = sketch->GetGroup(e->group);
         Printf(false, "");
         Printf(false, "%FtIN GROUP%E      %s", g->DescriptionString().c_str());
         if(e->workplane.v == Entity::FREE_IN_3D.v) {
             Printf(false, "%FtNOT LOCKED IN WORKPLANE%E");
         } else {
-            Entity *w = SK.GetEntity(e->workplane);
+            Entity *w = sketch->GetEntity(e->workplane);
             Printf(false, "%FtIN WORKPLANE%E  %s", w->DescriptionString().c_str());
         }
         if(e->style.v) {
-            Style *s = Style::Get(e->style);
+            Style *s = Style::Get(sketch, e->style);
             Printf(false, "%FtIN STYLE%E      %s", s->DescriptionString().c_str());
         } else {
             Printf(false, "%FtIN STYLE%E      none");
@@ -223,49 +226,49 @@ void TextWindow::DescribeSelection(void) {
         }
     } else if(gs.n == 2 && gs.points == 2) {
         Printf(false, "%FtTWO POINTS");
-        Vector p0 = SK.GetEntity(gs.point[0])->PointGetNum();
+        Vector p0 = sketch->GetEntity(gs.point[0])->PointGetNum();
         Printf(true,  "   at " PT_AS_STR, COSTR(p0));
-        Vector p1 = SK.GetEntity(gs.point[1])->PointGetNum();
+        Vector p1 = sketch->GetEntity(gs.point[1])->PointGetNum();
         Printf(false, "      " PT_AS_STR, COSTR(p1));
         double d = (p1.Minus(p0)).Magnitude();
         Printf(true, "  d = %Fi%s", SS.MmToString(d).c_str());
     } else if(gs.n == 2 && gs.faces == 1 && gs.points == 1) {
         Printf(false, "%FtA POINT AND A PLANE FACE");
-        Vector pt = SK.GetEntity(gs.point[0])->PointGetNum();
+        Vector pt = sketch->GetEntity(gs.point[0])->PointGetNum();
         Printf(true,  "        point = " PT_AS_STR, COSTR(pt));
-        Vector n = SK.GetEntity(gs.face[0])->FaceGetNormalNum();
+        Vector n = sketch->GetEntity(gs.face[0])->FaceGetNormalNum();
         Printf(true,  " plane normal = " PT_AS_NUM, CO(n));
-        Vector pl = SK.GetEntity(gs.face[0])->FaceGetPointNum();
+        Vector pl = sketch->GetEntity(gs.face[0])->FaceGetPointNum();
         Printf(false, "   plane thru = " PT_AS_STR, COSTR(pl));
         double dd = n.Dot(pl) - n.Dot(pt);
         Printf(true,  "     distance = %Fi%s", SS.MmToString(dd).c_str());
     } else if(gs.n == 3 && gs.points == 2 && gs.vectors == 1) {
         Printf(false, "%FtTWO POINTS AND A VECTOR");
-        Vector p0 = SK.GetEntity(gs.point[0])->PointGetNum();
+        Vector p0 = sketch->GetEntity(gs.point[0])->PointGetNum();
         Printf(true,  "  pointA = " PT_AS_STR, COSTR(p0));
-        Vector p1 = SK.GetEntity(gs.point[1])->PointGetNum();
+        Vector p1 = sketch->GetEntity(gs.point[1])->PointGetNum();
         Printf(false, "  pointB = " PT_AS_STR, COSTR(p1));
-        Vector v  = SK.GetEntity(gs.vector[0])->VectorGetNum();
+        Vector v  = sketch->GetEntity(gs.vector[0])->VectorGetNum();
         v = v.WithMagnitude(1);
         Printf(true,  "  vector = " PT_AS_NUM, CO(v));
         double d = (p1.Minus(p0)).Dot(v);
         Printf(true,  "  proj_d = %Fi%s", SS.MmToString(d).c_str());
     } else if(gs.n == 2 && gs.lineSegments == 1 && gs.points == 1) {
-        Entity *ln = SK.GetEntity(gs.entity[0]);
-        Vector lp0 = SK.GetEntity(ln->point[0])->PointGetNum(),
-               lp1 = SK.GetEntity(ln->point[1])->PointGetNum();
+        Entity *ln = sketch->GetEntity(gs.entity[0]);
+        Vector lp0 = sketch->GetEntity(ln->point[0])->PointGetNum(),
+               lp1 = sketch->GetEntity(ln->point[1])->PointGetNum();
         Printf(false, "%FtLINE SEGMENT AND POINT%E");
         Printf(true,  "   ln thru " PT_AS_STR, COSTR(lp0));
         Printf(false, "           " PT_AS_STR, COSTR(lp1));
-        Vector pp = SK.GetEntity(gs.point[0])->PointGetNum();
+        Vector pp = sketch->GetEntity(gs.point[0])->PointGetNum();
         Printf(true,  "     point " PT_AS_STR, COSTR(pp));
         Printf(true,  " pt-ln distance = %Fi%s%E",
             SS.MmToString(pp.DistanceToLine(lp0, lp1.Minus(lp0))).c_str());
     } else if(gs.n == 2 && gs.vectors == 2) {
         Printf(false, "%FtTWO VECTORS");
 
-        Vector v0 = SK.GetEntity(gs.entity[0])->VectorGetNum(),
-               v1 = SK.GetEntity(gs.entity[1])->VectorGetNum();
+        Vector v0 = sketch->GetEntity(gs.entity[0])->VectorGetNum(),
+               v1 = sketch->GetEntity(gs.entity[1])->VectorGetNum();
         v0 = v0.WithMagnitude(1);
         v1 = v1.WithMagnitude(1);
 
@@ -280,14 +283,14 @@ void TextWindow::DescribeSelection(void) {
     } else if(gs.n == 2 && gs.faces == 2) {
         Printf(false, "%FtTWO PLANE FACES");
 
-        Vector n0 = SK.GetEntity(gs.face[0])->FaceGetNormalNum();
+        Vector n0 = sketch->GetEntity(gs.face[0])->FaceGetNormalNum();
         Printf(true,  " planeA normal = " PT_AS_NUM, CO(n0));
-        Vector p0 = SK.GetEntity(gs.face[0])->FaceGetPointNum();
+        Vector p0 = sketch->GetEntity(gs.face[0])->FaceGetPointNum();
         Printf(false, "   planeA thru = " PT_AS_STR, COSTR(p0));
 
-        Vector n1 = SK.GetEntity(gs.face[1])->FaceGetNormalNum();
+        Vector n1 = sketch->GetEntity(gs.face[1])->FaceGetNormalNum();
         Printf(true,  " planeB normal = " PT_AS_NUM, CO(n1));
-        Vector p1 = SK.GetEntity(gs.face[1])->FaceGetPointNum();
+        Vector p1 = sketch->GetEntity(gs.face[1])->FaceGetPointNum();
         Printf(false, "   planeB thru = " PT_AS_STR, COSTR(p1));
 
         double theta = acos(n0.Dot(n1));
@@ -303,7 +306,7 @@ void TextWindow::DescribeSelection(void) {
     } else if(gs.n == 0 && gs.stylables > 0) {
         Printf(false, "%FtSELECTED:%E comment text");
     } else if(gs.n == 0 && gs.constraints == 1) {
-        Constraint *c = SK.GetConstraint(gs.constraint[0]);
+        Constraint *c = sketch->GetConstraint(gs.constraint[0]);
 
         if(c->type == Constraint::DIAMETER) {
             Printf(false, "%FtDIAMETER CONSTRAINT");
@@ -325,7 +328,7 @@ void TextWindow::DescribeSelection(void) {
     {
         // If we are showing a screen for a particular style, then offer the
         // option to assign our selected entities to that style.
-        Style *s = Style::Get(shown.style);
+        Style *s = Style::Get(sketch, shown.style);
         Printf(true, "%Fl%D%f%Ll(assign to style %s)%E",
             shown.style.v,
             &ScreenAssignSelectionToStyle,
@@ -335,13 +338,13 @@ void TextWindow::DescribeSelection(void) {
     // the option to remove that style.
     bool styleAssigned = false;
     for(i = 0; i < gs.entities; i++) {
-        Entity *e = SK.GetEntity(gs.entity[i]);
+        Entity *e = sketch->GetEntity(gs.entity[i]);
         if(e->style.v != 0) {
             styleAssigned = true;
         }
     }
     for(i = 0; i < gs.constraints; i++) {
-        Constraint *c = SK.GetConstraint(gs.constraint[i]);
+        Constraint *c = sketch->GetConstraint(gs.constraint[i]);
         if(c->type == Constraint::COMMENT && c->disp.style.v != 0) {
             styleAssigned = true;
         }

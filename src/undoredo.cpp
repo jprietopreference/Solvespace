@@ -47,8 +47,8 @@ void SolveSpaceUI::PushFromCurrentOnto(UndoStack *uk) {
 
     UndoState *ut = &(uk->d[uk->write]);
     *ut = {};
-    for(i = 0; i < SK.group.n; i++) {
-        Group *src = &(SK.group.elem[i]);
+    for(i = 0; i < sketch->group.n; i++) {
+        Group *src = &(sketch->group.elem[i]);
         Group dest = *src;
         // And then clean up all the stuff that needs to be a deep copy,
         // and zero out all the dynamic stuff that will get regenerated.
@@ -58,35 +58,35 @@ void SolveSpaceUI::PushFromCurrentOnto(UndoStack *uk) {
         dest.bezierLoops = {};
         dest.bezierOpens = {};
         dest.polyError = {};
-        dest.thisMesh = {};
-        dest.runningMesh = {};
-        dest.thisShell = {};
-        dest.runningShell = {};
-        dest.displayMesh = {};
+        dest.thisMesh = { sketch };
+        dest.runningMesh = { sketch };
+        dest.thisShell = { sketch };
+        dest.runningShell = { sketch };
+        dest.displayMesh = { sketch };
         dest.displayEdges = {};
 
         dest.remap = {};
         src->remap.DeepCopyInto(&(dest.remap));
 
-        dest.impMesh = {};
-        dest.impShell = {};
+        dest.impMesh = { sketch };
+        dest.impShell = { sketch };
         dest.impEntity = {};
         ut->group.Add(&dest);
     }
-    for(i = 0; i < SK.request.n; i++) {
-        ut->request.Add(&(SK.request.elem[i]));
+    for(i = 0; i < sketch->request.n; i++) {
+        ut->request.Add(&(sketch->request.elem[i]));
     }
-    for(i = 0; i < SK.constraint.n; i++) {
-        Constraint *src = &(SK.constraint.elem[i]);
+    for(i = 0; i < sketch->constraint.n; i++) {
+        Constraint *src = &(sketch->constraint.elem[i]);
         Constraint dest = *src;
         dest.dogd = {};
         ut->constraint.Add(&dest);
     }
-    for(i = 0; i < SK.param.n; i++) {
-        ut->param.Add(&(SK.param.elem[i]));
+    for(i = 0; i < sketch->param.n; i++) {
+        ut->param.Add(&(sketch->param.elem[i]));
     }
-    for(i = 0; i < SK.style.n; i++) {
-        ut->style.Add(&(SK.style.elem[i]));
+    for(i = 0; i < sketch->style.n; i++) {
+        ut->style.Add(&(sketch->style.elem[i]));
     }
     ut->activeGroup = SS.GW.activeGroup;
 
@@ -102,21 +102,21 @@ void SolveSpaceUI::PopOntoCurrentFrom(UndoStack *uk) {
 
     // Free everything in the main copy of the program before replacing it
     Group *g;
-    for(g = SK.group.First(); g; g = SK.group.NextAfter(g)) {
+    for(g = sketch->group.First(); g; g = sketch->group.NextAfter(g)) {
         g->Clear();
     }
-    SK.group.Clear();
-    SK.request.Clear();
-    SK.constraint.Clear();
-    SK.param.Clear();
-    SK.style.Clear();
+    sketch->group.Clear();
+    sketch->request.Clear();
+    sketch->constraint.Clear();
+    sketch->param.Clear();
+    sketch->style.Clear();
 
     // And then do a shallow copy of the state from the undo list
-    ut->group.MoveSelfInto(&(SK.group));
-    ut->request.MoveSelfInto(&(SK.request));
-    ut->constraint.MoveSelfInto(&(SK.constraint));
-    ut->param.MoveSelfInto(&(SK.param));
-    ut->style.MoveSelfInto(&(SK.style));
+    ut->group.MoveSelfInto(&(sketch->group));
+    ut->request.MoveSelfInto(&(sketch->request));
+    ut->constraint.MoveSelfInto(&(sketch->constraint));
+    ut->param.MoveSelfInto(&(sketch->param));
+    ut->style.MoveSelfInto(&(sketch->style));
     SS.GW.activeGroup = ut->activeGroup;
 
     // No need to free it, since a shallow copy was made above
@@ -131,7 +131,7 @@ void SolveSpaceUI::PopOntoCurrentFrom(UndoStack *uk) {
     SS.ScheduleShowTW();
 
     // Activate the group that was active before.
-    Group *activeGroup = SK.group.FindById(SS.GW.activeGroup);
+    Group *activeGroup = sketch->group.FindById(SS.GW.activeGroup);
     activeGroup->Activate();
 }
 

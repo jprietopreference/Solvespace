@@ -315,7 +315,7 @@ void ssglAxisAlignedLineLoop(double l, double r, double t, double b);
 extern "C" { typedef void SSGL_CALLBACK ssglCallbackFptr(void); }
 void ssglTesselatePolygon(GLUtesselator *gt, SPolygon *p);
 void ssglFillPolygon(SPolygon *p);
-void ssglFillMesh(bool useSpecColor, RgbaColor color,
+void ssglFillMesh(Sketch *sk, bool useSpecColor, RgbaColor color,
     SMesh *m, uint32_t h, uint32_t s1, uint32_t s2);
 void ssglDebugPolygon(SPolygon *p);
 void ssglDrawEdges(SEdgeList *l, bool endpointsToo);
@@ -366,6 +366,9 @@ RgbaColor CnfThawColor(RgbaColor v, const std::string &name);
 
 class System {
 public:
+    Sketch *sketch = NULL;
+    explicit System(Sketch *sk) : sketch(sk) { }
+
     enum { MAX_UNKNOWNS = 1024 };
 
     EntityList                      entity;
@@ -532,6 +535,9 @@ public:
 
 class StepFileWriter {
 public:
+    Sketch *sketch;
+    explicit StepFileWriter(Sketch *sk) : sketch(sk) { }
+
     void ExportSurfacesTo(const std::string &filename);
     void WriteHeader(void);
 	void WriteProductHeader(void);
@@ -549,6 +555,9 @@ public:
 
 class VectorFileWriter {
 public:
+    Sketch *sketch = NULL;
+    explicit VectorFileWriter(Sketch *sk) : sketch(sk) { }
+
     FILE *f = NULL;
     Vector ptMin, ptMax;
 
@@ -558,7 +567,7 @@ public:
 
     static double MmToPts(double mm);
 
-    static VectorFileWriter *ForFile(const std::string &filename);
+    static VectorFileWriter *ForFile(Sketch *sk, const std::string &filename);
 
     void Output(SBezierLoopSetSet *sblss, SMesh *sm);
 
@@ -579,6 +588,8 @@ public:
 };
 class DxfFileWriter : public VectorFileWriter {
 public:
+    explicit DxfFileWriter(Sketch *sk) : VectorFileWriter(sk) { }
+
     void StartPath( RgbaColor strokeRgb, double lineWidth,
                     bool filled, RgbaColor fillRgb);
     void FinishPath(RgbaColor strokeRgb, double lineWidth,
@@ -591,6 +602,8 @@ public:
 };
 class EpsFileWriter : public VectorFileWriter {
 public:
+    explicit EpsFileWriter(Sketch *sk) : VectorFileWriter(sk) { }
+
     Vector prevPt;
     void MaybeMoveTo(Vector s, Vector f);
 
@@ -606,6 +619,8 @@ public:
 };
 class PdfFileWriter : public VectorFileWriter {
 public:
+    explicit PdfFileWriter(Sketch *sk) : VectorFileWriter(sk) { }
+
     uint32_t xref[10] = {};
     uint32_t bodyStart = 0;
     Vector prevPt;
@@ -623,6 +638,8 @@ public:
 };
 class SvgFileWriter : public VectorFileWriter {
 public:
+    explicit SvgFileWriter(Sketch *sk) : VectorFileWriter(sk) { }
+
     Vector prevPt;
     void MaybeMoveTo(Vector s, Vector f);
 
@@ -638,6 +655,8 @@ public:
 };
 class HpglFileWriter : public VectorFileWriter {
 public:
+    explicit HpglFileWriter(Sketch *sk) : VectorFileWriter(sk) { }
+
     static double MmToHpglUnits(double mm);
     void StartPath( RgbaColor strokeRgb, double lineWidth,
                     bool filled, RgbaColor fillRgb);
@@ -650,6 +669,9 @@ public:
     bool HasCanvasSize(void) { return false; }
 };
 class Step2dFileWriter : public VectorFileWriter {
+public:
+    explicit Step2dFileWriter(Sketch *sk) : VectorFileWriter(sk), sfw(sk) { }
+
     StepFileWriter sfw;
     void StartPath( RgbaColor strokeRgb, double lineWidth,
                     bool filled, RgbaColor fillRgb);
@@ -663,6 +685,8 @@ class Step2dFileWriter : public VectorFileWriter {
 };
 class GCodeFileWriter : public VectorFileWriter {
 public:
+    explicit GCodeFileWriter(Sketch *sk) : VectorFileWriter(sk) { }
+
     SEdgeList sel;
     void StartPath( RgbaColor strokeRgb, double lineWidth,
                     bool filled, RgbaColor fillRgb);
@@ -709,8 +733,11 @@ public:
 
 class SolveSpaceUI {
 public:
-    TextWindow                  TW = {};
-    GraphicsWindow              GW = {};
+    Sketch *sketch;
+    SolveSpaceUI(Sketch *sk) : TW(sk), GW(sk), sv(sk), sketch(sk), sys(sk) { }
+
+    TextWindow                  TW;
+    GraphicsWindow              GW;
 
     // The state for undo/redo
     struct UndoState {
@@ -839,6 +866,8 @@ public:
     void SaveUsingTable(int type);
     void LoadUsingTable(char *key, char *val);
     struct SV {
+        Sketch       *sketch;
+        SV(Sketch *sk) : g(sk), r(sk), e(sk), c(sk), sketch(sk) { }
         Group        g;
         Request      r;
         Entity       e;

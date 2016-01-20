@@ -6,7 +6,7 @@
 #include "solvespace.h"
 
 void GraphicsWindow::UpdateDraggedPoint(hEntity hp, double mx, double my) {
-    Entity *p = SK.GetEntity(hp);
+    Entity *p = sketch->GetEntity(hp);
     Vector pos = p->PointGetNum();
     UpdateDraggedNum(&pos, mx, my);
     p->PointForceTo(pos);
@@ -18,7 +18,7 @@ void GraphicsWindow::UpdateDraggedNum(Vector *pos, double mx, double my) {
 }
 
 void GraphicsWindow::AddPointToDraggedList(hEntity hp) {
-    Entity *p = SK.GetEntity(hp);
+    Entity *p = sketch->GetEntity(hp);
     // If an entity and its points are both selected, then its points could
     // end up in the list twice. This would be bad, because it would move
     // twice as far as the mouse pointer...
@@ -28,7 +28,7 @@ void GraphicsWindow::AddPointToDraggedList(hEntity hp) {
             // Exact same point.
             return;
         }
-        Entity *pe = SK.GetEntity(*hee);
+        Entity *pe = sketch->GetEntity(*hee);
         if(pe->type == p->type &&
            pe->type != Entity::POINT_IN_2D &&
            pe->type != Entity::POINT_IN_3D &&
@@ -43,7 +43,7 @@ void GraphicsWindow::AddPointToDraggedList(hEntity hp) {
 }
 
 void GraphicsWindow::StartDraggingByEntity(hEntity he) {
-    Entity *e = SK.GetEntity(he);
+    Entity *e = sketch->GetEntity(he);
     if(e->IsPoint()) {
         AddPointToDraggedList(e->h);
     } else if(e->type == Entity::LINE_SEGMENT ||
@@ -173,9 +173,9 @@ void GraphicsWindow::MouseMoved(double x, double y, bool leftDown,
         // start dragging something.
         if(leftDown && dm > 3) {
             Entity *e = NULL;
-            if(hover.entity.v) e = SK.GetEntity(hover.entity);
+            if(hover.entity.v) e = sketch->GetEntity(hover.entity);
             if(e && e->type != Entity::WORKPLANE) {
-                Entity *e = SK.GetEntity(hover.entity);
+                Entity *e = sketch->GetEntity(hover.entity);
                 if(e->type == Entity::CIRCLE && selection.n <= 1) {
                     // Drag the radius.
                     ClearSelection();
@@ -205,7 +205,7 @@ void GraphicsWindow::MouseMoved(double x, double y, bool leftDown,
                     pending.operation = DRAGGING_POINTS;
                 }
             } else if(hover.constraint.v &&
-                            SK.GetConstraint(hover.constraint)->HasLabel())
+                            sketch->GetConstraint(hover.constraint)->HasLabel())
             {
                 ClearSelection();
                 pending.constraint = hover.constraint;
@@ -263,7 +263,7 @@ void GraphicsWindow::MouseMoved(double x, double y, bool leftDown,
     }
     switch(pending.operation) {
         case DRAGGING_CONSTRAINT: {
-            Constraint *c = SK.constraint.FindById(pending.constraint);
+            Constraint *c = sketch->constraint.FindById(pending.constraint);
             UpdateDraggedNum(&(c->disp.offset), x, y);
             orig.mouse = mp;
             InvalidateGraphics();
@@ -317,7 +317,7 @@ void GraphicsWindow::MouseMoved(double x, double y, bool leftDown,
                 // Now apply this rotation to the points being dragged.
                 List<hEntity> *lhe = &(pending.points);
                 for(hEntity *he = lhe->First(); he; he = lhe->NextAfter(he)) {
-                    Entity *e = SK.GetEntity(*he);
+                    Entity *e = sketch->GetEntity(*he);
                     if(e->type != Entity::POINT_N_ROT_TRANS) {
                         if(ctrlDown) {
                             Vector p = e->PointGetNum();
@@ -357,20 +357,20 @@ void GraphicsWindow::MouseMoved(double x, double y, bool leftDown,
             if(pending.point.v == hr.entity(4).v) {
                 // The very first segment; dragging final point drags both
                 // tangent points.
-                Vector p0 = SK.GetEntity(hr.entity(1))->PointGetNum(),
-                       p3 = SK.GetEntity(hr.entity(4))->PointGetNum(),
+                Vector p0 = sketch->GetEntity(hr.entity(1))->PointGetNum(),
+                       p3 = sketch->GetEntity(hr.entity(4))->PointGetNum(),
                        p1 = p0.ScaledBy(2.0/3).Plus(p3.ScaledBy(1.0/3)),
                        p2 = p0.ScaledBy(1.0/3).Plus(p3.ScaledBy(2.0/3));
-                SK.GetEntity(hr.entity(1+1))->PointForceTo(p1);
-                SK.GetEntity(hr.entity(1+2))->PointForceTo(p2);
+                sketch->GetEntity(hr.entity(1+1))->PointForceTo(p1);
+                sketch->GetEntity(hr.entity(1+2))->PointForceTo(p2);
             } else {
                 // A subsequent segment; dragging point drags only final
                 // tangent point.
-                int i = SK.GetEntity(hr.entity(0))->extraPoints;
-                Vector pn   = SK.GetEntity(hr.entity(4+i))->PointGetNum(),
-                       pnm2 = SK.GetEntity(hr.entity(2+i))->PointGetNum(),
+                int i = sketch->GetEntity(hr.entity(0))->extraPoints;
+                Vector pn   = sketch->GetEntity(hr.entity(4+i))->PointGetNum(),
+                       pnm2 = sketch->GetEntity(hr.entity(2+i))->PointGetNum(),
                        pnm1 = (pn.Plus(pnm2)).ScaledBy(0.5);
-                SK.GetEntity(hr.entity(3+i))->PointForceTo(pnm1);
+                sketch->GetEntity(hr.entity(3+i))->PointForceTo(pnm1);
             }
 
             orig.mouse = mp;
@@ -382,11 +382,11 @@ void GraphicsWindow::MouseMoved(double x, double y, bool leftDown,
             HitTestMakeSelection(mp);
 
             hRequest hr = pending.point.request();
-            Vector ona = SK.GetEntity(hr.entity(2))->PointGetNum();
-            Vector onb = SK.GetEntity(hr.entity(3))->PointGetNum();
+            Vector ona = sketch->GetEntity(hr.entity(2))->PointGetNum();
+            Vector onb = sketch->GetEntity(hr.entity(3))->PointGetNum();
             Vector center = (ona.Plus(onb)).ScaledBy(0.5);
 
-            SK.GetEntity(hr.entity(1))->PointForceTo(center);
+            sketch->GetEntity(hr.entity(1))->PointForceTo(center);
 
             orig.mouse = mp;
             SS.MarkGroupDirtyByEntity(pending.point);
@@ -394,19 +394,19 @@ void GraphicsWindow::MouseMoved(double x, double y, bool leftDown,
         }
         case DRAGGING_NEW_RADIUS:
         case DRAGGING_RADIUS: {
-            Entity *circle = SK.GetEntity(pending.circle);
-            Vector center = SK.GetEntity(circle->point[0])->PointGetNum();
+            Entity *circle = sketch->GetEntity(pending.circle);
+            Vector center = sketch->GetEntity(circle->point[0])->PointGetNum();
             Point2d c2 = ProjectPoint(center);
             double r = c2.DistanceTo(mp)/scale;
-            SK.GetEntity(circle->distance)->DistanceForceTo(r);
+            sketch->GetEntity(circle->distance)->DistanceForceTo(r);
 
             SS.MarkGroupDirtyByEntity(pending.circle);
             break;
         }
 
         case DRAGGING_NORMAL: {
-            Entity *normal = SK.GetEntity(pending.normal);
-            Vector p = SK.GetEntity(normal->point[0])->PointGetNum();
+            Entity *normal = sketch->GetEntity(pending.normal);
+            Vector p = sketch->GetEntity(normal->point[0])->PointGetNum();
             Point2d p2 = ProjectPoint(p);
 
             Quaternion q = normal->NormalGetNum();
@@ -473,7 +473,7 @@ void GraphicsWindow::ContextMenuListStyles(void) {
     CreateContextSubmenu();
     Style *s;
     bool empty = true;
-    for(s = SK.style.First(); s; s = SK.style.NextAfter(s)) {
+    for(s = sketch->style.First(); s; s = sketch->style.NextAfter(s)) {
         if(s->h.v < Style::FIRST_CUSTOM) continue;
 
         AddContextMenuItem(s->DescriptionString().c_str(), CMNU_FIRST_STYLE + s->h.v);
@@ -501,7 +501,7 @@ void GraphicsWindow::MouseRightUp(double x, double y) {
         SuggestedConstraint suggested =
             SS.GW.SuggestLineConstraint(SS.GW.pending.request);
         if(suggested != SUGGESTED_NONE) {
-            Constraint::Constrain(suggested,
+            Constraint::Constrain(sketch, suggested,
                 Entity::NO_ENTITY, Entity::NO_ENTITY, pending.request.entity(0));
         }
     }
@@ -541,7 +541,7 @@ void GraphicsWindow::MouseRightUp(double x, double y) {
             AddContextMenuItem("Select Edge Chain", CMNU_SELECT_CHAIN);
         }
         if(gs.constraints == 1 && gs.n == 0) {
-            Constraint *c = SK.GetConstraint(gs.constraint[0]);
+            Constraint *c = sketch->GetConstraint(gs.constraint[0]);
             if(c->HasLabel() && c->type != Constraint::COMMENT) {
                 AddContextMenuItem("Toggle Reference Dimension",
                     CMNU_REFERENCE_DIM);
@@ -558,9 +558,9 @@ void GraphicsWindow::MouseRightUp(double x, double y) {
         }
 
         if(gs.points == 1) {
-            Entity *p = SK.GetEntity(gs.point[0]);
+            Entity *p = sketch->GetEntity(gs.point[0]);
             Constraint *c;
-            IdList<Constraint,hConstraint> *lc = &(SK.constraint);
+            IdList<Constraint,hConstraint> *lc = &(sketch->constraint);
             for(c = lc->First(); c; c = lc->NextAfter(c)) {
                 if(c->type != Constraint::POINTS_COINCIDENT) continue;
                 if(c->ptA.v == p->h.v || c->ptB.v == p->h.v) {
@@ -638,18 +638,18 @@ void GraphicsWindow::MouseRightUp(double x, double y) {
         case CMNU_DEL_COINCIDENT: {
             SS.UndoRemember();
             if(!gs.point[0].v) break;
-            Entity *p = SK.GetEntity(gs.point[0]);
+            Entity *p = sketch->GetEntity(gs.point[0]);
             if(!p->IsPoint()) break;
 
-            SK.constraint.ClearTags();
+            sketch->constraint.ClearTags();
             Constraint *c;
-            for(c = SK.constraint.First(); c; c = SK.constraint.NextAfter(c)) {
+            for(c = sketch->constraint.First(); c; c = sketch->constraint.NextAfter(c)) {
                 if(c->type != Constraint::POINTS_COINCIDENT) continue;
                 if(c->ptA.v == p->h.v || c->ptB.v == p->h.v) {
                     c->tag = 1;
                 }
             }
-            SK.constraint.RemoveTagged();
+            sketch->constraint.RemoveTagged();
             ClearSelection();
             break;
         }
@@ -661,11 +661,11 @@ void GraphicsWindow::MouseRightUp(double x, double y) {
         case CMNU_GROUP_INFO: {
             hGroup hg;
             if(gs.entities == 1) {
-                hg = SK.GetEntity(gs.entity[0])->group;
+                hg = sketch->GetEntity(gs.entity[0])->group;
             } else if(gs.points == 1) {
-                hg = SK.GetEntity(gs.point[0])->group;
+                hg = sketch->GetEntity(gs.point[0])->group;
             } else if(gs.constraints == 1) {
-                hg = SK.GetConstraint(gs.constraint[0])->group;
+                hg = sketch->GetConstraint(gs.constraint[0])->group;
             } else {
                 break;
             }
@@ -680,11 +680,11 @@ void GraphicsWindow::MouseRightUp(double x, double y) {
         case CMNU_STYLE_INFO: {
             hStyle hs;
             if(gs.entities == 1) {
-                hs = Style::ForEntity(gs.entity[0]);
+                hs = Style::ForEntity(sketch, gs.entity[0]);
             } else if(gs.points == 1) {
-                hs = Style::ForEntity(gs.point[0]);
+                hs = Style::ForEntity(sketch, gs.point[0]);
             } else if(gs.constraints == 1) {
-                hs = SK.GetConstraint(gs.constraint[0])->disp.style;
+                hs = sketch->GetConstraint(gs.constraint[0])->disp.style;
                 if(!hs.v) hs.v = Style::CONSTRAINT;
             } else {
                 break;
@@ -698,18 +698,18 @@ void GraphicsWindow::MouseRightUp(double x, double y) {
         }
 
         case CMNU_NEW_CUSTOM_STYLE: {
-            uint32_t v = Style::CreateCustomStyle();
-            Style::AssignSelectionToStyle(v);
+            uint32_t v = Style::CreateCustomStyle(sketch);
+            Style::AssignSelectionToStyle(sketch, v);
             break;
         }
 
         case CMNU_NO_STYLE:
-            Style::AssignSelectionToStyle(0);
+            Style::AssignSelectionToStyle(sketch, 0);
             break;
 
         default:
             if(ret >= CMNU_FIRST_STYLE) {
-                Style::AssignSelectionToStyle(ret - CMNU_FIRST_STYLE);
+                Style::AssignSelectionToStyle(sketch, ret - CMNU_FIRST_STYLE);
             } else {
                 // otherwise it was cancelled, so do nothing
                 contextMenuCancelTime = GetMilliseconds();
@@ -727,9 +727,9 @@ hRequest GraphicsWindow::AddRequest(int type) {
 hRequest GraphicsWindow::AddRequest(int type, bool rememberForUndo) {
     if(rememberForUndo) SS.UndoRemember();
 
-    Request r {};
+    Request r { sketch };
     r.group = activeGroup;
-    Group *g = SK.GetGroup(activeGroup);
+    Group *g = sketch->GetGroup(activeGroup);
     if(g->type == Group::DRAWING_3D || g->type == Group::DRAWING_WORKPLANE) {
         r.construction = false;
     } else {
@@ -737,7 +737,7 @@ hRequest GraphicsWindow::AddRequest(int type, bool rememberForUndo) {
     }
     r.workplane = ActiveWorkplane();
     r.type = type;
-    SK.request.AddAndAssignId(&r);
+    sketch->request.AddAndAssignId(&r);
 
     // We must regenerate the parameters, so that the code that tries to
     // place this request's entities where the mouse is can do so. But
@@ -751,18 +751,18 @@ hRequest GraphicsWindow::AddRequest(int type, bool rememberForUndo) {
 bool GraphicsWindow::ConstrainPointByHovered(hEntity pt) {
     if(!hover.entity.v) return false;
 
-    Entity *e = SK.GetEntity(hover.entity);
+    Entity *e = sketch->GetEntity(hover.entity);
     if(e->IsPoint()) {
-        Constraint::ConstrainCoincident(e->h, pt);
+        Constraint::ConstrainCoincident(sketch, e->h, pt);
         return true;
     }
     if(e->IsCircle()) {
-        Constraint::Constrain(Constraint::PT_ON_CIRCLE,
+        Constraint::Constrain(sketch, Constraint::PT_ON_CIRCLE,
             pt, Entity::NO_ENTITY, e->h);
         return true;
     }
     if(e->type == Entity::LINE_SEGMENT) {
-        Constraint::Constrain(Constraint::PT_ON_LINE,
+        Constraint::Constrain(sketch, Constraint::PT_ON_LINE,
             pt, Entity::NO_ENTITY, e->h);
         return true;
     }
@@ -800,7 +800,7 @@ void GraphicsWindow::MouseLeftDown(double mx, double my) {
     switch(pending.operation) {
         case MNU_DATUM_POINT:
             hr = AddRequest(Request::DATUM_POINT);
-            SK.GetEntity(hr.entity(0))->PointForceTo(v);
+            sketch->GetEntity(hr.entity(0))->PointForceTo(v);
             ConstrainPointByHovered(hr.entity(0));
 
             ClearSuper();
@@ -809,8 +809,8 @@ void GraphicsWindow::MouseLeftDown(double mx, double my) {
         case MNU_LINE_SEGMENT:
         case MNU_CONSTR_SEGMENT:
             hr = AddRequest(Request::LINE_SEGMENT);
-            SK.GetRequest(hr)->construction = (pending.operation == MNU_CONSTR_SEGMENT);
-            SK.GetEntity(hr.entity(1))->PointForceTo(v);
+            sketch->GetRequest(hr)->construction = (pending.operation == MNU_CONSTR_SEGMENT);
+            sketch->GetEntity(hr.entity(1))->PointForceTo(v);
             ConstrainPointByHovered(hr.entity(1));
 
             ClearSuper();
@@ -819,7 +819,7 @@ void GraphicsWindow::MouseLeftDown(double mx, double my) {
             pending.request = hr;
             pending.point = hr.entity(2);
             pending.description = "click next point of line, or press Esc";
-            SK.GetEntity(pending.point)->PointForceTo(v);
+            sketch->GetEntity(pending.point)->PointForceTo(v);
             break;
 
         case MNU_RECTANGLE: {
@@ -835,13 +835,13 @@ void GraphicsWindow::MouseLeftDown(double mx, double my) {
                 lns[i] = AddRequest(Request::LINE_SEGMENT, false);
             }
             for(i = 0; i < 4; i++) {
-                Constraint::ConstrainCoincident(
+                Constraint::ConstrainCoincident(sketch,
                     lns[i].entity(1), lns[(i+1)%4].entity(2));
-                SK.GetEntity(lns[i].entity(1))->PointForceTo(v);
-                SK.GetEntity(lns[i].entity(2))->PointForceTo(v);
+                sketch->GetEntity(lns[i].entity(1))->PointForceTo(v);
+                sketch->GetEntity(lns[i].entity(2))->PointForceTo(v);
             }
             for(i = 0; i < 4; i++) {
-                Constraint::Constrain(
+                Constraint::Constrain(sketch,
                     (i % 2) ? Constraint::HORIZONTAL : Constraint::VERTICAL,
                     Entity::NO_ENTITY, Entity::NO_ENTITY,
                     lns[i].entity(0));
@@ -856,12 +856,12 @@ void GraphicsWindow::MouseLeftDown(double mx, double my) {
         case MNU_CIRCLE:
             hr = AddRequest(Request::CIRCLE);
             // Centered where we clicked
-            SK.GetEntity(hr.entity(1))->PointForceTo(v);
+            sketch->GetEntity(hr.entity(1))->PointForceTo(v);
             // Normal to the screen
-            SK.GetEntity(hr.entity(32))->NormalForceTo(
+            sketch->GetEntity(hr.entity(32))->NormalForceTo(
                 Quaternion::From(SS.GW.projRight, SS.GW.projUp));
             // Initial radius zero
-            SK.GetEntity(hr.entity(64))->DistanceForceTo(0);
+            sketch->GetEntity(hr.entity(64))->DistanceForceTo(0);
 
             ConstrainPointByHovered(hr.entity(1));
 
@@ -882,9 +882,9 @@ void GraphicsWindow::MouseLeftDown(double mx, double my) {
             // This fudge factor stops us from immediately failing to solve
             // because of the arc's implicit (equal radius) tangent.
             Vector adj = SS.GW.projRight.WithMagnitude(2/SS.GW.scale);
-            SK.GetEntity(hr.entity(1))->PointForceTo(v.Minus(adj));
-            SK.GetEntity(hr.entity(2))->PointForceTo(v);
-            SK.GetEntity(hr.entity(3))->PointForceTo(v);
+            sketch->GetEntity(hr.entity(1))->PointForceTo(v.Minus(adj));
+            sketch->GetEntity(hr.entity(2))->PointForceTo(v);
+            sketch->GetEntity(hr.entity(3))->PointForceTo(v);
             ConstrainPointByHovered(hr.entity(2));
 
             ClearSuper();
@@ -896,10 +896,10 @@ void GraphicsWindow::MouseLeftDown(double mx, double my) {
         }
         case MNU_CUBIC:
             hr = AddRequest(Request::CUBIC);
-            SK.GetEntity(hr.entity(1))->PointForceTo(v);
-            SK.GetEntity(hr.entity(2))->PointForceTo(v);
-            SK.GetEntity(hr.entity(3))->PointForceTo(v);
-            SK.GetEntity(hr.entity(4))->PointForceTo(v);
+            sketch->GetEntity(hr.entity(1))->PointForceTo(v);
+            sketch->GetEntity(hr.entity(2))->PointForceTo(v);
+            sketch->GetEntity(hr.entity(3))->PointForceTo(v);
+            sketch->GetEntity(hr.entity(4))->PointForceTo(v);
             ConstrainPointByHovered(hr.entity(1));
 
             ClearSuper();
@@ -917,8 +917,8 @@ void GraphicsWindow::MouseLeftDown(double mx, double my) {
                 break;
             }
             hr = AddRequest(Request::WORKPLANE);
-            SK.GetEntity(hr.entity(1))->PointForceTo(v);
-            SK.GetEntity(hr.entity(32))->NormalForceTo(
+            sketch->GetEntity(hr.entity(1))->PointForceTo(v);
+            sketch->GetEntity(hr.entity(32))->NormalForceTo(
                 Quaternion::From(SS.GW.projRight, SS.GW.projUp));
             ConstrainPointByHovered(hr.entity(1));
 
@@ -932,12 +932,12 @@ void GraphicsWindow::MouseLeftDown(double mx, double my) {
                 break;
             }
             hr = AddRequest(Request::TTF_TEXT);
-            Request *r = SK.GetRequest(hr);
+            Request *r = sketch->GetRequest(hr);
             r->str = "Abc";
             r->font = "arial.ttf";
 
-            SK.GetEntity(hr.entity(1))->PointForceTo(v);
-            SK.GetEntity(hr.entity(2))->PointForceTo(v);
+            sketch->GetEntity(hr.entity(1))->PointForceTo(v);
+            sketch->GetEntity(hr.entity(2))->PointForceTo(v);
 
             pending.operation = DRAGGING_NEW_POINT;
             pending.point = hr.entity(2);
@@ -947,13 +947,13 @@ void GraphicsWindow::MouseLeftDown(double mx, double my) {
 
         case MNU_COMMENT: {
             ClearSuper();
-            Constraint c {};
+            Constraint c { sketch };
             c.group       = SS.GW.activeGroup;
             c.workplane   = SS.GW.ActiveWorkplane();
             c.type        = Constraint::COMMENT;
             c.disp.offset = v;
             c.comment = "NEW COMMENT -- DOUBLE-CLICK TO EDIT";
-            Constraint::AddConstraint(&c);
+            Constraint::AddConstraint(sketch, &c);
             break;
         }
 
@@ -970,7 +970,7 @@ void GraphicsWindow::MouseLeftDown(double mx, double my) {
 
         case DRAGGING_NEW_CUBIC_POINT: {
             hRequest hr = pending.point.request();
-            Request *r = SK.GetRequest(hr);
+            Request *r = sketch->GetRequest(hr);
 
             if(hover.entity.v == hr.entity(1).v && r->extraPoints >= 2) {
                 // They want the endpoints coincident, which means a periodic
@@ -980,12 +980,12 @@ void GraphicsWindow::MouseLeftDown(double mx, double my) {
                 // needed here; so move [2,ep+1] down, skipping first pt.
                 int i;
                 for(i = 2; i <= r->extraPoints+1; i++) {
-                    SK.GetEntity(hr.entity((i-1)+1))->PointForceTo(
-                        SK.GetEntity(hr.entity(i+1))->PointGetNum());
+                    sketch->GetEntity(hr.entity((i-1)+1))->PointForceTo(
+                        sketch->GetEntity(hr.entity(i+1))->PointGetNum());
                 }
                 // and move ep+3 down by two, skipping both
-                SK.GetEntity(hr.entity((r->extraPoints+1)+1))->PointForceTo(
-                  SK.GetEntity(hr.entity((r->extraPoints+3)+1))->PointGetNum());
+                sketch->GetEntity(hr.entity((r->extraPoints+1)+1))->PointForceTo(
+                  sketch->GetEntity(hr.entity((r->extraPoints+3)+1))->PointGetNum());
                 r->extraPoints -= 2;
                 // And we're done.
                 SS.MarkGroupDirty(r->group);
@@ -999,21 +999,21 @@ void GraphicsWindow::MouseLeftDown(double mx, double my) {
                 break;
             }
 
-            Entity e;
+            Entity e { sketch };
             if(r->extraPoints >= (int)arraylen(e.point) - 4) {
                 ClearPending();
                 break;
             }
 
-            (SK.GetRequest(hr)->extraPoints)++;
+            (sketch->GetRequest(hr)->extraPoints)++;
             SS.GenerateAll(-1, -1);
 
             int ep = r->extraPoints;
-            Vector last = SK.GetEntity(hr.entity(3+ep))->PointGetNum();
+            Vector last = sketch->GetEntity(hr.entity(3+ep))->PointGetNum();
 
-            SK.GetEntity(hr.entity(2+ep))->PointForceTo(last);
-            SK.GetEntity(hr.entity(3+ep))->PointForceTo(v);
-            SK.GetEntity(hr.entity(4+ep))->PointForceTo(v);
+            sketch->GetEntity(hr.entity(2+ep))->PointForceTo(last);
+            sketch->GetEntity(hr.entity(3+ep))->PointForceTo(v);
+            sketch->GetEntity(hr.entity(4+ep))->PointForceTo(v);
             pending.point = hr.entity(4+ep);
             break;
         }
@@ -1023,15 +1023,15 @@ void GraphicsWindow::MouseLeftDown(double mx, double my) {
             SuggestedConstraint suggested =
                 SS.GW.SuggestLineConstraint(SS.GW.pending.request);
             if(suggested != SUGGESTED_NONE) {
-                Constraint::Constrain(suggested,
+                Constraint::Constrain(sketch, suggested,
                     Entity::NO_ENTITY, Entity::NO_ENTITY, pending.request.entity(0));
             }
 
             if(hover.entity.v) {
-                Entity *e = SK.GetEntity(hover.entity);
+                Entity *e = sketch->GetEntity(hover.entity);
                 if(e->IsPoint()) {
                     hRequest hrl = pending.point.request();
-                    Entity *sp = SK.GetEntity(hrl.entity(1));
+                    Entity *sp = sketch->GetEntity(hrl.entity(1));
                     if(( e->PointGetNum()).Equals(
                        (sp->PointGetNum())))
                     {
@@ -1051,15 +1051,15 @@ void GraphicsWindow::MouseLeftDown(double mx, double my) {
 
             // Create a new line segment, so that we continue drawing.
             hRequest hr = AddRequest(Request::LINE_SEGMENT);
-            SK.GetRequest(hr)->construction = SK.GetRequest(pending.request)->construction;
-            SK.GetEntity(hr.entity(1))->PointForceTo(v);
+            sketch->GetRequest(hr)->construction = sketch->GetRequest(pending.request)->construction;
+            sketch->GetEntity(hr.entity(1))->PointForceTo(v);
             // Displace the second point of the new line segment slightly,
             // to avoid creating zero-length edge warnings.
-            SK.GetEntity(hr.entity(2))->PointForceTo(
+            sketch->GetEntity(hr.entity(2))->PointForceTo(
                 v.Plus(projRight.ScaledBy(0.5/scale)));
 
             // Constrain the line segments to share an endpoint
-            Constraint::ConstrainCoincident(pending.point, hr.entity(1));
+            Constraint::ConstrainCoincident(sketch, pending.point, hr.entity(1));
 
             // And drag an endpoint of the new line segment
             pending.operation = DRAGGING_NEW_LINE_POINT;
@@ -1132,7 +1132,7 @@ void GraphicsWindow::MouseLeftDoubleClick(double mx, double my) {
         constraintBeingEdited = hover.constraint;
         ClearSuper();
 
-        Constraint *c = SK.GetConstraint(constraintBeingEdited);
+        Constraint *c = sketch->GetConstraint(constraintBeingEdited);
         if(!c->HasLabel()) {
             // Not meaningful to edit a constraint without a dimension
             return;
@@ -1189,7 +1189,7 @@ void GraphicsWindow::MouseLeftDoubleClick(double mx, double my) {
 
 void GraphicsWindow::EditControlDone(const char *s) {
     HideGraphicsEditControl();
-    Constraint *c = SK.GetConstraint(constraintBeingEdited);
+    Constraint *c = sketch->GetConstraint(constraintBeingEdited);
 
     if(c->type == Constraint::COMMENT) {
         SS.UndoRemember();
@@ -1197,7 +1197,7 @@ void GraphicsWindow::EditControlDone(const char *s) {
         return;
     }
 
-    Expr *e = Expr::From(s, true);
+    Expr *e = Expr::From(sketch, s, true);
     if(e) {
         SS.UndoRemember();
 
@@ -1312,9 +1312,9 @@ void GraphicsWindow::SpaceNavigatorMoved(double tx, double ty, double tz,
     GroupSelection();
     Entity *e = NULL;
     Group *g = NULL;
-    if(gs.points == 1   && gs.n == 1) e = SK.GetEntity(gs.point [0]);
-    if(gs.entities == 1 && gs.n == 1) e = SK.GetEntity(gs.entity[0]);
-    if(e) g = SK.GetGroup(e->group);
+    if(gs.points == 1   && gs.n == 1) e = sketch->GetEntity(gs.point [0]);
+    if(gs.entities == 1 && gs.n == 1) e = sketch->GetEntity(gs.entity[0]);
+    if(e) g = sketch->GetGroup(e->group);
     if(g && g->type == Group::IMPORTED && !shiftDown) {
         // Apply the transformation to an imported part. Gain down the Z
         // axis, since it's hard to see what you're doing on that one since

@@ -6,8 +6,8 @@
 //-----------------------------------------------------------------------------
 #include "solvespace.h"
 
-SolveSpaceUI SolveSpace::SS {};
-Sketch SolveSpace::SK {};
+Sketch SolveSpace::SK = {};
+SolveSpaceUI SolveSpace::SS { &SK };
 
 std::string SolveSpace::RecentFile[MAX_RECENT] {};
 
@@ -202,7 +202,7 @@ void SolveSpaceUI::Exit(void) {
     CnfFreezeInt(autosaveInterval, "AutosaveInterval");
 
     // And the default styles, colors and line widths and such.
-    Style::FreezeDefaultStyles();
+    Style::FreezeDefaultStyles(sketch);
 
     // Exiting cleanly.
     RemoveAutosave();
@@ -317,7 +317,7 @@ void SolveSpaceUI::AfterNewFile(void) {
 
     // Create all the default styles; they'll get created on the fly anyways,
     // but can't hurt to do it now.
-    Style::CreateAllDefaultStyles();
+    Style::CreateAllDefaultStyles(sketch);
 
     UpdateWindowTitle();
 }
@@ -411,6 +411,7 @@ static std::string Extension(const std::string &filename) {
 }
 
 void SolveSpaceUI::MenuFile(int id) {
+    Sketch *sk = SS.sketch;
     if(id >= RECENT_OPEN && id < (RECENT_OPEN+MAX_RECENT)) {
         if(!SS.OkayToStartNewFile()) return;
 
@@ -499,7 +500,7 @@ void SolveSpaceUI::MenuFile(int id) {
         case GraphicsWindow::MNU_EXPORT_SURFACES: {
             std::string exportFile;
             if(!GetSaveFile(exportFile, SRF_EXT, SRF_PATTERN)) break;
-            StepFileWriter sfw {};
+            StepFileWriter sfw { sk };
             sfw.ExportSurfacesTo(exportFile);
             break;
         }
@@ -555,7 +556,7 @@ void SolveSpaceUI::MenuAnalyze(int id) {
             SMesh *m = &(g->displayMesh);
             SKdNode *root = SKdNode::From(m);
             bool inters, leaks;
-            root->MakeCertainEdgesInto(&(SS.nakedEdges),
+            root->MakeCertainEdgesInto(SS.sketch, &(SS.nakedEdges),
                 SKdNode::NAKED_OR_SELF_INTER_EDGES, true, &inters, &leaks);
 
             InvalidateGraphics();
@@ -588,7 +589,7 @@ void SolveSpaceUI::MenuAnalyze(int id) {
             SMesh *m = &(SK.GetGroup(SS.GW.activeGroup)->displayMesh);
             SKdNode *root = SKdNode::From(m);
             bool inters, leaks;
-            root->MakeCertainEdgesInto(&(SS.nakedEdges),
+            root->MakeCertainEdgesInto(SS.sketch, &(SS.nakedEdges),
                 SKdNode::SELF_INTER_EDGES, false, &inters, &leaks);
 
             InvalidateGraphics();

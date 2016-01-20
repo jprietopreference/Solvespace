@@ -688,7 +688,6 @@ void GCodeFileWriter::FinishAndCloseFile(void) {
 // can also be used for surfaces or 3d curves.
 //-----------------------------------------------------------------------------
 void Step2dFileWriter::StartFile(void) {
-    sfw = {};
     sfw.f = f;
     sfw.WriteHeader();
 }
