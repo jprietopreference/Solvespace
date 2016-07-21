@@ -326,7 +326,46 @@ Lighting GraphicsWindow::GetLighting() const {
     return lighting;
 }
 
+GraphicsWindow::Selection GraphicsWindow::ChooseHover() {
+    Selection s = {};
+    if(hoverList.n == 0) return s;
+
+    Group *activeGroup = SK.GetGroup(SS.GW.activeGroup);
+    int bestOrder = -1;
+    int bestZIndex;
+    for(auto &h : hoverList) {
+        hGroup hg = {};
+        if(h.s.entity.v != 0) {
+            hg = SK.GetEntity(h.s.entity)->group;
+        } else if(h.s.constraint.v != 0) {
+            hg = SK.GetConstraint(h.s.constraint)->group;
+        }
+        Group *g = SK.GetGroup(hg);
+        if(g->order > activeGroup->order) continue;
+        if(bestOrder != -1 && (bestOrder >= g->order || bestZIndex > h.zIndex)) continue;
+        bestOrder = g->order;
+        bestZIndex = h.zIndex;
+        s = h.s;
+    }
+    return s;
+}
+
+GraphicsWindow::Selection GraphicsWindow::ChooseDraggableHover() {
+    Selection *fromRequestSelection = {};
+    for(auto &h : hoverList) {
+        if(h.s.entity.v == 0) continue;
+        if(!h.s.entity.isFromRequest()) continue;
+        fromRequestSelection = &h.s;
+        break;
+    }
+    if(fromRequestSelection != NULL) {
+        return *fromRequestSelection;
+    }
+    return ChooseHover();
+}
+
 void GraphicsWindow::HitTestMakeSelection(Point2d mp) {
+    hoverList = {};
     Selection s = {};
 
     // Did the view projection change? If so, invalidate bounding boxes.
@@ -368,8 +407,11 @@ void GraphicsWindow::HitTestMakeSelection(Point2d mp) {
         }
 
         if(canvas.Pick([&]{ e.Draw(Entity::DrawAs::DEFAULT, &canvas); })) {
-            s = {};
-            s.entity = e.h;
+            SelectionInfo si = {};
+            si.distance = canvas.minDistance;
+            si.zIndex  = canvas.maxZIndex;
+            si.s.entity = e.h;
+            hoverList.Add(&si);
         }
     }
 
@@ -377,11 +419,12 @@ void GraphicsWindow::HitTestMakeSelection(Point2d mp) {
     if(pending.operation == Pending::NONE) {
         // Constraints
         for(Constraint &c : SK.constraint) {
-            if(!c.IsVisible()) continue;
-
             if(canvas.Pick([&]{ c.Draw(Constraint::DrawAs::DEFAULT, &canvas); })) {
-                s = {};
-                s.constraint = c.h;
+                SelectionInfo si = {};
+                si.distance = canvas.minDistance;
+                si.zIndex  = canvas.maxZIndex;
+                si.s.constraint = c.h;
+                hoverList.Add(&si);
             }
         }
 
@@ -396,6 +439,9 @@ void GraphicsWindow::HitTestMakeSelection(Point2d mp) {
             }
         }
     }
+
+    std::sort(hoverList.begin(), hoverList.end());
+    s = ChooseHover();
 
     canvas.Clear();
 
