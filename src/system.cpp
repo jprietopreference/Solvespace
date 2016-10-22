@@ -359,7 +359,7 @@ void System::WriteEquationsExceptFor(hConstraint hc, Group *g) {
     g->GenerateEquations(&eq);
 }
 
-void System::FindWhichToRemoveToFixJacobian(Group *g, List<hConstraint> *bad) {
+void System::FindWhichToRemoveToFixJacobian(Group *g, List<hConstraint> *bad, bool fullDofTest) {
     int a, i;
 
     for(a = 0; a < 2; a++) {
@@ -382,7 +382,11 @@ void System::FindWhichToRemoveToFixJacobian(Group *g, List<hConstraint> *bad) {
 
             // It's a major speedup to solve the easy ones by substitution here,
             // and that doesn't break anything.
-            SolveBySubstitution();
+            // We remove it because with this we can't catch any problems
+            // since before we tested without this
+            if(!fullDofTest) {
+                SolveBySubstitution();
+            }
 
             WriteJacobian(0);
             EvalJacobian();
@@ -397,7 +401,7 @@ void System::FindWhichToRemoveToFixJacobian(Group *g, List<hConstraint> *bad) {
 }
 
 SolveResult System::Solve(Group *g, int *dof, List<hConstraint> *bad,
-                  bool andFindBad, bool andFindFree)
+                  bool andFindBad, bool andFindFree, bool fullDofTest)
 {
     WriteEquationsExceptFor(Constraint::NO_CONSTRAINT, g);
 
@@ -418,8 +422,9 @@ SolveResult System::Solve(Group *g, int *dof, List<hConstraint> *bad,
     param.ClearTags();
     eq.ClearTags();
 
-    SolveBySubstitution();
-
+    if(!fullDofTest) {
+        SolveBySubstitution();
+    }
     // Before solving the big system, see if we can find any equations that
     // are soluble alone. This can be a huge speedup. We don't know whether
     // the system is consistent yet, but if it isn't then we'll catch that
@@ -465,7 +470,7 @@ SolveResult System::Solve(Group *g, int *dof, List<hConstraint> *bad,
     rankOk = TestRank();
     if(!rankOk) {
         if(!g->allowRedundant) {
-            if(andFindBad) FindWhichToRemoveToFixJacobian(g, bad);
+            if(andFindBad) FindWhichToRemoveToFixJacobian(g, bad, fullDofTest);
         }
     } else {
         // This is not the full Jacobian, but any substitutions or single-eq

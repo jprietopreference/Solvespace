@@ -85,6 +85,7 @@ hConstraint Constraint::AddConstraint(Constraint *c, bool rememberForUndo) {
     SK.constraint.AddAndAssignId(c);
 
     SS.MarkGroupDirty(c->group);
+    SK.GetGroup(c->group)->dofDirty = true;
     SS.ScheduleGenerateAll();
     return c->h;
 }

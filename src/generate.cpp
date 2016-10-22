@@ -528,7 +528,10 @@ void SolveSpaceUI::SolveGroup(hGroup hg, bool andFindFree) {
     MarkDraggedParams();
     g->solved.remove.Clear();
     SolveResult how = sys.Solve(g, &(g->solved.dof),
-                           &(g->solved.remove), /*andFindBad=*/true, andFindFree);
+                           &(g->solved.remove), /*andFindBad=*/true, andFindFree, g->dofDirty);
+    if(how == SolveResult::OKAY) {
+        g->dofDirty = false;
+    }
     g->solved.how = how;
     FreeAllTemporary();
 }

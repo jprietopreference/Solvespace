@@ -315,6 +315,12 @@ void SolveSpaceUI::AfterNewFile() {
     SS.GW.projRight = Vector::From(1, 0, 0);
     SS.GW.projUp    = Vector::From(0, 1, 0);
 
+    // We are marking all the groups as dofDirty
+    // for checking all old-saved files for dof problems
+    for(Group &g : SK.group) {
+        g.dofDirty = true;
+    }
+
     GenerateAll(Generate::ALL);
 
     TW.Init();
