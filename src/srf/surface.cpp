@@ -834,7 +834,7 @@ void SShell::MakeFromTransformationOf(SShell *a,
                                       Vector t, Quaternion q, double scale)
 {
     booleanFailed = false;
-
+    surface.ReserveMore(a->surface.n);
     SSurface *s;
     for(s = a->surface.First(); s; s = a->surface.NextAfter(s)) {
         SSurface n;
@@ -842,6 +842,7 @@ void SShell::MakeFromTransformationOf(SShell *a,
         surface.Add(&n); // keeping the old ID
     }
 
+    curve.ReserveMore(a->curve.n);
     SCurve *c;
     for(c = a->curve.First(); c; c = a->curve.NextAfter(c)) {
         SCurve n;

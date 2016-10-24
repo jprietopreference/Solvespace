@@ -108,7 +108,7 @@ void Request::Generate(IdList<Entity,hEntity> *entity,
 
     Entity e = {};
     EntReqTable::GetRequestInfo(type, extraPoints, &et, &points, &hasNormal, &hasDistance);
-
+    
     // Generate the entity that's specific to this request.
     e.type = et;
     e.extraPoints = extraPoints;
