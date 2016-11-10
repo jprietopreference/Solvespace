@@ -162,6 +162,20 @@ public:
     int  n;
     int  elemsAllocated;
 
+    void ReserveMore(int howMuch) {
+        if(n + howMuch > elemsAllocated) {
+            elemsAllocated = n + howMuch;
+            T *newElem = (T *)MemAlloc((size_t)elemsAllocated*sizeof(elem[0]));
+            for(int i = 0; i < n; i++) {
+                new(&newElem[i]) T(std::move(elem[i]));
+                elem[i].~T();
+            }
+            MemFree(elem);
+            elem = newElem;
+        }
+        
+    }
+
     void AllocForOneMore() {
         if(n >= elemsAllocated) {
             elemsAllocated = (elemsAllocated + 32)*2;

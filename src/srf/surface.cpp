@@ -165,6 +165,7 @@ SSurface SSurface::FromTransformationOf(SSurface *a, Vector t, Quaternion q, dou
 
     if(includingTrims) {
         STrimBy *stb;
+        ret.trim.ReserveMore(a->trim.n);
         for(stb = a->trim.First(); stb; stb = a->trim.NextAfter(stb)) {
             STrimBy n = *stb;
             if(needScale) {
