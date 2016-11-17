@@ -274,6 +274,11 @@ public:
     }
 };
 
+struct IdToI {
+    uint32_t h;
+    uint32_t i;
+};
+
 // A list, where each element has an integer identifier. The list is kept
 // sorted by that identifier, and items can be looked up in log n time by
 // id.
@@ -283,6 +288,7 @@ public:
     T     *elem;
     int   n;
     int   elemsAllocated;
+    IdToI *iti;
 
     uint32_t MaximumId() {
         if(n == 0) {
@@ -303,12 +309,16 @@ public:
         if(n + howMuch > elemsAllocated) {
             elemsAllocated = n + howMuch;
             T *newElem = (T *)MemAlloc((size_t)elemsAllocated*sizeof(elem[0]));
+            IdToI *newIti = (IdToI *)MemAlloc((size_t)elemsAllocated*sizeof(iti[0]));
             for(int i = 0; i < n; i++) {
                 new(&newElem[i]) T(std::move(elem[i]));
                 elem[i].~T();
+                newIti[i] = iti[i];
             }
             MemFree(elem);
+            MemFree(iti);
             elem = newElem;
+            iti = newIti;
         }
     }
 
@@ -316,31 +326,37 @@ public:
         if(n >= elemsAllocated) {
             elemsAllocated = (elemsAllocated + 32)*2;
             T *newElem = (T *)MemAlloc((size_t)elemsAllocated*sizeof(elem[0]));
+            IdToI *newIti = (IdToI *)MemAlloc((size_t)elemsAllocated*sizeof(iti[0]));
             for(int i = 0; i < n; i++) {
                 new(&newElem[i]) T(std::move(elem[i]));
                 elem[i].~T();
+                newIti[i] = iti[i];
             }
             MemFree(elem);
+            MemFree(iti);
             elem = newElem;
+            iti = newIti;
         }
     
         int first = 0, last = n;
         // We know that we must insert within the closed interval [first,last]
         while(first != last) {
             int mid = (first + last)/2;
-            H hm = elem[mid].h;
-            ssassert(hm.v != t->h.v, "Handle isn't unique");
-            if(hm.v > t->h.v) {
+            uint32_t hm = iti[mid].h;
+            ssassert(hm != t->h.v, "Handle isn't unique");
+            if(hm > t->h.v) {
                 last = mid;
-            } else if(hm.v < t->h.v) {
+            } else if(hm < t->h.v) {
                 first = mid + 1;
             }
         }
 
         int i = first;
+        memmove(iti+i+1, iti+i, (size_t)(n-i)*sizeof(iti[0]));
         new(&elem[n]) T();
-        std::move_backward(elem + i, elem + n, elem + n + 1);
-        elem[i] = *t;
+        elem[n] = *t;
+        iti[i].i = n;
+        iti[i].h = t->h.v;
         n++;
     }
 
@@ -354,10 +370,26 @@ public:
         int first = 0, last = n-1;
         while(first <= last) {
             int mid = (first + last)/2;
-            H hm = elem[mid].h;
-            if(hm.v > h.v) {
+            uint32_t hm = iti[mid].h;
+            if(hm > h.v) {
                 last = mid-1; // and first stays the same
-            } else if(hm.v < h.v) {
+            } else if(hm < h.v) {
+                first = mid+1; // and last stays the same
+            } else {
+                return iti[mid].i;
+            }
+        }
+        return -1;
+    }
+    
+    int InternalIndexOf(H h) {
+        int first = 0, last = n-1;
+        while(first <= last) {
+            int mid = (first + last)/2;
+            uint32_t hm = iti[mid].h;
+            if(hm > h.v) {
+                last = mid-1; // and first stays the same
+            } else if(hm < h.v) {
                 first = mid+1; // and last stays the same
             } else {
                 return mid;
@@ -366,17 +398,18 @@ public:
         return -1;
     }
 
+
     T *FindByIdNoOops(H h) {
         int first = 0, last = n-1;
         while(first <= last) {
             int mid = (first + last)/2;
-            H hm = elem[mid].h;
-            if(hm.v > h.v) {
+            uint32_t hm = iti[mid].h;
+            if(hm > h.v) {
                 last = mid-1; // and first stays the same
-            } else if(hm.v < h.v) {
+            } else if(hm < h.v) {
                 first = mid+1; // and last stays the same
             } else {
-                return &(elem[mid]);
+                return &(elem[iti[mid].i]);
             }
         }
         return NULL;
@@ -416,6 +449,17 @@ public:
         int src, dest;
         dest = 0;
         for(src = 0; src < n; src++) {
+            if(elem[iti[src].i].tag) {
+                // this item should be deleted
+            } else {
+                if(src != dest) {
+                    iti[dest] = iti[src];
+                }
+                dest++;
+            }
+        }
+        dest = 0;
+        for(src = 0; src < n; src++) {
             if(elem[src].tag) {
                 // this item should be deleted
                 elem[src].Clear();
@@ -428,7 +472,12 @@ public:
         }
         for(int i = dest; i < n; i++)
             elem[i].~T();
+
         n = dest;
+        for(int i = 0; i < n; i++) {
+            int index = InternalIndexOf(elem[i].h);
+            iti[index].i = i;
+        }
         // and elemsAllocated is untouched, because we didn't resize
     }
     void RemoveById(H h) {
@@ -442,13 +491,17 @@ public:
         *l = *this;
         elemsAllocated = n = 0;
         elem = NULL;
+        iti = NULL;
     }
 
     void DeepCopyInto(IdList<T,H> *l) {
         l->Clear();
         l->elem = (T *)MemAlloc(elemsAllocated * sizeof(elem[0]));
-        for(int i = 0; i < n; i++)
+        l->iti = (IdToI *)MemAlloc(elemsAllocated * sizeof(iti[0]));
+        for(int i = 0; i < n; i++) {
             new(&l->elem[i]) T(elem[i]);
+            l->iti[i] = iti[i];
+        }
         l->elemsAllocated = elemsAllocated;
         l->n = n;
     }
@@ -460,7 +513,9 @@ public:
         }
         elemsAllocated = n = 0;
         if(elem) MemFree(elem);
+        if(iti) MemFree(iti);
         elem = NULL;
+        iti = NULL;
     }
 
 };
