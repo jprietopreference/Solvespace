@@ -69,6 +69,34 @@ void GraphicsWindow::DeleteSelection() {
     DeleteTaggedRequests();
 }
 
+
+void GraphicsWindow::DistinctSelection(IdSet<hRequest> *requests,
+                                       IdSet<hEntity> *entities) {
+
+    for(const Selection &s : selection) {
+        if(s.entity.v == Entity::NO_ENTITY.v) continue;
+        if(!s.entity.isFromRequest()) continue;
+        hRequest r = s.entity.request();
+        // Add request only if main entity is selected
+        if(r.entity(0).v != s.entity.v) continue;
+        if(requests->Contains(r)) continue;
+        requests->Add(r);
+    }
+
+    if(entities == NULL) return;
+
+    // Add only entities which is not from listed requests
+    for(const Selection &s : selection) {
+        if(s.entity.v == Entity::NO_ENTITY.v) continue;
+        if(s.entity.isFromRequest()) {
+            hRequest r = s.entity.request();
+            if(requests->Contains(r)) continue;
+        }
+        if(entities->Contains(s.entity)) continue;
+        entities->Add(s.entity);
+    }
+}
+
 void GraphicsWindow::CopySelection() {
     SS.clipboard.Clear();
 
@@ -79,15 +107,26 @@ void GraphicsWindow::CopySelection() {
            n = wrkpln->NormalN(),
            p = SK.GetEntity(wrkpl->point[0])->PointGetNum();
 
-    List<Selection> *ls = &(selection);
-    for(Selection *s = ls->First(); s; s = ls->NextAfter(s)) {
-        if(!s->entity.v) continue;
-        // Work only on entities that have requests that will generate them.
-        Entity *e = SK.GetEntity(s->entity);
+    IdSet<hRequest> requests = {};
+    IdSet<hEntity> entities = {};
+    DistinctSelection(&requests, &entities);
+
+    // Make one unified list of entities for copying.
+    // We add main entities for each unique request.
+    for(const auto &r : requests) {
+        Request *req = SK.GetRequest(r.h);
+        Entity *e = SK.GetEntity(req->h.entity(0));
+        entities.Add(e->h);
+    }
+
+    // Now, create ClipboardRequest for each entity we want to copy
+    for(const auto &ei : entities) {
+        Entity *e = SK.GetEntity(ei.h);
+        Entity::Type eType = e->IsPoint() ? (Entity::Type)0 : e->type;
         bool hasDistance;
         Request::Type req;
         int pts;
-        if(!EntReqTable::GetEntityInfo(e->type, e->extraPoints,
+        if(!EntReqTable::GetEntityInfo(eType, e->extraPoints,
                 &req, &pts, NULL, &hasDistance))
         {
             continue;
@@ -102,7 +141,12 @@ void GraphicsWindow::CopySelection() {
         cr.font         = e->font;
         cr.construction = e->construction;
         {for(int i = 0; i < pts; i++) {
-            Vector pt = SK.GetEntity(e->point[i])->PointGetNum();
+            Vector pt;
+            if(req == Request::Type::DATUM_POINT) {
+                pt = e->PointGetNum();
+            } else {
+                pt = SK.GetEntity(e->point[i])->PointGetNum();
+            }
             pt = pt.Minus(p);
             pt = pt.DotInToCsys(u, v, n);
             cr.point[i] = pt;
@@ -119,6 +163,7 @@ void GraphicsWindow::CopySelection() {
         SS.clipboard.r.Add(&cr);
     }
 
+    List<Selection> *ls = &(selection);
     for(Selection *s = ls->First(); s; s = ls->NextAfter(s)) {
         if(!s->constraint.v) continue;
 
@@ -182,7 +227,8 @@ void GraphicsWindow::PasteClipboard(Vector trans, double theta, double scale) {
             pt = pt.Plus(p);
             pt = pt.RotatedAbout(n, theta);
             pt = pt.Plus(trans);
-            SK.GetEntity(hr.entity(i+1))->PointForceTo(pt);
+            int index = (r->type == Request::Type::DATUM_POINT) ? i : i + 1;
+            SK.GetEntity(hr.entity(index))->PointForceTo(pt);
         }
         if(hasDistance) {
             SK.GetEntity(hr.entity(64))->DistanceForceTo(
@@ -192,7 +238,8 @@ void GraphicsWindow::PasteClipboard(Vector trans, double theta, double scale) {
         cr->newReq = hr;
         MakeSelected(hr.entity(0));
         for(i = 0; i < pts; i++) {
-            MakeSelected(hr.entity(i+1));
+            int index = (r->type == Request::Type::DATUM_POINT) ? i : i + 1;
+            MakeSelected(hr.entity(index));
         }
     }
 

@@ -498,6 +498,8 @@ public:
     void DeleteSelection();
     void CopySelection();
     void PasteClipboard(Vector trans, double theta, double scale);
+    void DistinctSelection(IdSet<hRequest> *requests, 
+                           IdSet<hEntity> *entities);
     static void MenuClipboard(Command id);
 
     std::shared_ptr<ViewportCanvas> canvas;

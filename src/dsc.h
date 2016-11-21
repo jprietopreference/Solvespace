@@ -437,6 +437,35 @@ public:
 
 };
 
+template <class H>
+struct IdSetItem {
+    H h;
+    int tag;
+    void Clear() {}
+};
+
+template <class H>
+class IdSet : public IdList<IdSetItem<H>, H> {
+public:
+
+    // We have to make constructor because "= {}" not working here
+    IdSet() {
+        elem = NULL;
+        n = 0;
+        elemsAllocated = 0;
+    }
+
+    void Add(H h) {
+        IdSetItem<H> item = {};
+        item.h = h;
+        IdList<IdSetItem<H>, H>::Add(&item);
+    }
+
+    bool Contains(H h) {
+        return FindByIdNoOops(h) != NULL;
+    }
+};
+
 class BandedMatrix {
 public:
     enum {
