@@ -136,39 +136,63 @@ void System::SolveBySubstitution() {
 // is less than the tolerance RANK_MAG_TOLERANCE.
 //-----------------------------------------------------------------------------
 int System::CalculateRank() {
+    return CalculateRankExceptFor(Constraint::NO_CONSTRAINT);
+}
+
+typedef double NumMatrix[System::MAX_UNKNOWNS][System::MAX_UNKNOWNS];
+
+int System::CalculateRankExceptFor(hConstraint hc) {
     // Actually work with magnitudes squared, not the magnitudes
     double rowMag[MAX_UNKNOWNS] = {};
     double tol = RANK_MAG_TOLERANCE*RANK_MAG_TOLERANCE;
 
-    int i, iprev, j;
     int rank = 0;
 
-    for(i = 0; i < mat.m; i++) {
+    int matM = 0;
+    int matN = mat.n;
+    for(int i = 0; i < mat.m; i++) {
+        if(mat.eq[i].constraint().v == hc.v) continue;
+        matM++;
+    }
+
+    double *num = new double[matM * matN];
+    #define NUM(I, J) (num[(I) * matN + (J)])
+
+    int ii = 0;
+    for(int i = 0; i < mat.m; i++) {
+        if(mat.eq[i].constraint().v == hc.v) continue;
+        for(int j = 0; j < mat.n; j++) {
+            NUM(ii, j) = mat.A.num[i][j];
+        }
+        ii++;
+    }
+    for(int i = 0; i < matM; i++) {
         // Subtract off this row's component in the direction of any
         // previous rows
-        for(iprev = 0; iprev < i; iprev++) {
+        for(int iprev = 0; iprev < i; iprev++) {
             if(rowMag[iprev] <= tol) continue; // ignore zero rows
 
             double dot = 0;
-            for(j = 0; j < mat.n; j++) {
-                dot += (mat.A.num[iprev][j]) * (mat.A.num[i][j]);
+            for(int j = 0; j < mat.n; j++) {
+                dot += NUM(iprev, j) * NUM(i, j);
             }
-            for(j = 0; j < mat.n; j++) {
-                mat.A.num[i][j] -= (dot/rowMag[iprev])*mat.A.num[iprev][j];
+            for(int j = 0; j < mat.n; j++) {
+                NUM(i, j) -= (dot/rowMag[iprev])*NUM(iprev, j);
             }
         }
         // Our row is now normal to all previous rows; calculate the
         // magnitude of what's left
         double mag = 0;
-        for(j = 0; j < mat.n; j++) {
-            mag += (mat.A.num[i][j]) * (mat.A.num[i][j]);
+        for(int j = 0; j < mat.n; j++) {
+            mag += NUM(i, j) * NUM(i, j);
         }
         if(mag > tol) {
             rank++;
         }
         rowMag[i] = mag;
     }
-
+    #undef NUM
+    delete []num;
     return rank;
 }
 
@@ -323,13 +347,12 @@ bool System::NewtonSolve(int tag) {
     return converged;
 }
 
-void System::WriteEquationsExceptFor(hConstraint hc, Group *g) {
+void System::WriteEquationsFor(Group *g) {
     int i;
     // Generate all the equations from constraints in this group
     for(i = 0; i < SK.constraint.n; i++) {
         ConstraintBase *c = &(SK.constraint.elem[i]);
         if(c->group.v != g->h.v) continue;
-        if(c->h.v == hc.v) continue;
 
         if(c->HasLabel() && c->type != Constraint::Type::COMMENT &&
                 g->allDimsReference)
@@ -360,10 +383,20 @@ void System::WriteEquationsExceptFor(hConstraint hc, Group *g) {
 }
 
 void System::FindWhichToRemoveToFixJacobian(Group *g, List<hConstraint> *bad, bool forceDofCheck) {
-    int a, i;
+    param.ClearTags();
+    eq.Clear();
+    WriteEquationsFor(g);
+    eq.ClearTags();
+    // It's a major speedup to solve the easy ones by substitution here,
+    // and that doesn't break anything.
+    if(!forceDofCheck) {
+        SolveBySubstitution();
+    }
+    WriteJacobian(0);
+    EvalJacobian();
 
-    for(a = 0; a < 2; a++) {
-        for(i = 0; i < SK.constraint.n; i++) {
+    for(int a = 0; a < 2; a++) {
+        for(int i = 0; i < SK.constraint.n; i++) {
             ConstraintBase *c = &(SK.constraint.elem[i]);
             if(c->group.v != g->h.v) continue;
             if((c->type == Constraint::Type::POINTS_COINCIDENT && a == 0) ||
@@ -375,22 +408,14 @@ void System::FindWhichToRemoveToFixJacobian(Group *g, List<hConstraint> *bad, bo
                 continue;
             }
 
-            param.ClearTags();
-            eq.Clear();
-            WriteEquationsExceptFor(c->h, g);
-            eq.ClearTags();
-
-            // It's a major speedup to solve the easy ones by substitution here,
-            // and that doesn't break anything.
-            if(!forceDofCheck) {
-                SolveBySubstitution();
+            int matM = 0;
+            for(int j = 0; j < mat.m; j++) {
+                if(mat.eq[j].constraint().v == c->h.v) continue;
+                matM++;
             }
 
-            WriteJacobian(0);
-            EvalJacobian();
-
-            int rank = CalculateRank();
-            if(rank == mat.m) {
+            int rank = CalculateRankExceptFor(c->h);
+            if(rank == matM) {
                 // We fixed it by removing this constraint
                 bad->Add(&(c->h));
             }
@@ -401,7 +426,7 @@ void System::FindWhichToRemoveToFixJacobian(Group *g, List<hConstraint> *bad, bo
 SolveResult System::Solve(Group *g, int *dof, List<hConstraint> *bad,
                           bool andFindBad, bool andFindFree, bool forceDofCheck)
 {
-    WriteEquationsExceptFor(Constraint::NO_CONSTRAINT, g);
+    WriteEquationsFor(g);
 
     int i;
     bool rankOk;
@@ -520,7 +545,7 @@ didnt_converge:
 SolveResult System::SolveRank(Group *g, int *dof, List<hConstraint> *bad,
                               bool andFindBad, bool andFindFree, bool forceDofCheck)
 {
-    WriteEquationsExceptFor(Constraint::NO_CONSTRAINT, g);
+    WriteEquationsFor(g);
 
     // All params and equations are assigned to group zero.
     param.ClearTags();

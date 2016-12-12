@@ -381,6 +381,7 @@ public:
 
     static const double RANK_MAG_TOLERANCE, CONVERGE_TOLERANCE;
     int CalculateRank();
+    int CalculateRankExceptFor(hConstraint hc);
     bool TestRank();
     static bool SolveLinearSystem(double X[], double A[][MAX_UNKNOWNS],
                                   double B[], int N);
@@ -389,7 +390,7 @@ public:
     bool WriteJacobian(int tag);
     void EvalJacobian();
 
-    void WriteEquationsExceptFor(hConstraint hc, Group *g);
+    void WriteEquationsFor(Group *g);
     void FindWhichToRemoveToFixJacobian(Group *g, List<hConstraint> *bad, bool forceDofCheck);
     void SolveBySubstitution();
 
