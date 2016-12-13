@@ -173,11 +173,37 @@ int System::CalculateRankExceptFor(hConstraint hc) {
             if(rowMag[iprev] <= tol) continue; // ignore zero rows
 
             double dot = 0;
-            for(int j = 0; j < mat.n; j++) {
+            // for(int j = 0; j < mat.n; j++) {
+            //     dot += NUM(iprev, j) * NUM(i, j);
+            // }
+            int N = mat.n - mat.n % 4;
+            double dots[4] = {};
+            for(int j = 0; j < N; j += 4) {
+                dots[0] += NUM(iprev, j + 0) * NUM(i, j + 0);
+                dots[1] += NUM(iprev, j + 1) * NUM(i, j + 1);
+                dots[2] += NUM(iprev, j + 2) * NUM(i, j + 2);
+                dots[3] += NUM(iprev, j + 3) * NUM(i, j + 3);
+            }
+            dot = dots[0] + dots[1] + dots[2] + dots[3];
+            for(int j = N; j < mat.n; j++) {
                 dot += NUM(iprev, j) * NUM(i, j);
             }
-            for(int j = 0; j < mat.n; j++) {
-                NUM(i, j) -= (dot/rowMag[iprev])*NUM(iprev, j);
+            // for(int j = 0; j < mat.n; j++) {
+            //     NUM(i, j) -= (dot/rowMag[iprev])*NUM(iprev, j);
+            // }
+            double k = dot / rowMag[iprev];
+            for(int j = 0; j < N; j += 4) {
+                double v0 = k * NUM(iprev, j + 0);
+                double v1 = k * NUM(iprev, j + 1);
+                double v2 = k * NUM(iprev, j + 2);
+                double v3 = k * NUM(iprev, j + 3);
+                NUM(i, j + 0) -= v0;
+                NUM(i, j + 1) -= v1;
+                NUM(i, j + 2) -= v2;
+                NUM(i, j + 3) -= v3;
+            }
+            for(int j = N; j < mat.n; j++) {
+                NUM(i, j) -= k * NUM(iprev, j);
             }
         }
         // Our row is now normal to all previous rows; calculate the
