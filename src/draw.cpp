@@ -229,7 +229,9 @@ void GraphicsWindow::SelectByMarquee() {
 // lines, etc.), and so on.
 //-----------------------------------------------------------------------------
 void GraphicsWindow::GroupSelection() {
+    gs.requests.Clear();
     gs = {};
+    DistinctSelection(&gs.requests, NULL);
     int i;
     for(i = 0; i < selection.n; i++) {
         Selection *s = &(selection.elem[i]);

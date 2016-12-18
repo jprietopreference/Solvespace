@@ -1040,15 +1040,12 @@ c:
         case Command::CONSTRUCTION: {
             SS.UndoRemember();
             SS.GW.GroupSelection();
-            if(SS.GW.gs.entities == 0) {
-                Error("No entities are selected. Select entities before "
+            if(SS.GW.gs.requests.n == 0) {
+                Error("No suitable entities are selected. Select suitable entities before "
                       "trying to toggle their construction state.");
             }
-            int i;
-            for(i = 0; i < SS.GW.gs.entities; i++) {
-                hEntity he = SS.GW.gs.entity[i];
-                if(!he.isFromRequest()) continue;
-                Request *r = SK.GetRequest(he.request());
+            for(const auto &ir : SS.GW.gs.requests) {
+                Request *r = SK.GetRequest(ir.h);
                 r->construction = !(r->construction);
                 SS.MarkGroupDirty(r->group);
             }

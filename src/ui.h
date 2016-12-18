@@ -676,6 +676,7 @@ public:
         std::vector<hEntity>     vector;
         std::vector<hEntity>     face;
         std::vector<hConstraint> constraint;
+        IdSet<hRequest>          requests;
         int         points;
         int         entities;
         int         workplanes;
