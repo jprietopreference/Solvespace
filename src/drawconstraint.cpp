@@ -1184,9 +1184,10 @@ s:
             }
 
             if(disp.style.v != 0) {
-                stroke.width = Style::Width(disp.style);
-                if(how == DrawAs::DEFAULT) {
-                    stroke.color = Style::Color(disp.style);
+                RgbaColor color = stroke.color;
+                stroke = Style::Stroke(disp.style);
+                if(how != DrawAs::DEFAULT) {
+                    stroke.color = color;
                 }
                 hcs = canvas->GetStroke(stroke);
             }
