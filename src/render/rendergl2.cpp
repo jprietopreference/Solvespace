@@ -468,11 +468,16 @@ void OpenGl2Renderer::DrawOutlines(const SOutlineList &ol, hStroke hcs, DrawOutl
 void OpenGl2Renderer::DrawVectorText(const std::string &text, double height,
                                      const Vector &o, const Vector &u, const Vector &v,
                                      hStroke hcs) {
-    SEdgeList el = {};
-    auto traceEdge = [&](Vector a, Vector b) { el.AddEdge(a, b); };
+    SEdgeListItem *eli = lines.FindByIdNoOops(hcs);
+    if(eli == NULL) {
+        SEdgeListItem item = {};
+        item.h = hcs;
+        lines.Add(&item);
+        eli = lines.FindByIdNoOops(hcs);
+    }
+    SEdgeList &lines = eli->lines;
+    auto traceEdge = [&](Vector a, Vector b) { lines.AddEdge(a, b); };
     VectorFont::Builtin()->Trace(height, o, u, v, text, traceEdge, camera);
-    DrawEdgesInternal(el, hcs);
-    el.Clear();
 }
 
 void OpenGl2Renderer::DrawQuad(const Vector &a, const Vector &b, const Vector &c, const Vector &d,
