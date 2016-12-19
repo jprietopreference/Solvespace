@@ -96,7 +96,7 @@ void TextWindow::ShowListOfGroups() {
                *checkTrue  = " " CHECK_TRUE  " ",
                *checkFalse = " " CHECK_FALSE " ";
 
-    Printf(true, "%Ft active");
+    Printf(true,  "%Ft active   source");
     Printf(false, "%Ft    shown ok  group-name%E");
     int i;
     bool afterActive = false;

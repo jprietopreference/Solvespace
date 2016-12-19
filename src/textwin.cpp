@@ -977,13 +977,44 @@ void TextWindow::Paint() {
     if(!SS.GW.pending.description && gs.n == 0 && gs.constraints == 0 &&
         shown.screen == Screen::LIST_OF_GROUPS)
     {
-        int x = 29, y = 70 + LINE_HEIGHT;
-        y -= scrollPos*(LINE_HEIGHT/2);
+        int x = 29, y = 72 + LINE_HEIGHT;
+        int scroll = scrollPos * (LINE_HEIGHT / 2);
+        y -= scroll;
 
         RgbaColor color = RgbaColor::FromFloat(fgColorTable['t'*3+0],
                                                fgColorTable['t'*3+1],
                                                fgColorTable['t'*3+2]);
         uiCanvas.DrawLine(x, y, x, y+40, color);
+
+        // src
+        x = 122;
+        uiCanvas.DrawLine(x, y, x, y+20, color);
+
+        Group *active = SK.GetGroup(SS.GW.activeGroup);
+        if(active->opA.v != 0) {
+            Group *source = SK.GetGroup(active->opA);
+            x = 118;
+            int start = 65 + 3 * LINE_HEIGHT;
+            int y0 = start + source->order * LINE_HEIGHT - scroll;
+            int y1 = start + active->order * LINE_HEIGHT - scroll;
+            int dx = 10;
+            int ax = 5;
+            int ay = 2;
+
+            // line
+            uiCanvas.DrawLine(x, y0, x, y1, color);
+
+            // source
+            uiCanvas.DrawLine(x, y0, x + dx, y0, color);
+
+            // arrow
+            uiCanvas.DrawLine(x + dx - ax, y0 - ay, x + dx, y0, color);
+            uiCanvas.DrawLine(x + dx - ax, y0 + ay, x + dx, y0, color);
+
+            // active
+            uiCanvas.DrawLine(x, y1, x + dx, y1, color);
+        }
+
     }
 
     // The header has some icons that are drawn separately from the text
