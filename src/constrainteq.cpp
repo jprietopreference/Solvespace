@@ -196,6 +196,7 @@ void ConstraintBase::Generate(IdList<Param,hParam> *l) const {
         case Type::PT_ON_LINE: {
             Param p = {};
             p.h = h.param(0);
+            p.group = group;
             l->Add(&p);
             break;
         }

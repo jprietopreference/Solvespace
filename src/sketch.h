@@ -224,7 +224,7 @@ public:
     std::string DescriptionString();
     void Clear();
 
-    static void AddParam(ParamList *param, hParam hp, double v);
+    void AddParam(ParamList *param, hParam hp, double v);
     void Generate(EntityList *entity, ParamList *param);
     bool IsSolvedOkay();
     void TransformImportedBy(Vector t, Quaternion q);
@@ -322,7 +322,7 @@ public:
     std::string font;
     double      aspectRatio;
 
-    static hParam AddParam(ParamList *param, hParam hp);
+    hParam AddParam(ParamList *param, hParam hp);
     void Generate(EntityList *entity, ParamList *param);
 
     std::string DescriptionString() const;
@@ -552,6 +552,7 @@ class Param {
 public:
     int         tag;
     hParam      h;
+    hGroup      group;
 
     double      val;
     bool        known;

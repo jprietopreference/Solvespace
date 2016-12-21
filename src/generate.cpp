@@ -221,11 +221,13 @@ void SolveSpaceUI::GenerateAll(Generate type, bool andFindFree, bool genForBBox)
 
     // Don't lose our numerical guesses when we regenerate.
     IdList<Param,hParam> prev = {};
-    SK.param.MoveSelfInto(&prev);
-    SK.param.ReserveMore(prev.n);
-    int oldEntityCount = SK.entity.n;
-    SK.entity.Clear();
-    SK.entity.ReserveMore(oldEntityCount);
+    SK.param.DeepCopyInto(&prev);
+    bool needRegenerateAllEntities = (type == Generate::ALL || type == Generate::REGEN);
+    if(needRegenerateAllEntities) {
+        SK.param.Clear();
+        SK.param.ReserveMore(prev.n);
+        SK.entity.Clear();
+    }
 
     for(i = 0; i < SK.groupOrder.n; i++) {
         Group *g = SK.GetGroup(SK.groupOrder.elem[i]);
@@ -236,19 +238,34 @@ void SolveSpaceUI::GenerateAll(Generate type, bool andFindFree, bool genForBBox)
         if(PruneGroups(g->h))
             goto pruned;
 
-        for(j = 0; j < SK.request.n; j++) {
-            Request *r = &(SK.request.elem[j]);
-            if(r->group.v != g->h.v) continue;
+        if(i >= first && i <= last || type == Generate::REGEN) {
+            if(!needRegenerateAllEntities) {
+                // Remove all the entities from the current group
+                for(j = 0; j < SK.entity.n; j++) {
+                    SK.entity.elem[j].tag = (int)(SK.entity.elem[j].group.v == g->h.v);
+                }
+                SK.entity.RemoveTagged();
+                // Remove all the parameters from the current group
+                for(j = 0; j < SK.param.n; j++) {
+                    SK.param.elem[j].tag = (int)(SK.param.elem[j].group.v == g->h.v);
+                }
+                SK.param.RemoveTagged();
+            }
+            // Regenerate entities
+            for(j = 0; j < SK.request.n; j++) {
+                Request *r = &(SK.request.elem[j]);
+                if(r->group.v != g->h.v) continue;
 
-            r->Generate(&(SK.entity), &(SK.param));
-        }
-        for(j = 0; j < SK.constraint.n; j++) {
-            Constraint *c = &SK.constraint.elem[j];
-            if(c->group.v != g->h.v) continue;
+                r->Generate(&(SK.entity), &(SK.param));
+            }
+            for(j = 0; j < SK.constraint.n; j++) {
+                Constraint *c = &SK.constraint.elem[j];
+                if(c->group.v != g->h.v) continue;
 
-            c->Generate(&(SK.param));
+                c->Generate(&(SK.param));
+            }
+            g->Generate(&(SK.entity), &(SK.param));
         }
-        g->Generate(&(SK.entity), &(SK.param));
 
         // The requests and constraints depend on stuff in this or the
         // previous group, so check them after generating.

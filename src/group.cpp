@@ -38,6 +38,7 @@ void Group::AddParam(IdList<Param,hParam> *param, hParam hp, double v) {
     Param pa = {};
     pa.h = hp;
     pa.val = v;
+    pa.group = h;
 
     param->Add(&pa);
 }

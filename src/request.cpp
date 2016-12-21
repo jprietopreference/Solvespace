@@ -228,6 +228,7 @@ int Request::IndexOfPoint(hEntity he) const {
 hParam Request::AddParam(IdList<Param,hParam> *param, hParam hp) {
     Param pa = {};
     pa.h = hp;
+    pa.group = group;
     param->Add(&pa);
     return hp;
 }
