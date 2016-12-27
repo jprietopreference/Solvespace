@@ -251,7 +251,7 @@ public:
                     Entity *ep, int timesApplied, int remap,
                     hParam dx, hParam dy, hParam dz,
                     hParam qw, hParam qvx, hParam qvy, hParam qvz,
-                    bool asTrans, bool asAxisAngle);
+                    bool asTrans, bool asAxisAngle, hParam dw = hParam{0});
 
     void AddEq(IdList<Equation,hEquation> *l, Expr *expr, int index);
     void GenerateEquations(IdList<Equation,hEquation> *l);
@@ -385,7 +385,7 @@ public:
     hEntity     distance;
     // The only types that have their own params are points, normals,
     // and directions.
-    hParam      param[7];
+    hParam      param[8];
 
     // Transformed points/normals/distances have their numerical base
     Vector      numPoint;
@@ -655,6 +655,7 @@ public:
     static Expr *PointPlaneDistance(ExprVector p, hEntity plane);
     static ExprVector VectorsParallel3d(ExprVector a, ExprVector b, hParam p);
     static ExprVector PointInThreeSpace(hEntity workplane, Expr *u, Expr *v);
+    static Vector4 ToHomo(const Vector &v);
 
     void Clear() {}
 };

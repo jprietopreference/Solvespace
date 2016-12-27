@@ -433,9 +433,11 @@ void EntityBase::PointForceTo(Vector p) {
             // remember that we're working with respect to the rotated
             // point.
             Vector trans = p.Minus(PointGetQuaternion().Rotate(numPoint));
-            SK.GetParam(param[0])->val = trans.x;
-            SK.GetParam(param[1])->val = trans.y;
-            SK.GetParam(param[2])->val = trans.z;
+            Vector4 homo = ConstraintBase::ToHomo(trans);
+            SK.GetParam(param[7])->val = homo.w;
+            SK.GetParam(param[0])->val = homo.x;
+            SK.GetParam(param[1])->val = homo.y;
+            SK.GetParam(param[2])->val = homo.z;
             break;
         }
 
@@ -490,7 +492,8 @@ Vector EntityBase::PointGetNum() const {
         }
 
         case Type::POINT_N_ROT_TRANS: {
-            Vector offset = Vector::From(param[0], param[1], param[2]);
+            double w = SK.GetParam(param[7])->val;
+            Vector offset = Vector::From(param[0], param[1], param[2]).ScaledBy(w);
             Quaternion q = PointGetQuaternion();
             p = q.Rotate(numPoint);
             p = p.Plus(offset);
@@ -539,7 +542,8 @@ ExprVector EntityBase::PointGetExprs() const {
         }
         case Type::POINT_N_ROT_TRANS: {
             ExprVector orig = ExprVector::From(numPoint);
-            ExprVector trans = ExprVector::From(param[0], param[1], param[2]);
+            Expr *w = Expr::From(param[7]);
+            ExprVector trans = ExprVector::From(param[0], param[1], param[2]).ScaledBy(w);
             ExprQuaternion q =
                 ExprQuaternion::From(param[3], param[4], param[5], param[6]);
             orig = q.Rotate(orig);
@@ -715,7 +719,8 @@ ExprVector EntityBase::FaceGetPointExprs() const {
         r = ExprVector::From(numPoint);
     } else if(type == Type::FACE_N_ROT_TRANS) {
         // The numerical point gets the rotation and translation.
-        ExprVector trans = ExprVector::From(param[0], param[1], param[2]);
+        Expr *w = Expr::From(param[7]);
+        ExprVector trans = ExprVector::From(param[0], param[1], param[2]).ScaledBy(w);
         ExprQuaternion q =
             ExprQuaternion::From(param[3], param[4], param[5], param[6]);
         r = ExprVector::From(numPoint);
@@ -744,7 +749,8 @@ Vector EntityBase::FaceGetPointNum() const {
         r = numPoint;
     } else if(type == Type::FACE_N_ROT_TRANS) {
         // The numerical point gets the rotation and translation.
-        Vector trans = Vector::From(param[0], param[1], param[2]);
+        double w = SK.GetParam(param[7])->val;
+        Vector trans = Vector::From(param[0], param[1], param[2]).ScaledBy(w);
         Quaternion q = Quaternion::From(param[3], param[4], param[5], param[6]);
         r = q.Rotate(numPoint);
         r = r.Plus(trans);

@@ -141,6 +141,13 @@ ExprVector ConstraintBase::PointInThreeSpace(hEntity workplane,
     return (ub.ScaledBy(u)).Plus(vb.ScaledBy(v)).Plus(ob);
 }
 
+Vector4 ConstraintBase::ToHomo(const Vector &v) {
+    Vector dv = v.WithMagnitude(1.0);
+    double lvroot = sqrt(v.Magnitude());
+    Vector xyz = dv.ScaledBy(lvroot);
+    return Vector4::From(lvroot, xyz.x, xyz.y, xyz.z);
+}
+
 void ConstraintBase::ModifyToSatisfy() {
     if(type == Type::ANGLE) {
         Vector a = SK.GetEntity(entityA)->VectorGetNum();

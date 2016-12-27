@@ -558,10 +558,12 @@ void Group::Generate(IdList<Entity,hEntity> *entity,
             return;
         }
         case Type::LINKED:
+            Vector4 p = ConstraintBase::ToHomo(gp);
             // The translation vector
-            AddParam(param, h.param(0), gp.x);
-            AddParam(param, h.param(1), gp.y);
-            AddParam(param, h.param(2), gp.z);
+            AddParam(param, h.param(0), p.x);
+            AddParam(param, h.param(1), p.y);
+            AddParam(param, h.param(2), p.z);
+            AddParam(param, h.param(7), p.w);
             // The rotation quaternion
             AddParam(param, h.param(3), 1);
             AddParam(param, h.param(4), 0);
@@ -573,7 +575,7 @@ void Group::Generate(IdList<Entity,hEntity> *entity,
                 CopyEntity(entity, ie, 0, 0,
                     h.param(0), h.param(1), h.param(2),
                     h.param(3), h.param(4), h.param(5), h.param(6),
-                    /*asTrans=*/false, /*asAxisAngle=*/false);
+                    /*asTrans=*/false, /*asAxisAngle=*/false, h.param(7));
             }
             return;
     }
@@ -601,6 +603,9 @@ void Group::GenerateEquations(IdList<Equation,hEquation> *l) {
             Expr::From(h.param(5)),
             Expr::From(h.param(6)) };
         AddEq(l, (q.Magnitude())->Minus(Expr::From(1)), 0);
+        Expr *w = Expr::From(h.param(7));
+        ExprVector v = ExprVector::From(h.param(0), h.param(1), h.param(2));
+        AddEq(l, v.Magnitude()->Minus(w), 1);
     } else if(type == Type::ROTATE) {
         // The axis and center of rotation are specified numerically
 #define EC(x) (Expr::From(x))
@@ -804,7 +809,7 @@ void Group::CopyEntity(IdList<Entity,hEntity> *el,
                        Entity *ep, int timesApplied, int remap,
                        hParam dx, hParam dy, hParam dz,
                        hParam qw, hParam qvx, hParam qvy, hParam qvz,
-                       bool asTrans, bool asAxisAngle)
+                       bool asTrans, bool asAxisAngle, hParam dw)
 {
     Entity en = {};
     en.type = ep->type;
@@ -846,6 +851,7 @@ void Group::CopyEntity(IdList<Entity,hEntity> *el,
                 en.param[4] = qvx;
                 en.param[5] = qvy;
                 en.param[6] = qvz;
+                en.param[7] = dw;
             }
             en.numPoint = (ep->actPoint).ScaledBy(scale);
             break;
@@ -903,6 +909,7 @@ void Group::CopyEntity(IdList<Entity,hEntity> *el,
                 en.param[4] = qvx;
                 en.param[5] = qvy;
                 en.param[6] = qvz;
+                en.param[7] = dw;
             }
             en.numPoint  = (ep->actPoint).ScaledBy(scale);
             en.numNormal = (ep->actNormal).ScaledBy(scale);

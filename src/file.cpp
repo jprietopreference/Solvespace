@@ -656,6 +656,25 @@ void SolveSpaceUI::UpgradeLegacyData() {
                 break;
         }
     }
+    for(Group &g : SK.group) {
+        switch(g.type) {
+            case Group::Type::LINKED: {
+                // We have no w param for this group, so calculate value for this
+                if(oldParam.FindByIdNoOops(g.h.param(7)) == NULL) {
+                    Vector pos = Vector::From(g.h.param(0), g.h.param(1), g.h.param(2));
+                    Vector4 homo = Constraint::ToHomo(pos);
+                    SK.GetParam(g.h.param(0))->val = homo.x;
+                    SK.GetParam(g.h.param(1))->val = homo.y;
+                    SK.GetParam(g.h.param(2))->val = homo.z;
+                    SK.GetParam(g.h.param(7))->val = homo.w;
+                }
+                break;
+            }
+
+            default:
+                break;
+        }
+    }
     oldParam.Clear();
 }
 

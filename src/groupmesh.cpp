@@ -290,10 +290,11 @@ void Group::GenerateShellAndMesh() {
     } else if(type == Type::LINKED) {
         // The imported shell or mesh are copied over, with the appropriate
         // transformation applied. We also must remap the face entities.
+        double w = SK.GetParam(h.param(7))->val;
         Vector offset = {
-            SK.GetParam(h.param(0))->val,
-            SK.GetParam(h.param(1))->val,
-            SK.GetParam(h.param(2))->val };
+            SK.GetParam(h.param(0))->val * w,
+            SK.GetParam(h.param(1))->val * w,
+            SK.GetParam(h.param(2))->val * w };
         Quaternion q = {
             SK.GetParam(h.param(3))->val,
             SK.GetParam(h.param(4))->val,
