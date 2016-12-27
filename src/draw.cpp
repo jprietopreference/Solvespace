@@ -427,7 +427,12 @@ void GraphicsWindow::HitTestMakeSelection(Point2d mp) {
                 hoverList.Add(&si);
             }
         }
+    }
 
+    std::sort(hoverList.begin(), hoverList.end());
+    s = ChooseHover();
+
+    if(pending.operation == Pending::NONE) {
         // Faces, from the triangle mesh; these are lowest priority
         if(s.constraint.v == 0 && s.entity.v == 0 && showShaded && showFaces) {
             Group *g = SK.GetGroup(activeGroup);
@@ -439,9 +444,6 @@ void GraphicsWindow::HitTestMakeSelection(Point2d mp) {
             }
         }
     }
-
-    std::sort(hoverList.begin(), hoverList.end());
-    s = ChooseHover();
 
     canvas.Clear();
 
