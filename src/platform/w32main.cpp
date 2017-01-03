@@ -59,6 +59,7 @@ HMENU RecentOpenMenu, RecentImportMenu;
 HMENU ContextMenu, ContextSubmenu;
 
 int ClientIsSmallerBy;
+bool needPaintGraphics = false;
 
 HFONT FixedFont;
 
@@ -833,10 +834,11 @@ void SolveSpace::PaintGraphics()
 #else
     SwapBuffers(GetDC(GraphicsWnd));
 #endif
+    needPaintGraphics = false;
 }
 void SolveSpace::InvalidateGraphics()
 {
-    InvalidateRect(GraphicsWnd, NULL, false);
+    needPaintGraphics = true;
 }
 
 void SolveSpace::ToggleFullScreen()
@@ -1517,6 +1519,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
         DispatchMessage(&msg);
 done:
         SS.DoLater();
+        if(needPaintGraphics) PaintGraphics();
     }
 
 #ifdef HAVE_SPACEWARE
