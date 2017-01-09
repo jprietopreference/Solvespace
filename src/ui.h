@@ -597,6 +597,7 @@ public:
         hRequest             request;
         hEntity              point;
         List<hEntity>        points;
+        List<hRequest>       requests;
         hEntity              circle;
         hEntity              normal;
         hConstraint          constraint;
@@ -607,6 +608,9 @@ public:
         Constraint::Type     suggestion;
     } pending;
     void ClearPending();
+    bool IsFromPending(hRequest r);
+    void AddToPending(hRequest r);
+
     // The constraint that is being edited with the on-screen textbox.
     hConstraint constraintBeingEdited;
 
