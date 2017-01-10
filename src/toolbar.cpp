@@ -212,7 +212,7 @@ bool GraphicsWindow::ToolbarDrawOrHitTest(int mx, int my,
                 }
             }
 
-            int tw = BitmapFont::Builtin()->GetWidth(str) * 8 + 10,
+            int tw = canvas->canvas->GetBitmapFont()->GetWidth(str) * 8 + 10,
                 th = SS.TW.LINE_HEIGHT + 2;
 
             int ox = toolbarMouseX + 3, oy = toolbarMouseY + 3;
