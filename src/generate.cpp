@@ -534,7 +534,8 @@ void SolveSpaceUI::SolveGroup(hGroup hg, bool andFindFree) {
                                    &(g->solved.remove),
                                    /*andFindBad=*/true,
                                    /*andFindFree=*/andFindFree,
-                                   /*forceDofCheck=*/!g->dofCheckOk);
+                                   /*forceDofCheck=*/!g->dofCheckOk,
+                                   &(g->solved.timeout));
     if(how == SolveResult::OKAY) {
         g->dofCheckOk = true;
     }

@@ -359,11 +359,18 @@ void System::WriteEquationsExceptFor(hConstraint hc, Group *g) {
     g->GenerateEquations(&eq);
 }
 
-void System::FindWhichToRemoveToFixJacobian(Group *g, List<hConstraint> *bad, bool forceDofCheck) {
+void System::FindWhichToRemoveToFixJacobian(Group *g, List<hConstraint> *bad, bool forceDofCheck,
+                                            bool *isTimeout) {
+    if(isTimeout != NULL) *isTimeout = false;
+    auto time = GetMilliseconds();
     int a, i;
 
     for(a = 0; a < 2; a++) {
         for(i = 0; i < SK.constraint.n; i++) {
+            if((GetMilliseconds() - time) > OPERATION_TIMEOUT) {
+                if(isTimeout != NULL) *isTimeout = true;
+                return;
+            }
             ConstraintBase *c = &(SK.constraint.elem[i]);
             if(c->group.v != g->h.v) continue;
             if((c->type == Constraint::Type::POINTS_COINCIDENT && a == 0) ||
@@ -399,7 +406,7 @@ void System::FindWhichToRemoveToFixJacobian(Group *g, List<hConstraint> *bad, bo
 }
 
 SolveResult System::Solve(Group *g, int *dof, List<hConstraint> *bad,
-                          bool andFindBad, bool andFindFree, bool forceDofCheck)
+                          bool andFindBad, bool andFindFree, bool forceDofCheck, bool *isTimeout)
 {
     WriteEquationsExceptFor(Constraint::NO_CONSTRAINT, g);
 
@@ -469,7 +476,7 @@ SolveResult System::Solve(Group *g, int *dof, List<hConstraint> *bad,
     rankOk = TestRank();
     if(!rankOk) {
         if(!g->allowRedundant) {
-            if(andFindBad) FindWhichToRemoveToFixJacobian(g, bad, forceDofCheck);
+            if(andFindBad) FindWhichToRemoveToFixJacobian(g, bad, forceDofCheck, isTimeout);
         }
     } else {
         // This is not the full Jacobian, but any substitutions or single-eq
@@ -518,7 +525,7 @@ didnt_converge:
 }
 
 SolveResult System::SolveRank(Group *g, int *dof, List<hConstraint> *bad,
-                              bool andFindBad, bool andFindFree, bool forceDofCheck)
+                              bool andFindBad, bool andFindFree, bool forceDofCheck, bool *isTimeout)
 {
     WriteEquationsExceptFor(Constraint::NO_CONSTRAINT, g);
 
@@ -539,7 +546,7 @@ SolveResult System::SolveRank(Group *g, int *dof, List<hConstraint> *bad,
     bool rankOk = TestRank();
     if(!rankOk) {
         if(!g->allowRedundant) {
-            if(andFindBad) FindWhichToRemoveToFixJacobian(g, bad, forceDofCheck);
+            if(andFindBad) FindWhichToRemoveToFixJacobian(g, bad, forceDofCheck, isTimeout);
         }
     } else {
         // This is not the full Jacobian, but any substitutions or single-eq

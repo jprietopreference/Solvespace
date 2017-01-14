@@ -331,7 +331,10 @@ RgbaColor CnfThawColor(RgbaColor v, const std::string &name);
 
 class System {
 public:
-    enum { MAX_UNKNOWNS = 1024 };
+    enum {
+        MAX_UNKNOWNS        = 1024,
+        OPERATION_TIMEOUT   = 1000
+    };
 
     EntityList                      entity;
     ParamList                       param;
@@ -390,7 +393,8 @@ public:
     void EvalJacobian();
 
     void WriteEquationsExceptFor(hConstraint hc, Group *g);
-    void FindWhichToRemoveToFixJacobian(Group *g, List<hConstraint> *bad, bool forceDofCheck);
+    void FindWhichToRemoveToFixJacobian(Group *g, List<hConstraint> *bad, bool forceDofCheck,
+                                        bool *isTimeout = NULL);
     void SolveBySubstitution();
 
     bool IsDragged(hParam p);
@@ -401,10 +405,12 @@ public:
     int CalculateDof();
 
     SolveResult Solve(Group *g, int *dof, List<hConstraint> *bad,
-                      bool andFindBad, bool andFindFree, bool forceDofCheck = false);
+                      bool andFindBad, bool andFindFree, bool forceDofCheck = false,
+                      bool *isTimeout = NULL);
 
     SolveResult SolveRank(Group *g, int *dof, List<hConstraint> *bad,
-                          bool andFindBad, bool andFindFree, bool forceDofCheck = false);
+                          bool andFindBad, bool andFindFree, bool forceDofCheck = false,
+                          bool *isTimeout = NULL);
 
     void Clear();
 };

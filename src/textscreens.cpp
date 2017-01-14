@@ -516,7 +516,10 @@ void TextWindow::ShowGroupSolveInfo() {
             (&TextWindow::ScreenHoverConstraint),
             c->DescriptionString().c_str());
     }
-
+    if(g->solved.timeout) {
+        Printf(true,  "%FxSome of items in list has ommitted%Fd");
+        Printf(false,  "%Fxbecause of operation timeout.%Fd");
+    }
     Printf(true,  "It may be possible to fix the problem ");
     Printf(false, "by selecting Edit -> Undo.");
 
