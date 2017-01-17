@@ -190,6 +190,7 @@ public:
     STriangle Transform(Vector o, Vector u, Vector v) const;
     bool Raytrace(const Vector &rayPoint, const Vector &rayDir,
                   double *t, Vector *inters) const;
+    double SignedVolume() const;
 };
 
 class SBsp2 {

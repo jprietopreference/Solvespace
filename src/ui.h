@@ -216,6 +216,7 @@ enum class Command : uint32_t {
     TRACE_PT,
     STOP_TRACING,
     STEP_DIM,
+    MASS_CENTER,
     // Help
     WEBSITE,
     ABOUT,

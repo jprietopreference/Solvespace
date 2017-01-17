@@ -810,6 +810,10 @@ public:
         bool        draw, showOrigin;
         Vector      pt, u, v;
     } justExportedInfo;
+    struct {
+        bool   draw;
+        Vector position;
+    } massCenter;
 
     class Clipboard {
     public:
