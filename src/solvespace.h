@@ -812,6 +812,7 @@ public:
     } justExportedInfo;
     struct {
         bool   draw;
+        bool   dirty;
         Vector position;
     } massCenter;
 

@@ -770,7 +770,7 @@ void GraphicsWindow::Draw(Canvas *canvas) {
         canvas->DrawLine(SS.extraLine.ptA, SS.extraLine.ptB, hcsDatum);
     }
 
-    if(SS.massCenter.draw) {
+    if(SS.massCenter.draw && !SS.massCenter.dirty) {
         Vector p = SS.massCenter.position;
         Vector u = camera.projRight;
         Vector v = camera.projUp;

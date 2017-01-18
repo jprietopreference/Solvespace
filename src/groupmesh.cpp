@@ -414,9 +414,6 @@ void Group::GenerateDisplayItems() {
                 builder.GenerateOutlines(&displayOutlines);
                 rawOutlines.Clear();
             }
-            if(SS.massCenter.draw && h.v == SS.GW.activeGroup.v) {
-                SS.UpdateMassCenter();
-            }
         }
 
         // If we render this mesh, we need to know whether it's transparent,
@@ -424,6 +421,10 @@ void Group::GenerateDisplayItems() {
         // work correctly.
         displayMesh.PrecomputeTransparency();
 
+        // Recalculate mass center if needed
+        if(SS.massCenter.draw && SS.massCenter.dirty && h.v == SS.GW.activeGroup.v) {
+            SS.UpdateMassCenter();
+        }
         displayDirty = false;
     }
 }

@@ -359,6 +359,7 @@ void SolveSpaceUI::GenerateAll(Generate type, bool andFindFree, bool genForBBox)
     FreeAllTemporary();
     allConsistent = true;
     SS.GW.persistentDirty = true;
+    SS.massCenter.dirty = true;
 
     endMillis = GetMilliseconds();
 
@@ -421,6 +422,7 @@ void SolveSpaceUI::ForceReferences() {
 void SolveSpaceUI::UpdateMassCenter() {
     SMesh *m = &(SK.GetGroup(SS.GW.activeGroup)->displayMesh);
     SS.massCenter.position = m->GetMassCenter();
+    SS.massCenter.dirty = false;
 }
 
 void SolveSpaceUI::MarkDraggedParams() {
