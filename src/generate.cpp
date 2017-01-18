@@ -418,6 +418,11 @@ void SolveSpaceUI::ForceReferences() {
     }
 }
 
+void SolveSpaceUI::UpdateMassCenter() {
+    SMesh *m = &(SK.GetGroup(SS.GW.activeGroup)->displayMesh);
+    SS.massCenter.position = m->GetMassCenter();
+}
+
 void SolveSpaceUI::MarkDraggedParams() {
     sys.dragged.Clear();
 

@@ -861,6 +861,7 @@ public:
     void WriteEqSystemForGroup(hGroup hg);
     void MarkDraggedParams();
     void ForceReferences();
+    void UpdateMassCenter();
 
     bool ActiveGroupsOkay();
 

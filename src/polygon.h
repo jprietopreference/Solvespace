@@ -283,6 +283,8 @@ public:
     void RemapFaces(Group *g, int remap);
 
     uint32_t FirstIntersectionWith(Point2d mp) const;
+
+    Vector GetMassCenter() const;
 };
 
 // A linked list of triangles

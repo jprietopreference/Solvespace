@@ -618,20 +618,8 @@ void SolveSpaceUI::MenuAnalyze(Command id) {
         }
 
         case Command::MASS_CENTER: {
-            SMesh *m = &(SK.GetGroup(SS.GW.activeGroup)->displayMesh);
-
-            Vector center = {};
-            double vol = 0.0;
-            for(int i = 0; i < m->l.n; i++) {
-                STriangle &tr = m->l.elem[i];
-                double tvol = tr.SignedVolume();
-                center = center.Plus(tr.a.Plus(tr.b.Plus(tr.c)).ScaledBy(tvol / 4.0));
-                vol += tvol;
-            }
-            center = center.ScaledBy(1.0 / vol);
-
+            SS.UpdateMassCenter();
             SS.massCenter.draw = true;
-            SS.massCenter.position = center;
             InvalidateGraphics();
             break;
         }
