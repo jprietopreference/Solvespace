@@ -339,6 +339,8 @@ public:
     void Init();
     void MakeColorTable(const Color *in, float *out);
     void Printf(bool half, const char *fmt, ...);
+    void PrintPointLink(bool half, const char *str, hEntity point);
+    void PrintNormalLink(bool half, const char *str, hEntity normal);
     void ClearScreen();
 
     void Show();
@@ -488,6 +490,7 @@ public:
 
     // and the rest from the stuff in textscreens.cpp
     static void ScreenSelectGroup(int link, uint32_t v);
+    static void ScreenForceSelectGroup(int link, uint32_t v);
     static void ScreenActivateGroup(int link, uint32_t v);
     static void ScreenToggleGroupShown(int link, uint32_t v);
     static void ScreenHowGroupSolved(int link, uint32_t v);
@@ -496,8 +499,10 @@ public:
 
     static void ScreenHoverConstraint(int link, uint32_t v);
     static void ScreenHoverRequest(int link, uint32_t v);
+    static void ScreenHoverEntity(int link, uint32_t v);
     static void ScreenSelectRequest(int link, uint32_t v);
     static void ScreenSelectConstraint(int link, uint32_t v);
+    static void ScreenSelectEntity(int link, uint32_t v);
 
     static void ScreenChangeGroupOption(int link, uint32_t v);
     static void ScreenColor(int link, uint32_t v);
@@ -505,6 +510,7 @@ public:
 
     static void ScreenShowListOfStyles(int link, uint32_t v);
     static void ScreenShowStyleInfo(int link, uint32_t v);
+    static void ScreenForceStyleInfo(int link, uint32_t v);
     static void ScreenDeleteStyle(int link, uint32_t v);
     static void ScreenChangeStylePatternType(int link, uint32_t v);
     static void ScreenChangeStyleYesNo(int link, uint32_t v);

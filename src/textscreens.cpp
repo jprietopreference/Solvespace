@@ -47,6 +47,10 @@ void TextWindow::ScreenSelectGroup(int link, uint32_t v) {
     SS.TW.GoToScreen(Screen::GROUP_INFO);
     SS.TW.shown.group.v = v;
 }
+void TextWindow::ScreenForceSelectGroup(int link, uint32_t v) {
+    SS.GW.ClearSelection();
+    ScreenSelectGroup(link, v);
+}
 void TextWindow::ScreenToggleGroupShown(int link, uint32_t v) {
     hGroup hg = { v };
     Group *g = SK.GetGroup(hg);
@@ -162,6 +166,11 @@ void TextWindow::ScreenHoverRequest(int link, uint32_t v) {
     SS.GW.hover.entity = hr.entity(0);
     SS.GW.hover.emphasized = true;
 }
+void TextWindow::ScreenHoverEntity(int link, uint32_t v) {
+    SS.GW.hover.Clear();
+    SS.GW.hover.entity.v = v;
+    SS.GW.hover.emphasized = true;
+}
 void TextWindow::ScreenSelectConstraint(int link, uint32_t v) {
     SS.GW.ClearSelection();
     GraphicsWindow::Selection sel = {};
@@ -173,6 +182,12 @@ void TextWindow::ScreenSelectRequest(int link, uint32_t v) {
     GraphicsWindow::Selection sel = {};
     hRequest hr = { v };
     sel.entity = hr.entity(0);
+    SS.GW.selection.Add(&sel);
+}
+void TextWindow::ScreenSelectEntity(int link, uint32_t v) {
+    SS.GW.ClearSelection();
+    GraphicsWindow::Selection sel = {};
+    sel.entity.v = v;
     SS.GW.selection.Add(&sel);
 }
 
