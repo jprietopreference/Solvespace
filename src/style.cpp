@@ -373,6 +373,11 @@ void TextWindow::ScreenShowStyleInfo(int link, uint32_t v) {
     SS.TW.shown.style.v = v;
 }
 
+void TextWindow::ScreenForceStyleInfo(int link, uint32_t v) {
+    SS.GW.ClearSelection();
+    ScreenShowStyleInfo(link, v);
+}
+
 void TextWindow::ScreenLoadFactoryDefaultStyles(int link, uint32_t v) {
     Style::LoadFactoryDefaults();
     SS.TW.GoToScreen(Screen::LIST_OF_STYLES);

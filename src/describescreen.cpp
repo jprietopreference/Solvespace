@@ -75,6 +75,31 @@ void TextWindow::ScreenConstraintRangeMin(int link, uint32_t v) {
     SS.TW.edit.i = 1;
     SS.TW.edit.constraint = hc;
 }
+void TextWindow::PrintPointLink(bool half, const char *str, hEntity point) {
+    Vector p = SK.GetEntity(point)->PointGetNum();
+    Printf(half, "   %Fl%Ll%D%f%h%s%E = (%Fi%s%E, %Fi%s%E, %Fi%s%E)",
+        point.v,
+        &ScreenSelectEntity,
+        &ScreenHoverEntity,
+        str,
+        SS.MmToString((p).x).c_str(),
+        SS.MmToString((p).y).c_str(),
+        SS.MmToString((p).z).c_str()
+    );
+}
+
+void TextWindow::PrintNormalLink(bool half, const char *str, hEntity normal) {
+    Quaternion q = SK.GetEntity(normal)->NormalGetNum();
+    Vector p = q.RotationN();
+    Printf(half, "   %Fl%Ll%D%f%h%s%E = (%Fi%3%E, %Fi%3%E, %Fi%3%E)",
+        normal.v,
+        &ScreenSelectEntity,
+        &ScreenHoverEntity,
+        str,
+        p.x, p.y, p.z
+    );
+}
+
 
 void TextWindow::ScreenConstraintRangeMax(int link, uint32_t v) {
     hConstraint hc = { v };
@@ -129,20 +154,17 @@ void TextWindow::DescribeSelection() {
             case Entity::Type::WORKPLANE: {
                 p = SK.GetEntity(e->point[0])->PointGetNum();
                 Printf(false, "%FtWORKPLANE%E");
-                Printf(true, "   origin = " PT_AS_STR, COSTR(p));
-                Quaternion q = e->Normal()->NormalGetNum();
-                p = q.RotationN();
-                Printf(true, "   normal = " PT_AS_NUM, CO(p));
+                PrintPointLink(true, "origin", e->point[0]);
+                PrintNormalLink(false, "nomral", e->normal);
                 break;
             }
             case Entity::Type::LINE_SEGMENT: {
-                Vector p0 = SK.GetEntity(e->point[0])->PointGetNum();
-                p = p0;
                 Printf(false, "%FtLINE SEGMENT%E");
-                Printf(true,  "   thru " PT_AS_STR, COSTR(p));
+                PrintPointLink(true, "point1", e->point[0]);
+                PrintPointLink(false, "point2", e->point[1]);
+
+                Vector p0 = SK.GetEntity(e->point[0])->PointGetNum();
                 Vector p1 = SK.GetEntity(e->point[1])->PointGetNum();
-                p = p1;
-                Printf(false, "        " PT_AS_STR, COSTR(p));
                 Printf(true,  "   len = %Fi%s%E",
                     SS.MmToString((p1.Minus(p0).Magnitude())).c_str());
                 break;
@@ -161,19 +183,16 @@ void TextWindow::DescribeSelection() {
                     pts = 4;
                 }
                 for(int i = 0; i < pts; i++) {
-                    p = SK.GetEntity(e->point[i])->PointGetNum();
-                    Printf((i==0), "   p%d = " PT_AS_STR, i, COSTR(p));
+                    PrintPointLink((i == 0), ssprintf("p%d", i).c_str(), e->point[i]);
                 }
                 break;
 
             case Entity::Type::ARC_OF_CIRCLE: {
                 Printf(false, "%FtARC OF A CIRCLE%E");
-                p = SK.GetEntity(e->point[0])->PointGetNum();
-                Printf(true,  "     center = " PT_AS_STR, COSTR(p));
-                p = SK.GetEntity(e->point[1])->PointGetNum();
-                Printf(true,  "  endpoints = " PT_AS_STR, COSTR(p));
-                p = SK.GetEntity(e->point[2])->PointGetNum();
-                Printf(false, "              " PT_AS_STR, COSTR(p));
+                PrintPointLink(true, "center", e->point[0]);
+                PrintPointLink(true, "endpoint1", e->point[1]);
+                PrintPointLink(false, "endpoint2", e->point[2]);
+                PrintNormalLink(true, "normal", e->normal);
                 double r = e->CircleGetRadiusNum();
                 Printf(true, "   diameter =  %Fi%s", SS.MmToString(r*2).c_str());
                 Printf(false, "     radius =  %Fi%s", SS.MmToString(r).c_str());
@@ -184,8 +203,8 @@ void TextWindow::DescribeSelection() {
             }
             case Entity::Type::CIRCLE: {
                 Printf(false, "%FtCIRCLE%E");
-                p = SK.GetEntity(e->point[0])->PointGetNum();
-                Printf(true,  "     center = " PT_AS_STR, COSTR(p));
+                PrintPointLink(true, "center", e->point[0]);
+                PrintNormalLink(true, "normal", e->normal);
                 double r = e->CircleGetRadiusNum();
                 Printf(true,  "   diameter =  %Fi%s", SS.MmToString(r*2).c_str());
                 Printf(false, "     radius =  %Fi%s", SS.MmToString(r).c_str());
@@ -205,6 +224,10 @@ void TextWindow::DescribeSelection() {
 
             case Entity::Type::TTF_TEXT: {
                 Printf(false, "%FtTRUETYPE FONT TEXT%E");
+                for(int i = 0; i < 4; i++) {
+                    PrintPointLink((i == 0), ssprintf("p%d", i).c_str(), e->point[i]);
+                }
+                PrintNormalLink(true, "normal", e->normal);
                 Printf(true, "  font = '%Fi%s%E'", e->font.c_str());
                 if(e->h.isFromRequest()) {
                     Printf(false, "  text = '%Fi%s%E' %Fl%Ll%f%D[change]%E",
@@ -249,18 +272,35 @@ void TextWindow::DescribeSelection() {
 
         Group *g = SK.GetGroup(e->group);
         Printf(false, "");
-        Printf(false, "%FtIN GROUP%E      %s", g->DescriptionString().c_str());
+        Printf(false, "%FtIN GROUP%E      %Fl%Ll%D%f%s",
+            g->h.v,
+            &ScreenForceSelectGroup,
+            g->DescriptionString().c_str());
         if(e->workplane.v == Entity::FREE_IN_3D.v) {
             Printf(false, "%FtNOT LOCKED IN WORKPLANE%E");
         } else {
             Entity *w = SK.GetEntity(e->workplane);
-            Printf(false, "%FtIN WORKPLANE%E  %s", w->DescriptionString().c_str());
+            Printf(false, "%FtIN WORKPLANE%E  %Fl%Ll%D%f%h%s%E",
+            e->workplane.v,
+            &ScreenSelectEntity,
+            &ScreenHoverEntity,
+            w->DescriptionString().c_str());
         }
         if(e->style.v) {
             Style *s = Style::Get(e->style);
-            Printf(false, "%FtIN STYLE%E      %s", s->DescriptionString().c_str());
+            Printf(false, "%FtIN STYLE%E      %Fl%Ll%f%D%s%E",
+            ScreenForceStyleInfo, s->h.v,
+            s->DescriptionString().c_str());
         } else {
             Printf(false, "%FtIN STYLE%E      none");
+        }
+        if(e->h.isFromRequest()) {
+            Request *r = SK.GetRequest(e->h.request());
+            Printf(false, "%FtFROM REQUEST%E  %Fl%Ll%D%f%h%s%E",
+            r->h.v,
+            &ScreenSelectRequest,
+            &ScreenHoverRequest,
+            r->DescriptionString().c_str());
         }
         if(e->construction) {
             Printf(false, "%FtCONSTRUCTION");
