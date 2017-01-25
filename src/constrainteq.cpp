@@ -161,7 +161,7 @@ void ConstraintBase::ModifyToSatisfy() {
         ExprVector exa = ea->PointGetExprsInWorkplane(workplane);
         ExprVector exb = eb->PointGetExprsInWorkplane(workplane);
         ExprVector exba = exb.Minus(exa);
-        Param *p = SK.GetParam(h.param(0));
+        Param *p = SK.GetParam(valP);
         p->val = exba.Dot(exp.Minus(exa))->Eval() / exba.Dot(exba)->Eval();
     } else {
         // We'll fix these ones up by looking at their symbolic equation;
@@ -196,7 +196,7 @@ void ConstraintBase::AddEq(IdList<Equation,hEquation> *l, const ExprVector &v,
     }
 }
 
-void ConstraintBase::Generate(IdList<Param,hParam> *l) const {
+void ConstraintBase::Generate(IdList<Param,hParam> *l) {
     switch(type) {
         case Type::PARALLEL:
         case Type::CUBIC_LINE_TANGENT:
@@ -206,7 +206,8 @@ void ConstraintBase::Generate(IdList<Param,hParam> *l) const {
         case Type::SAME_ORIENTATION:
         case Type::PT_ON_LINE: {
             Param p = {};
-            p.h = h.param(0);
+            valP = h.param(0);
+            p.h = valP;
             l->Add(&p);
             break;
         }
@@ -404,7 +405,7 @@ void ConstraintBase::GenerateEquations(IdList<Equation,hEquation> *l,
             ExprVector ea = a->PointGetExprsInWorkplane(workplane);
             ExprVector eb = b->PointGetExprsInWorkplane(workplane);
 
-            ExprVector ptOnLine = ea.Plus(eb.Minus(ea).ScaledBy(Expr::From(h.param(0))));
+            ExprVector ptOnLine = ea.Plus(eb.Minus(ea).ScaledBy(Expr::From(valP)));
             ExprVector eq = ptOnLine.Minus(ep);
 
             AddEq(l, eq);
@@ -610,7 +611,7 @@ void ConstraintBase::GenerateEquations(IdList<Equation,hEquation> *l,
                        bv = b->NormalExprsV(),
                        bn = b->NormalExprsN();
 
-            ExprVector eq = VectorsParallel3d(an, bn, h.param(0));
+            ExprVector eq = VectorsParallel3d(an, bn, valP);
             AddEq(l, eq);
             Expr *d1 = au.Dot(bv);
             Expr *d2 = au.Dot(bu);
@@ -701,7 +702,7 @@ void ConstraintBase::GenerateEquations(IdList<Equation,hEquation> *l,
             ExprVector b = line->VectorGetExprs();
 
             if(workplane.v == EntityBase::FREE_IN_3D.v) {
-                ExprVector eq = VectorsParallel3d(a, b, h.param(0));
+                ExprVector eq = VectorsParallel3d(a, b, valP);
                 AddEq(l, eq);
             } else {
                 EntityBase *w = SK.GetEntity(workplane);
@@ -755,7 +756,7 @@ void ConstraintBase::GenerateEquations(IdList<Equation,hEquation> *l,
             ExprVector b = eb->VectorGetExprsInWorkplane(workplane);
 
             if(workplane.v == EntityBase::FREE_IN_3D.v) {
-                ExprVector eq = VectorsParallel3d(a, b, h.param(0));
+                ExprVector eq = VectorsParallel3d(a, b, valP);
                 AddEq(l, eq);
             } else {
                 // We use expressions written in workplane csys, so we can assume the workplane
