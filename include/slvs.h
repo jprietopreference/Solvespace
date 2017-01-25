@@ -123,6 +123,7 @@ typedef struct {
     Slvs_hEntity        wrkpl;
 
     double              valA;
+    Slvs_hParam         valP;
     Slvs_hEntity        ptA;
     Slvs_hEntity        ptB;
     Slvs_hEntity        entityA;

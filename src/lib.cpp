@@ -183,6 +183,7 @@ default: dbp("bad constraint type %d", sc->type); return;
         c.group.v       = sc->group;
         c.workplane.v   = sc->wrkpl;
         c.valA          = sc->valA;
+        c.valP.v        = sc->valP;
         c.ptA.v         = sc->ptA;
         c.ptB.v         = sc->ptB;
         c.entityA.v     = sc->entityA;
@@ -191,6 +192,11 @@ default: dbp("bad constraint type %d", sc->type); return;
         c.entityD.v     = sc->entityD;
         c.other         = (sc->other) ? true : false;
         c.other2        = (sc->other2) ? true : false;
+
+        if(c.HasParam() && c.valP.v == 0) {
+            dbp("parameter valP for constraint type %d must be specified.", sc->type);
+            return;
+        }
 
         SK.constraint.Add(&c);
     }
