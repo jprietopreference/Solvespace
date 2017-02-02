@@ -152,6 +152,17 @@ void ConstraintBase::ModifyToSatisfy() {
         }
         double c = (a.Dot(b))/(a.Magnitude() * b.Magnitude());
         valA = acos(c)*180/PI;
+    } else if(type == Type::PT_ON_LINE) {
+        EntityBase *eln = SK.GetEntity(entityA);
+        EntityBase *ea = SK.GetEntity(eln->point[0]);
+        EntityBase *eb = SK.GetEntity(eln->point[1]);
+        EntityBase *ep = SK.GetEntity(ptA);
+        ExprVector exp = ep->PointGetExprsInWorkplane(workplane);
+        ExprVector exa = ea->PointGetExprsInWorkplane(workplane);
+        ExprVector exb = eb->PointGetExprsInWorkplane(workplane);
+        ExprVector exba = exb.Minus(exa);
+        Param *p = SK.GetParam(h.param(0)/*TODO: valP*/);
+        p->val = exba.Dot(exp.Minus(exa))->Eval() / exba.Dot(exba)->Eval();
     } else {
         // We'll fix these ones up by looking at their symbolic equation;
         // that means no extra work.

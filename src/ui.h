@@ -728,7 +728,7 @@ public:
     bool SuggestLineConstraint(hRequest lineSegment, ConstraintBase::Type *type);
 
     Vector SnapToGrid(Vector p);
-    bool ConstrainPointByHovered(hEntity pt);
+    bool ConstrainPointByHovered(hEntity pt, Point2d *screenPosHint = NULL);
     void DeleteTaggedRequests();
     hRequest AddRequest(Request::Type type, bool rememberForUndo);
     hRequest AddRequest(Request::Type type);
@@ -891,6 +891,7 @@ public:
     void SpaceNavigatorMoved(double tx, double ty, double tz,
                              double rx, double ry, double rz, bool shiftDown);
     void SpaceNavigatorButtonUp();
+    Vector SnapToEntityByScreenPoint(Point2d pp, hEntity he);
 };
 
 
