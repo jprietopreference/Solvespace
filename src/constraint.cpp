@@ -118,6 +118,7 @@ hConstraint Constraint::ConstrainCoincident(hEntity ptA, hEntity ptB) {
 
 void Constraint::MenuConstrain(Command id) {
     Constraint c = {};
+    hConstraint hc = {};
     c.group = SS.GW.activeGroup;
     c.workplane = SS.GW.ActiveWorkplane();
 
@@ -219,7 +220,13 @@ void Constraint::MenuConstrain(Command id) {
                         "    * a point and a plane face (point on face)\n"));
                 return;
             }
-            AddConstraint(&c);
+            hc = AddConstraint(&c);
+            switch(c.type) {
+                case Type::PT_ON_LINE:
+                    SK.GetConstraint(hc)->ModifyToSatisfy();
+                default:
+                    break;
+            }
             break;
 
         case Command::EQUAL:

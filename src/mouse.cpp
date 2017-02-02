@@ -910,8 +910,9 @@ bool GraphicsWindow::ConstrainPointByHovered(hEntity pt) {
         return true;
     }
     if(e->type == Entity::Type::LINE_SEGMENT) {
-        Constraint::Constrain(Constraint::Type::PT_ON_LINE,
+        hConstraint hc = Constraint::Constrain(Constraint::Type::PT_ON_LINE,
             pt, Entity::NO_ENTITY, e->h);
+        SK.GetConstraint(hc)->ModifyToSatisfy();
         return true;
     }
 

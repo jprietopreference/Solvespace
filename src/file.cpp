@@ -590,18 +590,7 @@ void SolveSpaceUI::UpgradeLegacyData() {
         switch(c.type) {
             case Constraint::Type::PT_ON_LINE: {
                 if(AllParamsExistFor(c)) continue;
-
-                EntityBase *eln = SK.GetEntity(c.entityA);
-                EntityBase *ea = SK.GetEntity(eln->point[0]);
-                EntityBase *eb = SK.GetEntity(eln->point[1]);
-                EntityBase *ep = SK.GetEntity(c.ptA);
-
-                ExprVector exp = ep->PointGetExprsInWorkplane(c.workplane);
-                ExprVector exa = ea->PointGetExprsInWorkplane(c.workplane);
-                ExprVector exb = eb->PointGetExprsInWorkplane(c.workplane);
-                ExprVector exba = exb.Minus(exa);
-                Param *p = SK.GetParam(c.h.param(0));
-                p->val = exba.Dot(exp.Minus(exa))->Eval() / exba.Dot(exba)->Eval();
+                c.ModifyToSatisfy();
                 break;
             }
 
