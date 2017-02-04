@@ -1114,3 +1114,14 @@ void SMesh::PrecomputeTransparency() {
         return (opaquea != opaqueb && opaquea == true);
     });
 }
+
+void SMesh::RemoveBadTriangles() {
+    for(auto &tr : l) {
+        bool isBad = tr.a.OnLineSegment(tr.b, tr.c) ||
+                     tr.b.OnLineSegment(tr.a, tr.c) ||
+                     tr.c.OnLineSegment(tr.a, tr.b);
+        tr.tag = (int)isBad;
+    }
+    l.RemoveTagged();
+}
+

@@ -346,6 +346,9 @@ void Group::GenerateShellAndMesh() {
         SMesh outm = {};
         GenerateForBoolean<SMesh>(&prevm, &thism, &outm, srcg->meshCombine);
 
+        // We should not process "bad" triangles
+        outm.RemoveBadTriangles();
+
         // And make sure that the output mesh is vertex-to-vertex.
         SKdNode *root = SKdNode::From(&outm);
         root->SnapToMesh(&outm);
