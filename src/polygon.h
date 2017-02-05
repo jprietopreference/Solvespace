@@ -278,7 +278,7 @@ public:
     void MakeOutlinesInto(SOutlineList *sol, EdgeKind type);
 
     void PrecomputeTransparency();
-    void RemoveBadTriangles();
+    bool RemoveBadTriangles();
 
     bool IsEmpty() const;
     void RemapFaces(Group *g, int remap);

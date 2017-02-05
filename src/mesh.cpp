@@ -1115,13 +1115,16 @@ void SMesh::PrecomputeTransparency() {
     });
 }
 
-void SMesh::RemoveBadTriangles() {
+bool SMesh::RemoveBadTriangles() {
+    bool hadBadTriangles = false;
     for(auto &tr : l) {
         bool isBad = tr.a.OnLineSegment(tr.b, tr.c) ||
                      tr.b.OnLineSegment(tr.a, tr.c) ||
                      tr.c.OnLineSegment(tr.a, tr.b);
         tr.tag = (int)isBad;
+        hadBadTriangles = hadBadTriangles || isBad;
     }
     l.RemoveTagged();
+    return hadBadTriangles;
 }
 

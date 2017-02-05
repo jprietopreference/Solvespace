@@ -345,18 +345,24 @@ void Group::GenerateShellAndMesh() {
 
         SMesh outm = {};
         GenerateForBoolean<SMesh>(&prevm, &thism, &outm, srcg->meshCombine);
+        thism.Clear();
+        prevm.Clear();
 
         // We should not process "bad" triangles
         outm.RemoveBadTriangles();
-
-        // And make sure that the output mesh is vertex-to-vertex.
-        SKdNode *root = SKdNode::From(&outm);
-        root->SnapToMesh(&outm);
-        root->MakeMeshInto(&runningMesh);
-
-        outm.Clear();
-        thism.Clear();
-        prevm.Clear();
+        do {
+            // And make sure that the output mesh is vertex-to-vertex.
+            SKdNode *root = SKdNode::From(&outm);
+            root->SnapToMesh(&outm);
+            root->MakeMeshInto(&runningMesh);
+            outm.Clear();
+            if(runningMesh.RemoveBadTriangles()) {
+                // When we are removing bad triangles, we have to snap it again
+                outm.MakeFromCopyOf(&runningMesh);
+                dbp("Restart snap!");
+                continue;
+            }
+        } while(false);
     }
 
     displayDirty = true;
