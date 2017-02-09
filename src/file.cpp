@@ -272,7 +272,7 @@ bool SolveSpaceUI::SaveToFile(const std::string &filename) {
 
     fprintf(fh, "%s\n\n\n", VERSION_STRING);
 
-    int i, j;
+    int i, j, k;
     for(i = 0; i < SK.group.n; i++) {
         sv.g = SK.group.elem[i];
         SaveUsingTable('g');
@@ -280,32 +280,33 @@ bool SolveSpaceUI::SaveToFile(const std::string &filename) {
     }
 
     for(i = 0; i < SK.param.n; i++) {
-        sv.p = SK.param.elem[i];
+        sv.p = SK.param.elem[SK.param.iti[i].i];
         SaveUsingTable('p');
         fprintf(fh, "AddParam\n\n");
     }
 
     for(i = 0; i < SK.request.n; i++) {
-        sv.r = SK.request.elem[i];
+        sv.r = SK.request.elem[SK.request.iti[i].i];
         SaveUsingTable('r');
         fprintf(fh, "AddRequest\n\n");
     }
 
     for(i = 0; i < SK.entity.n; i++) {
-        (SK.entity.elem[i]).CalculateNumerical(/*forExport=*/true);
-        sv.e = SK.entity.elem[i];
+        Entity *e = &SK.entity.elem[SK.entity.iti[i].i];
+        e->CalculateNumerical(/*forExport=*/true);
+        sv.e = *e;
         SaveUsingTable('e');
         fprintf(fh, "AddEntity\n\n");
     }
 
     for(i = 0; i < SK.constraint.n; i++) {
-        sv.c = SK.constraint.elem[i];
+        sv.c = SK.constraint.elem[SK.constraint.iti[i].i];
         SaveUsingTable('c');
         fprintf(fh, "AddConstraint\n\n");
     }
 
     for(i = 0; i < SK.style.n; i++) {
-        sv.s = SK.style.elem[i];
+        sv.s = SK.style.elem[SK.style.iti[i].i];
         if(sv.s.h.v >= Style::FIRST_CUSTOM) {
             SaveUsingTable('s');
             fprintf(fh, "AddStyle\n\n");
@@ -326,8 +327,9 @@ bool SolveSpaceUI::SaveToFile(const std::string &filename) {
     }
 
     SShell *s = &g->runningShell;
-    SSurface *srf;
-    for(srf = s->surface.First(); srf; srf = s->surface.NextAfter(srf)) {
+
+    for(k = 0; k < s->surface.n; k++) {
+        SSurface *srf = &s->surface.elem[s->surface.iti[k].i];
         fprintf(fh, "Surface %08x %08x %08x %d %d\n",
             srf->h.v, srf->color.ToPackedInt(), srf->face, srf->degm, srf->degn);
         for(i = 0; i <= srf->degm; i++) {
@@ -346,8 +348,9 @@ bool SolveSpaceUI::SaveToFile(const std::string &filename) {
 
         fprintf(fh, "AddSurface\n");
     }
-    SCurve *sc;
-    for(sc = s->curve.First(); sc; sc = s->curve.NextAfter(sc)) {
+
+    for(k = 0; k < s->curve.n; k++) {
+        SCurve *sc = &s->curve.elem[s->curve.iti[k].i];
         fprintf(fh, "Curve %08x %d %d %08x %08x\n",
             sc->h.v,
             sc->isExact ? 1 : 0, sc->exact.deg,
