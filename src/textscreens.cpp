@@ -69,7 +69,7 @@ void TextWindow::ScreenActivateGroup(int link, uint32_t v) {
     SS.GW.ClearSuper();
 }
 void TextWindow::ReportHowGroupSolved(hGroup hg) {
-    SS.GW.ClearSuper();
+    SS.GW.ClearSuper(/*ensure=*/false);
     SS.TW.GoToScreen(Screen::GROUP_SOLVE_INFO);
     SS.TW.shown.group.v = hg.v;
     SS.ScheduleShowTW();

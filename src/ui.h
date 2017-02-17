@@ -828,7 +828,7 @@ public:
     void MakeUnselected(hEntity he, bool coincidentPointTrick);
     void MakeUnselected(Selection *s, bool coincidentPointTrick);
     void SelectByMarquee();
-    void ClearSuper();
+    void ClearSuper(bool ensure = true);
 
     void ContextMenuListStyles();
     int64_t contextMenuCancelTime;

@@ -1049,12 +1049,14 @@ c:
     }
 }
 
-void GraphicsWindow::ClearSuper() {
+void GraphicsWindow::ClearSuper(bool ensure) {
     HideGraphicsEditControl();
     ClearPending();
     ClearSelection();
     hover.Clear();
-    EnsureValidActives();
+    if(ensure) {
+        EnsureValidActives();
+    }
 }
 
 void GraphicsWindow::ToggleBool(bool *v) {
