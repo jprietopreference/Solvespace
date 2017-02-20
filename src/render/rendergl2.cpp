@@ -80,13 +80,14 @@ public:
     Camera   camera;
     Lighting lighting;
     // Cached OpenGL state.
-    struct {
+    struct Current {
         hStroke     hcs;
         Stroke     *stroke;
         hFill       hcf;
         Fill       *fill;
         std::weak_ptr<const Pixmap> texture;
-    } current;
+    };
+    Current current;
 
     OpenGl2Renderer() :
         lines(), meshes(), points(), pixmapCache(), masks(),

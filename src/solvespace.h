@@ -680,24 +680,30 @@ public:
     bool     exportPwlCurves;
     bool     exportCanvasSizeAuto;
     bool     exportMode;
-    struct {
+
+    struct ExportMargin {
         float   left;
         float   right;
         float   bottom;
         float   top;
-    }        exportMargin;
-    struct {
+    };
+    ExportMargin exportMargin;
+
+    struct ExportCanvas {
         float   width;
         float   height;
         float   dx;
         float   dy;
-    }        exportCanvas;
-    struct {
+    };
+    ExportCanvas exportCanvas;
+
+    struct GCode {
         float   depth;
         int     passes;
         float   feed;
         float   plungeFeed;
-    }        gCode;
+    };
+    GCode gCode;
 
     Unit     viewUnits;
     int      afterDecimalMm;
@@ -746,14 +752,17 @@ public:
     static const SaveTable SAVED[];
     void SaveUsingTable(int type);
     void LoadUsingTable(char *key, char *val);
-    struct {
+
+    struct SV {
         Group        g;
         Request      r;
         Entity       e;
         Param        p;
         Constraint   c;
         Style        s;
-    } sv;
+    };
+    SV sv;
+
     static void MenuFile(Command id);
 	bool Autosave();
     void RemoveAutosave();
@@ -790,30 +799,40 @@ public:
     static void MenuAnalyze(Command id);
 
     // Additional display stuff
-    struct {
+    struct Traced {
         SContour    path;
         hEntity     point;
-    } traced;
+    };
+    Traced traced;
+
     SEdgeList nakedEdges;
-    struct {
+
+    struct ExtraLine {
         bool        draw;
         Vector      ptA;
         Vector      ptB;
-    } extraLine;
-    struct {
+    };
+    ExtraLine extraLine;
+
+    struct BGImage {
         std::shared_ptr<Pixmap> pixmap;
         double      scale; // pixels per mm
         Vector      origin;
-    } bgImage;
-    struct {
+    };
+    BGImage bgImage;
+
+    struct JustExportedInfo {
         bool        draw, showOrigin;
         Vector      pt, u, v;
-    } justExportedInfo;
-    struct {
+    };
+    JustExportedInfo justExportedInfo;
+
+    struct CenterOfMass {
         bool   draw;
         bool   dirty;
         Vector position;
-    } centerOfMass;
+    };
+    CenterOfMass centerOfMass;
 
     class Clipboard {
     public:
@@ -831,12 +850,14 @@ public:
 
     // Consistency checking on the sketch: stuff with missing dependencies
     // will get deleted automatically.
-    struct {
+    struct Deleted {
         int     requests;
         int     groups;
         int     constraints;
         int     nonTrivialConstraints;
-    } deleted;
+    };
+    Deleted deleted;
+
     bool GroupExists(hGroup hg);
     bool PruneOrphans();
     bool EntityExists(hEntity he);
@@ -877,11 +898,13 @@ public:
     // the sketch!
     bool allConsistent;
 
-    struct {
+    struct Later {
         bool    scheduled;
         bool    showTW;
         bool    generateAll;
-    } later;
+    };
+    Later later;
+
     void ScheduleShowTW();
     void ScheduleGenerateAll();
     void DoLater();

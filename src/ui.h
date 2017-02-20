@@ -366,13 +366,14 @@ public:
         double      dimFinish;
         int         dimSteps;
 
-        struct {
+        struct Paste {
             int         times;
             Vector      trans;
             double      theta;
             Vector      origin;
             double      scale;
-        }           paste;
+        };
+        Paste paste;
     } ShownState;
     ShownState shown;
 
@@ -428,29 +429,33 @@ public:
         // For tangent arc
         TANGENT_ARC_RADIUS    = 800
     };
-    struct {
+
+    struct EditInfo {
         bool        showAgain;
         Edit        meaning;
         int         i;
         hGroup      group;
         hRequest    request;
         hStyle      style;
-    } edit;
+    };
+    EditInfo edit;
 
     static void ReportHowGroupSolved(hGroup hg);
 
-    struct {
+    struct EditControl {
         int     halfRow;
         int     col;
 
-        struct {
+        struct ColorPicker {
             RgbaColor rgb;
             double    h, s, v;
             bool      show;
             bool      picker1dActive;
             bool      picker2dActive;
-        }       colorPicker;
-    } editControl;
+        };
+        ColorPicker colorPicker;
+    };
+    EditControl editControl;
 
     void HideEditControl();
     void ShowEditControl(int col, const std::string &str, int halfRow = -1);
@@ -622,7 +627,8 @@ public:
     Vector  projRight;
     Vector  projUp;
     double  scale;
-    struct {
+
+    struct Orig {
         bool    mouseDown;
         Vector  offset;
         Vector  projRight;
@@ -631,15 +637,18 @@ public:
         Point2d mouseOnButtonDown;
         Vector  marqueePoint;
         bool    startedMoving;
-    }       orig;
+    };
+    Orig orig;
+
     // We need to detect when the projection is changed to invalidate
     // caches for drawn items.
-    struct {
+    struct Cached {
         Vector  offset;
         Vector  projRight;
         Vector  projUp;
         double  scale;
-    }       cached;
+    };
+    Cached cached;
 
     // Most recent mouse position, updated every time the mouse moves.
     Point2d currentMousePosition;
@@ -650,9 +659,10 @@ public:
     bool    havePainted;
 
     // Some state for the context menu.
-    struct {
-        bool        active;
-    }       context;
+    struct Active {
+        bool active;
+    };
+    Active context;
 
     Camera GetCamera() const;
     Lighting GetLighting() const;
@@ -699,7 +709,7 @@ public:
         DRAGGING_MARQUEE            = 11,
     };
 
-    struct {
+    struct PendingInfo {
         Pending              operation;
         Command              command;
 
@@ -715,7 +725,9 @@ public:
 
         bool                 hasSuggestion;
         Constraint::Type     suggestion;
-    } pending;
+    };
+    PendingInfo pending;
+
     void ClearPending();
     bool IsFromPending(hRequest r);
     void AddToPending(hRequest r);
@@ -795,7 +807,8 @@ public:
     void HitTestMakeSelection(Point2d mp);
     void ClearSelection();
     void ClearNonexistentSelectionItems();
-    struct {
+
+    struct GroupedSelecton {
         std::vector<hEntity>     point;
         std::vector<hEntity>     entity;
         std::vector<hEntity>     anyNormal;
@@ -818,7 +831,9 @@ public:
         int         constraintLabels;
         int         withEndpoints;
         int         n;
-    } gs;
+    };
+    GroupedSelecton gs;
+
     void GroupSelection();
     bool IsSelected(Selection *s);
     bool IsSelected(hEntity he);

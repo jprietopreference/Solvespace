@@ -155,11 +155,12 @@ public:
     double      valC;
     RgbaColor   color;
 
-    struct {
+    struct SolvedHow {
         SolveResult         how;
         int                 dof;
         List<hConstraint>   remove;
-    } solved;
+    };
+    SolvedHow solved;
 
     enum class Subtype : uint32_t {
         // For drawings in 2d
@@ -173,7 +174,7 @@ public:
 
     bool skipFirst; // for step and repeat ops
 
-    struct {
+    struct Predef {
         Quaternion  q;
         hEntity     origin;
         hEntity     entityB;
@@ -181,17 +182,19 @@ public:
         bool        swapUV;
         bool        negateU;
         bool        negateV;
-    } predef;
+    };
+    Predef predef;
 
     SPolygon                polyLoops;
     SBezierLoopSetSet       bezierLoops;
     SBezierList             bezierOpens;
 
-    struct {
+    struct PolyErrorInfo {
         PolyError       how;
         SEdge           notClosedAt;
         Vector          errorPointAt;
-    }               polyError;
+    };
+    PolyErrorInfo   polyError;
 
     bool            booleanFailed;
 
@@ -673,10 +676,11 @@ public:
     Constraint() : ConstraintBase({}), disp() {}
 
     // These define how the constraint is drawn on-screen.
-    struct {
+    struct Disp {
         Vector      offset;
         hStyle      style;
-    } disp;
+    };
+    Disp disp;
 
     bool IsVisible() const;
     bool IsStylable() const;

@@ -171,7 +171,7 @@ public:
     Camera      camera;
     Lighting    lighting;
     // Cached OpenGL state.
-    struct {
+    struct Current {
         bool        drawing;
         GLenum      mode;
         hStroke     hcs;
@@ -179,7 +179,8 @@ public:
         hFill       hcf;
         Fill       *fill;
         std::weak_ptr<const Pixmap> texture;
-    } current;
+    };
+    Current current;
 
     OpenGl1Renderer() : camera(), lighting(), current() {}
 

@@ -327,9 +327,10 @@ public:
     // Renderer configuration.
     bool        antialias;
     // Renderer state.
-    struct {
+    struct Current {
         hStroke     hcs;
-    } current;
+    };
+    Current current;
 
     CairoRenderer() : context(), current() {}
 
