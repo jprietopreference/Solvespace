@@ -808,9 +808,11 @@ public:
         MeshDrawCall *dc = new MeshDrawCall();
         dc->fillFront       = *fillFront;
         dc->handle          = renderer->meshRenderer.Add(m);
-        dc->fillBack        = *fillBack;
         dc->isShaded        = isShaded;
         dc->hasFillBack     = (fillBack != NULL);
+        if(fillBack != NULL) {
+            dc->fillBack = *fillBack;
+        }
         return std::shared_ptr<DrawCall>(dc);
     }
 

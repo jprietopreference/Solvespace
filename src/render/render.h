@@ -332,7 +332,7 @@ public:
     };
     Current current;
 
-    CairoRenderer() : context(), current() {}
+    CairoRenderer() : context(), current(), antialias() {}
 
     void SelectStroke(hStroke hcs);
     void MoveTo(Vector p);
