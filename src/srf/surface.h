@@ -302,10 +302,10 @@ public:
     void AddExactIntersectionCurve(SBezier *sb, SSurface *srfB,
                           SShell *agnstA, SShell *agnstB, SShell *into);
 
-    typedef struct {
+    struct Inter {
         int     tag;
         Point2d p;
-    } Inter;
+    };
     void WeightControlPoints();
     void UnWeightControlPoints();
     void CopyRowOrCol(bool row, int this_ij, SSurface *src, int src_ij);

@@ -621,7 +621,7 @@ public:
     GraphicsWindow              GW;
 
     // The state for undo/redo
-    typedef struct {
+    struct UndoState {
         IdList<Group,hGroup>            group;
         List<hGroup>                    groupOrder;
         IdList<Request,hRequest>        request;
@@ -637,13 +637,13 @@ public:
             param.Clear();
             style.Clear();
         }
-    } UndoState;
+    };
     enum { MAX_UNDO = 16 };
-    typedef struct {
+    struct UndoStack {
         UndoState   d[MAX_UNDO];
         int         cnt;
         int         write;
-    } UndoStack;
+    };
     UndoStack   undo;
     UndoStack   redo;
     void UndoEnableMenus();
@@ -743,12 +743,12 @@ public:
     std::string saveFile;
     bool        fileLoadError;
     bool        unsaved;
-    typedef struct {
+    struct SaveTable {
         char        type;
         const char *desc;
         char        fmt;
         void       *ptr;
-    } SaveTable;
+    };
     static const SaveTable SAVED[];
     void SaveUsingTable(int type);
     void LoadUsingTable(char *key, char *val);

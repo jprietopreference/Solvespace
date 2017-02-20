@@ -814,13 +814,13 @@ public:
 
     // The default styles, for entities that don't have a style assigned yet,
     // and for datums and such.
-    typedef struct {
+    struct Default {
         hStyle      h;
         const char *cnfPrefix;
         RgbaColor   color;
         double      width;
         int         zIndex;
-    } Default;
+    };
     static const Default Defaults[];
 
     static std::string CnfColor(const std::string &prefix);

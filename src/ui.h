@@ -264,10 +264,10 @@ public:
         MAX_ROWS = 2000
     };
 
-    typedef struct {
+    struct Color {
         char      c;
         RgbaColor color;
-    } Color;
+    };
     static const Color fgColors[];
     static const Color bgColors[];
 
@@ -355,7 +355,7 @@ public:
         EDIT_VIEW           = 8,
         TANGENT_ARC         = 9
     };
-    typedef struct {
+    struct ShownState {
         Screen  screen;
 
         hGroup      group;
@@ -374,7 +374,7 @@ public:
             double      scale;
         };
         Paste paste;
-    } ShownState;
+    };
     ShownState shown;
 
     enum class Edit : uint32_t {
@@ -597,14 +597,14 @@ public:
         CHECK,
         RADIO
     };
-    typedef struct {
+    struct MenuEntry {
         int          level;          // 0 == on menu bar, 1 == one level down
         const char  *label;          // or NULL for a separator
         Command      id;             // unique ID
         int          accel;          // keyboard accelerator
         MenuKind     kind;
         MenuHandler  *fn;
-    } MenuEntry;
+    };
     static const MenuEntry menu[];
     static void MenuView(Command id);
     static void MenuEdit(Command id);
