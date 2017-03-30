@@ -518,6 +518,7 @@ public:
 
     static void ScreenChangeFixExportColors(int link, uint32_t v);
     static void ScreenChangeBackFaces(int link, uint32_t v);
+    static void ScreenChangeDrawPolygonAreas(int link, uint32_t v);
     static void ScreenChangeCheckClosedContour(int link, uint32_t v);
     static void ScreenChangePwlCurves(int link, uint32_t v);
     static void ScreenChangeCanvasSizeAuto(int link, uint32_t v);

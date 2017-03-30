@@ -84,6 +84,11 @@ void TextWindow::ScreenChangeBackFaces(int link, uint32_t v) {
     InvalidateGraphics();
 }
 
+void TextWindow::ScreenChangeDrawPolygonAreas(int link, uint32_t v) {
+    SS.drawPolygonAreas = !SS.drawPolygonAreas;
+    InvalidateGraphics();
+}
+
 void TextWindow::ScreenChangeCheckClosedContour(int link, uint32_t v) {
     SS.checkClosedContour = !SS.checkClosedContour;
     InvalidateGraphics();
@@ -297,6 +302,9 @@ void TextWindow::ShowConfiguration() {
     Printf(false, "  %Fd%f%Ll%s  check sketch for closed contour%E",
         &ScreenChangeCheckClosedContour,
         SS.checkClosedContour ? CHECK_TRUE : CHECK_FALSE);
+    Printf(false, "  %Fd%f%Ll%s  draw closed polygons area%E",
+        &ScreenChangeDrawPolygonAreas,
+        SS.drawPolygonAreas ? CHECK_TRUE : CHECK_FALSE);
 
     Printf(false, "");
     Printf(false, "%Ft autosave interval (in minutes)%E");
