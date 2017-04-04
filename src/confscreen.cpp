@@ -99,6 +99,11 @@ void TextWindow::ScreenChangeShadedTriangles(int link, uint32_t v) {
     InvalidateGraphics();
 }
 
+void TextWindow::ScreenChangeAfterDecimalOptimal(int link, uint32_t v) {
+    SS.afterDecimalOptimal = !SS.afterDecimalOptimal;
+    InvalidateGraphics();
+}
+
 void TextWindow::ScreenChangePwlCurves(int link, uint32_t v) {
     SS.exportPwlCurves = !SS.exportPwlCurves;
     InvalidateGraphics();
@@ -226,6 +231,9 @@ void TextWindow::ShowConfiguration() {
         SS.UnitDigitsAfterDecimal(),
         &ScreenChangeDigitsAfterDecimal, 0,
         SS.MmToString(SS.StringToMm("1.23456789")).c_str());
+    Printf(false, "  %Fd%f%Ll%s  don't show zeroes%E",
+        &ScreenChangeAfterDecimalOptimal,
+        SS.afterDecimalOptimal ? CHECK_TRUE : CHECK_FALSE);
 
     Printf(false, "");
     Printf(false, "%Ft export scale factor (1:1=mm, 1:25.4=inch)");

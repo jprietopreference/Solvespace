@@ -56,6 +56,7 @@ void SolveSpaceUI::Init() {
     // Number of digits after the decimal point
     afterDecimalMm = CnfThawInt(2, "AfterDecimalMm");
     afterDecimalInch = CnfThawInt(3, "AfterDecimalInch");
+    afterDecimalOptimal = CnfThawBool(false, "AfterDecimalOptimal");
     // Camera tangent (determines perspective)
     cameraTangent = CnfThawFloat(0.3f/1e3f, "CameraTangent");
     // Grid spacing
@@ -181,6 +182,7 @@ void SolveSpaceUI::Exit() {
     // Number of digits after the decimal point
     CnfFreezeInt((uint32_t)afterDecimalMm, "AfterDecimalMm");
     CnfFreezeInt((uint32_t)afterDecimalInch, "AfterDecimalInch");
+    CnfFreezeBool(afterDecimalOptimal, "AfterDecimalOptimal");
     // Camera tangent (determines perspective)
     CnfFreezeFloat((float)cameraTangent, "CameraTangent");
     // Grid spacing
@@ -266,6 +268,43 @@ const char *SolveSpaceUI::UnitName() {
     return "";
 }
 
+static std::string SiPrefixFromDeg(int deg, int *rdeg) {
+    *rdeg = (int)(floor(deg / 3.0) * 3.0);
+    switch((int)floor(deg / 3.0)) {
+        case -8: return "y"; // yocto
+        case -7: return "z"; // zepto
+        case -6: return "a"; // atto
+        case -5: return "f"; // femto
+        case -4: return "p"; // pico
+        case -3: return "n"; // nano
+        case -2: return "µ"; // micro
+        case -1: return "m"; // mili
+        case  0: return  "";
+        case +1: return "k"; // kilo
+    }
+    *rdeg = deg;
+    return "";
+}
+
+std::string SolveSpaceUI::SiUnits(double value) {
+    if(viewUnits == Unit::INCHES) return ssprintf("%.*f", afterDecimalInch, value / 25.4);
+    std::string prefix;
+    int deg = 0;
+    if(fabs(value) > 0.0)  {
+        deg = (int)floor(log10(abs(value)));
+        deg -= 3;	//default millimeter
+        prefix = SiPrefixFromDeg(deg, &deg);
+        value = value / pow(10.0, deg + 3);
+        double k = pow(10.0, afterDecimalMm);
+        value = floor(value * k) / k;
+    }
+    std::string units = "";
+    if((viewUnits != Unit::METERS || deg != 0) &&
+       (viewUnits != Unit::MM || deg != -3)) units = " " + prefix + "m";
+    if(afterDecimalOptimal) return ssprintf("%.*g%s", 3 + afterDecimalMm, value, units.c_str());
+    return ssprintf("%.*f%s", afterDecimalMm, value, units.c_str());
+}
+
 std::string SolveSpaceUI::MmToString(double v) {
     switch(viewUnits) {
         case Unit::INCHES: return ssprintf("%.*f", afterDecimalInch, v / 25.4);
@@ -274,6 +313,16 @@ std::string SolveSpaceUI::MmToString(double v) {
     }
     return "";
 }
+
+std::string SolveSpaceUI::MmToStringDim(double v) {
+    switch(viewUnits) {
+        case Unit::INCHES: return ssprintf("%.*f", afterDecimalInch, v / 25.4);
+        case Unit::METERS:
+        case Unit::MM: return SiUnits(v);
+    }
+    return "";
+}
+
 double SolveSpaceUI::ExprToMm(Expr *e) {
     return (e->Eval()) * MmPerUnit();
 }
