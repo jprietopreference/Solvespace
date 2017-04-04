@@ -681,11 +681,14 @@ public:
     }        gCode;
 
     Unit     viewUnits;
+    bool     afterDecimalOptimal;
     int      afterDecimalMm;
     int      afterDecimalInch;
     int      autosaveInterval; // in minutes
 
     std::string MmToString(double v);
+    std::string MmToStringDim(double v);
+    std::string SiUnits(double v);
     double ExprToMm(Expr *e);
     double StringToMm(const std::string &s);
     const char *UnitName();

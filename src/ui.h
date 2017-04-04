@@ -525,6 +525,8 @@ public:
     static void ScreenChangeCanvasSize(int link, uint32_t v);
     static void ScreenChangeShadedTriangles(int link, uint32_t v);
 
+    static void ScreenChangeAfterDecimalOptimal(int link, uint32_t v);
+
     static void ScreenAllowRedundant(int link, uint32_t v);
 
     static void ScreenStepDimSteps(int link, uint32_t v);

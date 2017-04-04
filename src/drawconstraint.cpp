@@ -22,13 +22,13 @@ std::string Constraint::Label() const {
         result = comment;
     } else if(type == Type::DIAMETER) {
         if(!other) {
-            result = "⌀" + SS.MmToString(valA);
+            result = "⌀" + SS.MmToStringDim(valA);
         } else {
-            result = "R" + SS.MmToString(valA / 2);
+            result = "R" + SS.MmToStringDim(valA / 2);
         }
     } else {
         // valA has units of distance
-        result = SS.MmToString(fabs(valA));
+        result = SS.MmToStringDim(fabs(valA));
     }
     if(reference) {
         result += " REF";
