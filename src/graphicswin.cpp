@@ -15,6 +15,7 @@
 #define mGrp  (&Group::MenuGroup)
 #define mAna  (&SolveSpaceUI::MenuAnalyze)
 #define mHelp (&SolveSpaceUI::MenuHelp)
+#define mDbg  (&SolveSpaceUI::MenuDebug)
 #define DEL   DELETE_KEY
 #define ESC   ESCAPE_KEY
 #define S     SHIFT_MASK
@@ -74,7 +75,7 @@ const GraphicsWindow::MenuEntry GraphicsWindow::menu[] = {
 { 1, N_("&Center View At Point"),       Command::CENTER_VIEW,      F(4),    TN, mView },
 { 1,  NULL,                             Command::NONE,             0,       TN, NULL  },
 { 1, N_("Show Snap &Grid"),             Command::SHOW_GRID,        '>',     TC, mView },
-{ 1, N_("Use &Perspective Projection"), Command::PERSPECTIVE_PROJ, '`',    TC, mView },
+{ 1, N_("Use &Perspective Projection"), Command::PERSPECTIVE_PROJ, '`',     TC, mView },
 { 1,  NULL,                             Command::NONE,             0,       TN, NULL  },
 { 1, N_("Show &Toolbar"),               Command::SHOW_TOOLBAR,     0,       TC, mView },
 { 1, N_("Show Property Bro&wser"),      Command::SHOW_TEXT_WND,    '\t',    TC, mView },
@@ -149,7 +150,7 @@ const GraphicsWindow::MenuEntry GraphicsWindow::menu[] = {
 { 1, N_("Measure &Perimeter"),          Command::PERIMETER,        C|S|'P', TN, mAna  },
 { 1, N_("Show &Interfering Parts"),     Command::INTERFERENCE,     C|S|'I', TN, mAna  },
 { 1, N_("Show &Naked Edges"),           Command::NAKED_EDGES,      C|S|'N', TN, mAna  },
-{ 1, N_("Show &Center of Mass"),        Command::CENTER_OF_MASS,      C|S|'C', TN, mAna  },
+{ 1, N_("Show &Center of Mass"),        Command::CENTER_OF_MASS,   C|S|'C', TN, mAna  },
 { 1, NULL,                              Command::NONE,             0,       TN, NULL  },
 { 1, N_("Show Degrees of &Freedom"),    Command::SHOW_DOF,         C|S|'F', TN, mAna  },
 { 1, NULL,                              Command::NONE,             0,       TN, NULL  },
@@ -163,6 +164,13 @@ const GraphicsWindow::MenuEntry GraphicsWindow::menu[] = {
 #ifndef __APPLE__
 { 1, N_("&About"),                      Command::ABOUT,            0,       TN, mHelp },
 #endif
+
+#ifdef _DEBUG
+{ 0, N_("&Debug"),                      Command::NONE,             0,       TN, NULL  },
+{ 1, N_("&Equations"),                  Command::EQUATIONS,        0,       TN, mDbg  },
+{ 1, N_("&Solve way"),                  Command::SOLVE_WAY,        0,       TN, mDbg  },
+#endif
+
 { -1, 0,                                Command::NONE,             0,       TN, 0     }
 };
 

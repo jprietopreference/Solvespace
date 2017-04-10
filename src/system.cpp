@@ -8,6 +8,12 @@
 //-----------------------------------------------------------------------------
 #include "solvespace.h"
 
+#define USE_EIGEN
+
+#ifdef USE_EIGEN
+    #include "SparseQR"
+#endif
+
 // This tolerance is used to determine whether two (linearized) constraints
 // are linearly dependent. If this is too small, then we will attempt to
 // solve truly inconsistent systems and fail. But if it's too large, then
@@ -180,6 +186,37 @@ bool System::TestRank() {
 bool System::SolveLinearSystem(double X[], double A[][MAX_UNKNOWNS],
                                double B[], int n)
 {
+#ifdef USE_EIGEN
+    if(n == 0) return true;
+    using namespace Eigen;
+    SparseMatrix <double> AA{n, n};
+    for(int i = 0; i < n; i++) {
+        for(int j = 0; j < n; j++) {
+            if(EXACT(A[i][j] == 0.0)) continue;
+            AA.insert(i, j) = A[i][j];
+        }
+    }
+    AA.makeCompressed();
+
+    VectorXd BB(n);
+    for(int i = 0; i < n; i++) {
+        BB[i] = B[i];
+    }
+
+    VectorXd XX(n);
+
+    SparseQR <SparseMatrix<double>, COLAMDOrdering<int>> solver;
+    solver.compute(AA);
+    XX = solver.solve(BB);
+    if(solver.info() != Eigen::Success) {
+        return false;
+    }
+    for(int i = 0; i < n; i++) {
+        X[i] = XX[i];
+    }
+    return true;
+
+#else
     // Gaussian elimination, with partial pivoting. It's an error if the
     // matrix is singular, because that means two constraints are
     // equivalent.
@@ -231,6 +268,7 @@ bool System::SolveLinearSystem(double X[], double A[][MAX_UNKNOWNS],
     }
 
     return true;
+#endif
 }
 
 bool System::SolveLeastSquares() {
@@ -276,6 +314,18 @@ bool System::SolveLeastSquares() {
     return true;
 }
 
+void System::AddWayPoint() {
+    solveWay.emplace_back(IdList<ParamValue, hParam>{});
+    IdList<ParamValue, hParam> &w = solveWay.back();
+    for(int i = 0; i < mat.n; i++) {
+        Param *p = param.FindById(mat.param[i]);
+        ParamValue v;
+        v.h = p->h;
+        v.val = p->val;
+        w.Add(&v);
+    }
+}
+
 bool System::NewtonSolve(int tag) {
 
     int iter = 0;
@@ -286,6 +336,11 @@ bool System::NewtonSolve(int tag) {
     for(i = 0; i < mat.m; i++) {
         mat.B.num[i] = (mat.B.sym[i])->Eval();
     }
+    for(auto &w : solveWay) {
+        w.Clear();
+    }
+    solveWay.clear();
+    AddWayPoint();
     do {
         // And evaluate the Jacobian at our initial operating point.
         EvalJacobian();
@@ -302,6 +357,7 @@ bool System::NewtonSolve(int tag) {
                 return false;
             }
         }
+        AddWayPoint();
 
         // Re-evalute the functions, since the params have just changed.
         for(i = 0; i < mat.m; i++) {

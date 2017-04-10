@@ -876,6 +876,29 @@ void SolveSpaceUI::ShowNakedEdges(bool reportOnlyWhenNotOkay) {
     }
 }
 
+void SolveSpaceUI::MenuDebug(Command id) {
+    switch(id) {
+        case Command::EQUATIONS: {
+            SS.WriteEqSystemForGroup(SS.GW.activeGroup);
+            Group *g = SK.GetGroup(SS.GW.activeGroup);
+            SS.sys.WriteEquationsExceptFor(Constraint::NO_CONSTRAINT, g);
+            //std::string result = "https://latex.codecogs.com/gif.latex?";
+            //std::string result = "http://www.sciweavers.org/tex2img.php?eq=";
+            //std::string result = "http://www.texrendr.com/?eqn=";
+            std::string result = "http://www.HostMath.com/Show.aspx?Code=";
+
+            for(const Equation &eq : SS.sys.eq) {
+                Expr *expr = eq.e->FoldConstants();
+                result += expr->PrintLaTeX() + "\\\\ ";
+            }
+            //result += "&bc=White&fc=Black&im=jpg&fs=12&ff=arev&edit=0"; // sciweavers
+            OpenWebsite(result.c_str());
+            break;
+        }
+        default:;
+    }
+}
+
 void SolveSpaceUI::MenuHelp(Command id) {
     if((uint32_t)id >= (uint32_t)Command::LOCALE &&
        (uint32_t)id < ((uint32_t)Command::LOCALE + Locales().size())) {

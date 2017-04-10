@@ -539,6 +539,36 @@ void Entity::Draw(DrawAs how, Canvas *canvas) {
                 canvas->DrawPoint(PointGetNum(), hcsAnalyze);
             }
 
+            if(SS.sys.solveWay.size() > 0 && SS.sys.solveWay[0].FindByIdNoOops(param[0]) != NULL) {
+                Canvas::Stroke analyzeStroke = Style::Stroke(Style::ANALYZE);
+                analyzeStroke.width = 1.0;
+                analyzeStroke.layer = Canvas::Layer::FRONT;
+                Canvas::hStroke hcsAnalyze = canvas->GetStroke(analyzeStroke);
+
+                Param *px = SK.GetParam(param[0]),
+                      *py = SK.GetParam(param[1]);
+                double oldx = px->val;
+                double oldy = py->val;
+                bool first = true;
+                Vector prev;
+                for(auto &w : SS.sys.solveWay) {
+                    auto p0 = w.FindByIdNoOops(param[0]);
+                    auto p1 = w.FindByIdNoOops(param[1]);
+                    if(p0 == NULL || p1 == NULL) continue;
+                    px->val = p0->val;
+                    py->val = p1->val;
+                    Vector cur = PointGetNum();
+                    if(!first) {
+                        canvas->DrawLine(prev, cur, hcsAnalyze);
+                    } else {
+                        first = false;
+                    }
+                    prev = cur;
+                }
+                px->val = oldx;
+                py->val = oldy;
+            }
+
             canvas->DrawPoint(PointGetNum(), hcsPoint);
             return;
         }

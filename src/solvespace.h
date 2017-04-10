@@ -323,6 +323,14 @@ public:
         EQ_SUBSTITUTED       = 20000
     };
 
+    struct ParamValue {
+        double val;
+        hParam h;
+        void Clear() { }
+    };
+
+    std::vector<IdList<ParamValue, hParam>> solveWay;
+
     // The system Jacobian matrix
     struct {
         // The corresponding equation for each row
@@ -380,6 +388,7 @@ public:
                           bool andFindBad, bool andFindFree, bool forceDofCheck = false);
 
     void Clear();
+    void AddWayPoint();
 };
 
 #include "ttf.h"
@@ -866,6 +875,7 @@ public:
     void DoLater();
 
     static void MenuHelp(Command id);
+    static void MenuDebug(Command id);
 
     void Clear();
 

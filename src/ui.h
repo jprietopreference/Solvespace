@@ -221,6 +221,9 @@ enum class Command : uint32_t {
     // Help
     WEBSITE,
     ABOUT,
+    // Debug
+    EQUATIONS,
+    SOLVE_WAY,
     // Recent
     RECENT_OPEN = 0xf000,
     RECENT_LINK = 0xf100,
