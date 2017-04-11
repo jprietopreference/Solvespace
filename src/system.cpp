@@ -8,6 +8,13 @@
 //-----------------------------------------------------------------------------
 #include "solvespace.h"
 
+#define USE_EIGEN
+
+#ifdef USE_EIGEN
+    #define EIGEN_NO_DEBUG
+    #include "SparseQR"
+#endif
+
 // This tolerance is used to determine whether two (linearized) constraints
 // are linearly dependent. If this is too small, then we will attempt to
 // solve truly inconsistent systems and fail. But if it's too large, then
@@ -136,6 +143,22 @@ void System::SolveBySubstitution() {
 // is less than the tolerance RANK_MAG_TOLERANCE.
 //-----------------------------------------------------------------------------
 int System::CalculateRank() {
+#ifdef USE_EIGEN
+    if(mat.m == 0 || mat.n == 0) return 0;
+    using namespace Eigen;
+    SparseMatrix <double> Anum(mat.m, mat.n);
+    for(int i = 0; i < mat.m; i++) {
+        for(int j = 0; j < mat.n; j++) {
+            if(EXACT(mat.A.num[i][j] == 0.0)) continue;
+            Anum.insert(i, j) = mat.A.num[i][j];
+        }
+    }
+    Anum.makeCompressed();
+
+    SparseQR <SparseMatrix<double>, COLAMDOrdering<int>> solver;
+    solver.compute(Anum);
+    return solver.rank();
+#else
     // Actually work with magnitudes squared, not the magnitudes
     double rowMag[MAX_UNKNOWNS] = {};
     double tol = RANK_MAG_TOLERANCE*RANK_MAG_TOLERANCE;
@@ -170,6 +193,7 @@ int System::CalculateRank() {
     }
 
     return rank;
+#endif
 }
 
 bool System::TestRank() {
@@ -180,6 +204,37 @@ bool System::TestRank() {
 bool System::SolveLinearSystem(double X[], double A[][MAX_UNKNOWNS],
                                double B[], int n)
 {
+#ifdef USE_EIGEN
+    if(n == 0) return true;
+    using namespace Eigen;
+    SparseMatrix <double> AA(n, n);
+    for(int i = 0; i < n; i++) {
+        for(int j = 0; j < n; j++) {
+            if(EXACT(A[i][j] == 0.0)) continue;
+            AA.insert(i, j) = A[i][j];
+        }
+    }
+    AA.makeCompressed();
+
+    VectorXd BB(n);
+    for(int i = 0; i < n; i++) {
+        BB[i] = B[i];
+    }
+
+    VectorXd XX(n);
+
+    SparseQR <SparseMatrix<double>, COLAMDOrdering<int>> solver;
+    solver.compute(AA);
+    XX = solver.solve(BB);
+    if(solver.info() != Eigen::Success) {
+        return false;
+    }
+    for(int i = 0; i < n; i++) {
+        X[i] = XX[i];
+    }
+    return true;
+
+#else
     // Gaussian elimination, with partial pivoting. It's an error if the
     // matrix is singular, because that means two constraints are
     // equivalent.
@@ -231,6 +286,7 @@ bool System::SolveLinearSystem(double X[], double A[][MAX_UNKNOWNS],
     }
 
     return true;
+#endif
 }
 
 bool System::SolveLeastSquares() {
