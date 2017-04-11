@@ -862,6 +862,7 @@ public:
     void DoLater();
 
     static void MenuHelp(Command id);
+    static void MenuDebug(Command id);
 
     void Clear();
 
