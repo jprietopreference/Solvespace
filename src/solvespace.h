@@ -351,6 +351,15 @@ public:
         }           B;
     } mat;
 
+    struct ParamValue {
+        double val;
+        hParam h;
+        void Clear() { }
+    };
+
+    std::vector<IdList<ParamValue, hParam>> solveWay;
+    bool recordSolveWay;
+
     static const double RANK_MAG_TOLERANCE, CONVERGE_TOLERANCE;
     int CalculateRank();
     bool TestRank();
@@ -379,6 +388,8 @@ public:
                           bool andFindBad, bool andFindFree, bool forceDofCheck = false);
 
     void Clear();
+    void AddSolveWayPoint();
+    void ClearSolveWay();
 };
 
 #include "ttf.h"

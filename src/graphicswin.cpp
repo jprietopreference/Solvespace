@@ -168,6 +168,7 @@ const GraphicsWindow::MenuEntry GraphicsWindow::menu[] = {
 { 0, N_("&Debug"),                      Command::NONE,             0,       TN, NULL  },
 { 1, N_("&Equations"),                  Command::EQUATIONS,        0,       TN, mDbg  },
 { 1, N_("&Folded Equations"),           Command::FOLDED_EQUATIONS, 0,       TN, mDbg  },
+{ 1, N_("&Display Solve Way"),          Command::SOLVE_WAY,        0,       TC, mDbg  },
 #endif
 
 { -1, 0,                                Command::NONE,             0,       TN, 0     }
@@ -695,6 +696,7 @@ void GraphicsWindow::EnsureValidActives() {
     CheckMenuByCmd(Command::SHOW_GRID,/*checked=*/SS.GW.showSnapGrid);
     CheckMenuByCmd(Command::FULL_SCREEN, /*checked=*/FullScreenIsActive());
 
+    CheckMenuByCmd(Command::SOLVE_WAY, /*checked=*/SS.sys.recordSolveWay);
     if(change) SS.ScheduleShowTW();
 }
 

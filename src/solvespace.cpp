@@ -848,6 +848,13 @@ void SolveSpaceUI::MenuDebug(Command id) {
             SS.sys.Clear();
             break;
         }
+        case Command::SOLVE_WAY:
+            SS.sys.recordSolveWay = !SS.sys.recordSolveWay;
+            SS.sys.ClearSolveWay();
+            SS.GW.persistentDirty = true;
+            SS.GW.EnsureValidActives();
+            InvalidateGraphics();
+            break;
         default:;
     }
 }
