@@ -376,6 +376,9 @@ public:
                           bool andFindBad, bool andFindFree, bool forceDofCheck = false);
 
     void Clear();
+    Param *GetLastParamSubstitution(Param *p);
+    void SubstituteParamsByLast(Expr *e);
+    void SortSubstitutionByDragged(Param *p);
 };
 
 #include "ttf.h"
