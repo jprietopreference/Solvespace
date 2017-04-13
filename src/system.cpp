@@ -8,13 +8,6 @@
 //-----------------------------------------------------------------------------
 #include "solvespace.h"
 
-#define USE_EIGEN
-
-#ifdef USE_EIGEN
-    #define EIGEN_NO_DEBUG
-    #include "SparseQR"
-#endif
-
 // This tolerance is used to determine whether two (linearized) constraints
 // are linearly dependent. If this is too small, then we will attempt to
 // solve truly inconsistent systems and fail. But if it's too large, then
@@ -27,33 +20,31 @@ const double System::RANK_MAG_TOLERANCE = 1e-4;
 const double System::CONVERGE_TOLERANCE = (LENGTH_EPS/(1e2));
 
 bool System::WriteJacobian(int tag) {
-    int a, i, j;
+    // Clear all
+    mat.param.clear();
+    mat.eq.clear();
+    mat.B.sym.clear();
 
-    j = 0;
-    for(a = 0; a < param.n; a++) {
-        if(j >= MAX_UNKNOWNS) return false;
-
-        Param *p = &(param.elem[a]);
-        if(p->tag != tag) continue;
-        mat.param[j] = p->h;
-        j++;
+    for(Param &p : param) {
+        if(p.tag != tag) continue;
+        mat.param.push_back(p.h);
     }
-    mat.n = j;
+    mat.n = mat.param.size();
 
-    i = 0;
-    for(a = 0; a < eq.n; a++) {
-        if(i >= MAX_UNKNOWNS) return false;
-
-        Equation *e = &(eq.elem[a]);
-        if(e->tag != tag) continue;
-
-        mat.eq[i] = e->h;
+    for(Equation &e : eq) {
+        if(e.tag != tag) continue;
+        mat.eq.push_back(&e);
+    }
+    mat.m = mat.eq.size();
+    mat.A.sym = Eigen::SparseMatrix<Expr *>(mat.m, mat.n);
+    for(size_t i = 0; i < mat.eq.size(); i++) {
+        Equation *e = mat.eq[i];
         Expr *f = e->e->DeepCopyWithParamsAsPointers(&param, &(SK.param));
         f = f->FoldConstants();
 
         // Hash table (61 bits) to accelerate generation of zero partials.
         uint64_t scoreboard = f->ParamsUsed();
-        for(j = 0; j < mat.n; j++) {
+        for(int j = 0; j < mat.n; j++) {
             Expr *pd;
             if(scoreboard & ((uint64_t)1 << (mat.param[j].v % 61)) &&
                 f->DependsOn(mat.param[j]))
@@ -62,25 +53,28 @@ bool System::WriteJacobian(int tag) {
                 pd = pd->FoldConstants();
                 pd = pd->DeepCopyWithParamsAsPointers(&param, &(SK.param));
             } else {
-                pd = Expr::From(0.0);
+                continue;
             }
-            mat.A.sym[i][j] = pd;
+            mat.A.sym.insert(i, j) = pd;
         }
-        mat.B.sym[i] = f;
-        i++;
+        mat.B.sym.push_back(f);
     }
-    mat.m = i;
-
     return true;
 }
 
 void System::EvalJacobian() {
-    int i, j;
-    for(i = 0; i < mat.m; i++) {
-        for(j = 0; j < mat.n; j++) {
-            mat.A.num[i][j] = (mat.A.sym[i][j])->Eval();
+    using namespace Eigen;
+    mat.A.num = Eigen::SparseMatrix<double>(mat.m, mat.n);
+    int size = mat.A.sym.outerSize();
+
+    for(int k = 0; k < size; k++) {
+        for(SparseMatrix <Expr *>::InnerIterator it(mat.A.sym, k); it; ++it) {
+            double value = it.value()->Eval();
+            if(value == 0.0) continue;
+            mat.A.num.insert(it.row(), it.col()) = value;
         }
     }
+    mat.A.num.makeCompressed();
 }
 
 bool System::IsDragged(hParam p) {
@@ -143,57 +137,11 @@ void System::SolveBySubstitution() {
 // is less than the tolerance RANK_MAG_TOLERANCE.
 //-----------------------------------------------------------------------------
 int System::CalculateRank() {
-#ifdef USE_EIGEN
-    if(mat.m == 0 || mat.n == 0) return 0;
     using namespace Eigen;
-    SparseMatrix <double> Anum(mat.m, mat.n);
-    for(int i = 0; i < mat.m; i++) {
-        for(int j = 0; j < mat.n; j++) {
-            if(EXACT(mat.A.num[i][j] == 0.0)) continue;
-            Anum.insert(i, j) = mat.A.num[i][j];
-        }
-    }
-    Anum.makeCompressed();
-
+    if(mat.n == 0 || mat.m == 0) return 0;
     SparseQR <SparseMatrix<double>, COLAMDOrdering<int>> solver;
-    solver.compute(Anum);
+    solver.compute(mat.A.num);
     return solver.rank();
-#else
-    // Actually work with magnitudes squared, not the magnitudes
-    double rowMag[MAX_UNKNOWNS] = {};
-    double tol = RANK_MAG_TOLERANCE*RANK_MAG_TOLERANCE;
-
-    int i, iprev, j;
-    int rank = 0;
-
-    for(i = 0; i < mat.m; i++) {
-        // Subtract off this row's component in the direction of any
-        // previous rows
-        for(iprev = 0; iprev < i; iprev++) {
-            if(rowMag[iprev] <= tol) continue; // ignore zero rows
-
-            double dot = 0;
-            for(j = 0; j < mat.n; j++) {
-                dot += (mat.A.num[iprev][j]) * (mat.A.num[i][j]);
-            }
-            for(j = 0; j < mat.n; j++) {
-                mat.A.num[i][j] -= (dot/rowMag[iprev])*mat.A.num[iprev][j];
-            }
-        }
-        // Our row is now normal to all previous rows; calculate the
-        // magnitude of what's left
-        double mag = 0;
-        for(j = 0; j < mat.n; j++) {
-            mag += (mat.A.num[i][j]) * (mat.A.num[i][j]);
-        }
-        if(mag > tol) {
-            rank++;
-        }
-        rowMag[i] = mag;
-    }
-
-    return rank;
-#endif
 }
 
 bool System::TestRank() {
@@ -201,133 +149,50 @@ bool System::TestRank() {
     return CalculateRank() == mat.m;
 }
 
-bool System::SolveLinearSystem(double X[], double A[][MAX_UNKNOWNS],
-                               double B[], int n)
+bool System::SolveLinearSystem(const Eigen::SparseMatrix <double> &A,
+                               const Eigen::VectorXd &B, Eigen::VectorXd *X)
 {
-#ifdef USE_EIGEN
-    if(n == 0) return true;
     using namespace Eigen;
-    SparseMatrix <double> AA(n, n);
-    for(int i = 0; i < n; i++) {
-        for(int j = 0; j < n; j++) {
-            if(EXACT(A[i][j] == 0.0)) continue;
-            AA.insert(i, j) = A[i][j];
-        }
-    }
-    AA.makeCompressed();
-
-    VectorXd BB(n);
-    for(int i = 0; i < n; i++) {
-        BB[i] = B[i];
-    }
-
-    VectorXd XX(n);
-
     SparseQR <SparseMatrix<double>, COLAMDOrdering<int>> solver;
-    solver.compute(AA);
-    XX = solver.solve(BB);
-    if(solver.info() != Eigen::Success) {
-        return false;
-    }
-    for(int i = 0; i < n; i++) {
-        X[i] = XX[i];
-    }
-    return true;
-
-#else
-    // Gaussian elimination, with partial pivoting. It's an error if the
-    // matrix is singular, because that means two constraints are
-    // equivalent.
-    int i, j, ip, jp, imax = 0;
-    double max, temp;
-
-    for(i = 0; i < n; i++) {
-        // We are trying eliminate the term in column i, for rows i+1 and
-        // greater. First, find a pivot (between rows i and N-1).
-        max = 0;
-        for(ip = i; ip < n; ip++) {
-            if(ffabs(A[ip][i]) > max) {
-                imax = ip;
-                max = ffabs(A[ip][i]);
-            }
-        }
-        // Don't give up on a singular matrix unless it's really bad; the
-        // assumption code is responsible for identifying that condition,
-        // so we're not responsible for reporting that error.
-        if(ffabs(max) < 1e-20) continue;
-
-        // Swap row imax with row i
-        for(jp = 0; jp < n; jp++) {
-            swap(A[i][jp], A[imax][jp]);
-        }
-        swap(B[i], B[imax]);
-
-        // For rows i+1 and greater, eliminate the term in column i.
-        for(ip = i+1; ip < n; ip++) {
-            temp = A[ip][i]/A[i][i];
-
-            for(jp = i; jp < n; jp++) {
-                A[ip][jp] -= temp*(A[i][jp]);
-            }
-            B[ip] -= temp*B[i];
-        }
-    }
-
-    // We've put the matrix in upper triangular form, so at this point we
-    // can solve by back-substitution.
-    for(i = n - 1; i >= 0; i--) {
-        if(ffabs(A[i][i]) < 1e-20) continue;
-
-        temp = B[i];
-        for(j = n - 1; j > i; j--) {
-            temp -= X[j]*A[i][j];
-        }
-        X[i] = temp / A[i][i];
-    }
-
-    return true;
-#endif
+    solver.compute(A);
+    *X = solver.solve(B);
+    return (solver.info() == Success);
 }
 
 bool System::SolveLeastSquares() {
-    int r, c, i;
-
+    using namespace Eigen;
     // Scale the columns; this scale weights the parameters for the least
     // squares solve, so that we can encourage the solver to make bigger
     // changes in some parameters, and smaller in others.
-    for(c = 0; c < mat.n; c++) {
+    mat.scale = VectorXd(mat.n);
+    for(int c = 0; c < mat.n; c++) {
         if(IsDragged(mat.param[c])) {
             // It's least squares, so this parameter doesn't need to be all
             // that big to get a large effect.
-            mat.scale[c] = 1/20.0;
+            mat.scale[c] = 1 / 20.0;
         } else {
-            mat.scale[c] = 1;
-        }
-        for(r = 0; r < mat.m; r++) {
-            mat.A.num[r][c] *= mat.scale[c];
+            mat.scale[c]  = 1.0;
         }
     }
 
-    // Write A*A'
-    for(r = 0; r < mat.m; r++) {
-        for(c = 0; c < mat.m; c++) {  // yes, AAt is square
-            double sum = 0;
-            for(i = 0; i < mat.n; i++) {
-                sum += mat.A.num[r][i]*mat.A.num[c][i];
-            }
-            mat.AAt[r][c] = sum;
+    int size = mat.A.sym.outerSize();
+    for(int k = 0; k < size; k++) {
+        for(SparseMatrix<double>::InnerIterator it(mat.A.num, k); it; ++it) {
+            it.valueRef() *= mat.scale[it.col()];
         }
     }
 
-    if(!SolveLinearSystem(mat.Z, mat.AAt, mat.B.num, mat.m)) return false;
+    SparseMatrix <double> AAt = mat.A.num * mat.A.num.transpose();
+    AAt.makeCompressed();
 
-    // And multiply that by A' to get our solution.
-    for(c = 0; c < mat.n; c++) {
-        double sum = 0;
-        for(i = 0; i < mat.m; i++) {
-            sum += mat.A.num[i][c]*mat.Z[i];
-        }
-        mat.X[c] = sum * mat.scale[c];
+    VectorXd z(mat.n);
+
+    if(!SolveLinearSystem(AAt, mat.B.num, &z)) return false;
+
+    mat.X = mat.A.num.transpose() * z;
+
+    for(int c = 0; c < mat.n; c++) {
+        mat.X[c] *= mat.scale[c];
     }
     return true;
 }
@@ -339,6 +204,7 @@ bool System::NewtonSolve(int tag) {
     int i;
 
     // Evaluate the functions at our operating point.
+    mat.B.num = Eigen::VectorXd(mat.m);
     for(i = 0; i < mat.m; i++) {
         mat.B.num[i] = (mat.B.sym[i])->Eval();
     }
@@ -556,9 +422,9 @@ didnt_converge:
     for(i = 0; i < eq.n; i++) {
         if(ffabs(mat.B.num[i]) > CONVERGE_TOLERANCE || isnan(mat.B.num[i])) {
             // This constraint is unsatisfied.
-            if(!mat.eq[i].isFromConstraint()) continue;
+            if(!mat.eq[i]->h.isFromConstraint()) continue;
 
-            hConstraint hc = mat.eq[i].constraint();
+            hConstraint hc = mat.eq[i]->h.constraint();
             ConstraintBase *c = SK.constraint.FindByIdNoOops(hc);
             if(!c) continue;
             // Don't double-show constraints that generated multiple
