@@ -19,7 +19,7 @@ const double System::RANK_MAG_TOLERANCE = 1e-4;
 // always be much less than LENGTH_EPS, and in practice should be much less.
 const double System::CONVERGE_TOLERANCE = (LENGTH_EPS/(1e2));
 
-bool System::WriteJacobian(int tag) {
+void System::WriteJacobian(int tag) {
     // Clear all
     mat.param.clear();
     mat.eq.clear();
@@ -59,7 +59,6 @@ bool System::WriteJacobian(int tag) {
         }
         mat.B.sym.push_back(f);
     }
-    return true;
 }
 
 void System::EvalJacobian() {
@@ -152,6 +151,7 @@ bool System::TestRank() {
 bool System::SolveLinearSystem(const Eigen::SparseMatrix <double> &A,
                                const Eigen::VectorXd &B, Eigen::VectorXd *X)
 {
+    if(A.outerSize() == 0) return true;
     using namespace Eigen;
     SparseQR <SparseMatrix<double>, COLAMDOrdering<int>> solver;
     solver.compute(A);
@@ -377,9 +377,7 @@ SolveResult System::Solve(Group *g, int *dof, List<hConstraint> *bad,
 
     // Now write the Jacobian for what's left, and do a rank test; that
     // tells us if the system is inconsistently constrained.
-    if(!WriteJacobian(0)) {
-        return SolveResult::TOO_MANY_UNKNOWNS;
-    }
+    WriteJacobian(0);
 
     rankOk = TestRank();
 
@@ -419,7 +417,7 @@ SolveResult System::Solve(Group *g, int *dof, List<hConstraint> *bad,
 
 didnt_converge:
     SK.constraint.ClearTags();
-    for(i = 0; i < eq.n; i++) {
+    for(i = 0; i < mat.eq.size(); i++) {
         if(ffabs(mat.B.num[i]) > CONVERGE_TOLERANCE || isnan(mat.B.num[i])) {
             // This constraint is unsatisfied.
             if(!mat.eq[i]->h.isFromConstraint()) continue;
@@ -454,9 +452,7 @@ SolveResult System::SolveRank(Group *g, int *dof, List<hConstraint> *bad,
 
     // Now write the Jacobian, and do a rank test; that
     // tells us if the system is inconsistently constrained.
-    if(!WriteJacobian(0)) {
-        return SolveResult::TOO_MANY_UNKNOWNS;
-    }
+    WriteJacobian(0);
 
     bool rankOk = TestRank();
     if(!rankOk) {
