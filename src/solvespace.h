@@ -196,6 +196,7 @@ void GetGraphicsWindowSize(int *w, int *h);
 void GetTextWindowSize(int *w, int *h);
 double GetScreenDpi();
 int64_t GetMilliseconds();
+double GetSeconds();
 
 void dbp(const char *str, ...);
 #define DBPTRI(tri) \

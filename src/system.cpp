@@ -19,7 +19,15 @@ const double System::RANK_MAG_TOLERANCE = 1e-4;
 // always be much less than LENGTH_EPS, and in practice should be much less.
 const double System::CONVERGE_TOLERANCE = (LENGTH_EPS/(1e2));
 
+double wrEqTime = 0.0;
+double wrJacTime = 0.0;
+double evJacTime = 0.0;
+double sbsTime = 0.0;
+double lsysTime = 0.0;
+double crTime = 0.0;
+
 void System::WriteJacobian(int tag) {
+    double start = GetSeconds();
     // Clear all
     mat.param.clear();
     mat.eq.clear();
@@ -59,9 +67,15 @@ void System::WriteJacobian(int tag) {
         }
         mat.B.sym.push_back(f);
     }
+    int nz = mat.A.sym.nonZeros();
+    int total = mat.n * mat.m;
+    dbp("Equations: %d, Unknows: %d", mat.m, mat.n);
+    dbp("Jacobian non zeroes: %d/%d %.5g%%", nz, total, 100.0 * (double)nz / (double)total);
+    wrJacTime += GetSeconds() - start;
 }
 
 void System::EvalJacobian() {
+    double start = GetSeconds();
     using namespace Eigen;
     mat.A.num = Eigen::SparseMatrix<double>(mat.m, mat.n);
     int size = mat.A.sym.outerSize();
@@ -74,6 +88,7 @@ void System::EvalJacobian() {
         }
     }
     mat.A.num.makeCompressed();
+    evJacTime += GetSeconds() - start;
 }
 
 bool System::IsDragged(hParam p) {
@@ -85,6 +100,7 @@ bool System::IsDragged(hParam p) {
 }
 
 void System::SolveBySubstitution() {
+    double start = GetSeconds();
     int i;
     for(i = 0; i < eq.n; i++) {
         Equation *teq = &(eq.elem[i]);
@@ -128,6 +144,7 @@ void System::SolveBySubstitution() {
             teq->tag = EQ_SUBSTITUTED;
         }
     }
+    sbsTime += GetSeconds() - start;
 }
 
 //-----------------------------------------------------------------------------
@@ -138,9 +155,12 @@ void System::SolveBySubstitution() {
 int System::CalculateRank() {
     using namespace Eigen;
     if(mat.n == 0 || mat.m == 0) return 0;
+    double start = GetSeconds();
     SparseQR <SparseMatrix<double>, COLAMDOrdering<int>> solver;
     solver.compute(mat.A.num);
-    return solver.rank();
+    int result = solver.rank();
+    crTime += GetSeconds() - start;
+    return result;
 }
 
 bool System::TestRank() {
@@ -152,10 +172,12 @@ bool System::SolveLinearSystem(const Eigen::SparseMatrix <double> &A,
                                const Eigen::VectorXd &B, Eigen::VectorXd *X)
 {
     if(A.outerSize() == 0) return true;
+    double start = GetSeconds();
     using namespace Eigen;
     SparseQR <SparseMatrix<double>, COLAMDOrdering<int>> solver;
     solver.compute(A);
     *X = solver.solve(B);
+    lsysTime += GetSeconds() - start;
     return (solver.info() == Success);
 }
 
@@ -246,6 +268,7 @@ bool System::NewtonSolve(int tag) {
 }
 
 void System::WriteEquationsExceptFor(hConstraint hc, Group *g) {
+    double start = GetSeconds();
     int i;
     // Generate all the equations from constraints in this group
     for(i = 0; i < SK.constraint.n; i++) {
@@ -279,6 +302,7 @@ void System::WriteEquationsExceptFor(hConstraint hc, Group *g) {
     }
     // And from the groups themselves
     g->GenerateEquations(&eq);
+    wrEqTime += GetSeconds() - start;
 }
 
 void System::FindWhichToRemoveToFixJacobian(Group *g, List<hConstraint> *bad, bool forceDofCheck) {
@@ -323,6 +347,13 @@ void System::FindWhichToRemoveToFixJacobian(Group *g, List<hConstraint> *bad, bo
 SolveResult System::Solve(Group *g, int *dof, List<hConstraint> *bad,
                           bool andFindBad, bool andFindFree, bool forceDofCheck)
 {
+    wrEqTime = 0.0;
+    wrJacTime = 0.0;
+    evJacTime = 0.0;
+    sbsTime = 0.0;
+    lsysTime = 0.0;
+    crTime = 0.0;
+
     WriteEquationsExceptFor(Constraint::NO_CONSTRAINT, g);
 
     int i;
@@ -413,6 +444,14 @@ SolveResult System::Solve(Group *g, int *dof, List<hConstraint> *bad,
         pp->known = true;
         pp->free = p->free;
     }
+
+    dbp("WriteEquations: %5.3f ms", wrEqTime  * 1000.0);
+    dbp("WriteJacobian:  %5.3f ms", wrJacTime * 1000.0);
+    dbp("EvalJacobian:   %5.3f ms", evJacTime * 1000.0);
+    dbp("Substitution:   %5.3f ms", sbsTime   * 1000.0);
+    dbp("LinearSystem:   %5.3f ms", lsysTime  * 1000.0);
+    dbp("CalculateRank:  %5.3f ms", crTime    * 1000.0);
+
     return rankOk ? SolveResult::OKAY : SolveResult::REDUNDANT_OKAY;
 
 didnt_converge:

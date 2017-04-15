@@ -5,6 +5,7 @@
 // Copyright 2008-2013 Jonathan Westhues.
 //-----------------------------------------------------------------------------
 #include "solvespace.h"
+#include "windows.h"
 
 std::string SolveSpace::ssprintf(const char *fmt, ...)
 {
@@ -52,6 +53,18 @@ int64_t SolveSpace::GetMilliseconds()
 {
     auto timestamp = std::chrono::steady_clock::now().time_since_epoch();
     return std::chrono::duration_cast<std::chrono::milliseconds>(timestamp).count();
+}
+
+double SolveSpace::GetSeconds() {
+    // I hate all the std::shit
+    // I want to invent time maching and kill all the fucking idiots who's invented it
+    // Now I am just hate C++ because of what they do with it.
+    // I never loved this shit from Microsoft, but now I do.
+    LARGE_INTEGER end;
+    LARGE_INTEGER frq;
+    QueryPerformanceCounter(&end);
+    QueryPerformanceFrequency(&frq);
+    return (double)(end.QuadPart) / (double)frq.QuadPart;
 }
 
 void SolveSpace::MakeMatrix(double *mat,
