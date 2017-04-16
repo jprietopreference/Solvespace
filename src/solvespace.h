@@ -335,8 +335,8 @@ public:
         // We're solving AX = B
         int m, n;
         struct {
-            Eigen::SparseMatrix<Expr*>  sym;
-            Eigen::SparseMatrix<double> num;
+            Eigen::SparseMatrix<Expr*>  *sym;
+            Eigen::SparseMatrix<double> *num;
         } A;
 
         Eigen::VectorXd scale;

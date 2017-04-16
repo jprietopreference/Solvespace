@@ -44,7 +44,8 @@ void System::WriteJacobian(int tag) {
         mat.eq.push_back(&e);
     }
     mat.m = mat.eq.size();
-    mat.A.sym = Eigen::SparseMatrix<Expr *>(mat.m, mat.n);
+    delete mat.A.sym;
+    mat.A.sym = new Eigen::SparseMatrix<Expr *>(mat.m, mat.n);
 
     // Fill the param id to column index map
     std::map<uint32_t, int> paramToIndex;
@@ -65,11 +66,11 @@ void System::WriteJacobian(int tag) {
             pd = pd->FoldConstants();
             if(pd->IsZeroConst()) continue;
             pd = pd->DeepCopyWithParamsAsPointers(&param, &(SK.param));
-            mat.A.sym.insert(i, paramToIndex[pv]) = pd;
+            mat.A.sym->insert(i, paramToIndex[pv]) = pd;
         }
         mat.B.sym.push_back(f);
     }
-    int nz = mat.A.sym.nonZeros();
+    int nz = mat.A.sym->nonZeros();
     int total = mat.n * mat.m;
     dbp("Equations: %d, Unknows: %d", mat.m, mat.n);
     dbp("Jacobian non zeroes: %d/%d %.5g%%", nz, total, 100.0 * (double)nz / (double)total);
@@ -79,17 +80,18 @@ void System::WriteJacobian(int tag) {
 void System::EvalJacobian() {
     double start = GetSeconds();
     using namespace Eigen;
-    mat.A.num = Eigen::SparseMatrix<double>(mat.m, mat.n);
-    int size = mat.A.sym.outerSize();
+    delete mat.A.num;
+    mat.A.num = new Eigen::SparseMatrix<double>(mat.m, mat.n);
+    int size = mat.A.sym->outerSize();
 
     for(int k = 0; k < size; k++) {
-        for(SparseMatrix <Expr *>::InnerIterator it(mat.A.sym, k); it; ++it) {
+        for(SparseMatrix <Expr *>::InnerIterator it(*mat.A.sym, k); it; ++it) {
             double value = it.value()->Eval();
-            if(value == 0.0) continue;
-            mat.A.num.insert(it.row(), it.col()) = value;
+            if(EXACT(value == 0.0)) continue;
+            mat.A.num->insert(it.row(), it.col()) = value;
         }
     }
-    mat.A.num.makeCompressed();
+    mat.A.num->makeCompressed();
     evJacTime += GetSeconds() - start;
 }
 
@@ -159,7 +161,7 @@ int System::CalculateRank() {
     if(mat.n == 0 || mat.m == 0) return 0;
     double start = GetSeconds();
     SparseQR <SparseMatrix<double>, COLAMDOrdering<int>> solver;
-    solver.compute(mat.A.num);
+    solver.compute(*mat.A.num);
     int result = solver.rank();
     crTime += GetSeconds() - start;
     return result;
@@ -199,14 +201,14 @@ bool System::SolveLeastSquares() {
         }
     }
 
-    int size = mat.A.sym.outerSize();
+    int size = mat.A.sym->outerSize();
     for(int k = 0; k < size; k++) {
-        for(SparseMatrix<double>::InnerIterator it(mat.A.num, k); it; ++it) {
+        for(SparseMatrix<double>::InnerIterator it(*mat.A.num, k); it; ++it) {
             it.valueRef() *= mat.scale[it.col()];
         }
     }
 
-    SparseMatrix <double> AAt = mat.A.num * mat.A.num.transpose();
+    SparseMatrix <double> AAt = *mat.A.num * mat.A.num->transpose();
     AAt.makeCompressed();
     int total = AAt.rows() * AAt.cols();
     int nz = AAt.nonZeros();
@@ -216,7 +218,7 @@ bool System::SolveLeastSquares() {
 
     if(!SolveLinearSystem(AAt, mat.B.num, &z)) return false;
 
-    mat.X = mat.A.num.transpose() * z;
+    mat.X = mat.A.num->transpose() * z;
 
     for(int c = 0; c < mat.n; c++) {
         mat.X[c] *= mat.scale[c];
@@ -518,6 +520,10 @@ void System::Clear() {
     param.Clear();
     eq.Clear();
     dragged.Clear();
+    delete mat.A.num;
+    mat.A.num = NULL;
+    delete mat.A.sym;
+    mat.A.sym = NULL;
 }
 
 void System::MarkParamsFree(bool find) {
