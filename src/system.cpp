@@ -206,6 +206,9 @@ bool System::SolveLeastSquares() {
 
     SparseMatrix <double> AAt = mat.A.num * mat.A.num.transpose();
     AAt.makeCompressed();
+    int total = AAt.rows() * AAt.cols();
+    int nz = AAt.nonZeros();
+    dbp("A*A^T non zeroes: %d/%d %.5g%%", nz, total, 100.0 * (double)nz / (double)total);
 
     VectorXd z(mat.n);
 
