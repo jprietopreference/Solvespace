@@ -400,15 +400,19 @@ Expr *Expr::PartialWrt(hParam p) const {
     ssassert(false, "Unexpected operation");
 }
 
-uint64_t Expr::ParamsUsed() const {
-    uint64_t r = 0;
-    if(op == Op::PARAM)     r |= ((uint64_t)1 << (parh.v % 61));
-    if(op == Op::PARAM_PTR) r |= ((uint64_t)1 << (parp->h.v % 61));
+void Expr::ParamsUsedList(std::vector <uint32_t> *list) const {
+    if(op == Op::PARAM || op == Op::PARAM_PTR) {
+        uint32_t pv = (op == Op::PARAM) ? parh.v : parp->h.v;
+        if(std::find(list->begin(), list->end(), pv) != list->end()) return;
+        list->push_back(pv);
+        return;
+    }
 
     int c = Children();
-    if(c >= 1)          r |= a->ParamsUsed();
-    if(c >= 2)          r |= b->ParamsUsed();
-    return r;
+    if(c >= 1) {
+        a->ParamsUsedList(list);
+        if(c >= 2) b->ParamsUsedList(list);
+    }
 }
 
 bool Expr::DependsOn(hParam p) const {
@@ -424,6 +428,11 @@ bool Expr::DependsOn(hParam p) const {
 bool Expr::Tol(double a, double b) {
     return fabs(a - b) < 0.001;
 }
+
+bool Expr::IsZeroConst() const {
+    return op == Op::CONSTANT && EXACT(v == 0.0);
+}
+
 Expr *Expr::FoldConstants() {
     Expr *n = AllocExpr();
     *n = *this;
