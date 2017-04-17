@@ -381,7 +381,7 @@ SolveResult System::Solve(Group *g, int *dof, List<hConstraint> *bad,
     param.ClearTags();
     eq.ClearTags();
 
-    if(!forceDofCheck) {
+    if(g->allowRedundant || !forceDofCheck) {
         SolveBySubstitution();
     }
 
@@ -418,18 +418,20 @@ SolveResult System::Solve(Group *g, int *dof, List<hConstraint> *bad,
     // tells us if the system is inconsistently constrained.
     WriteJacobian(0);
 
-    rankOk = TestRank();
+    rankOk = (!g->allowRedundant) ? TestRank() : false;
 
     // And do the leftovers as one big system
     if(!NewtonSolve(0)) {
         goto didnt_converge;
     }
 
-    rankOk = TestRank();
+    rankOk = (!g->allowRedundant) ? TestRank() : false;
+
     if(!rankOk) {
         if(!g->allowRedundant) {
             if(andFindBad) FindWhichToRemoveToFixJacobian(g, bad, forceDofCheck);
         }
+        if(dof) *dof = -1;
     } else {
         // This is not the full Jacobian, but any substitutions or single-eq
         // solves removed one equation and one unknown, therefore no effect
