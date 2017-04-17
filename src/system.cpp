@@ -270,6 +270,7 @@ bool System::NewtonSolve(int tag) {
             }
         }
     } while(iter++ < 50 && !converged);
+    dbp("Newton Steps: %d", iter);
 
     return converged;
 }
