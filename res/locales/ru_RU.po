@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: SolveSpace 3.0\n"
 "Report-Msgid-Bugs-To: whitequark@whitequark.org\n"
 "POT-Creation-Date: 2017-01-11 03:37+0000\n"
-"PO-Revision-Date: 2017-04-20 21:10+0700\n"
+"PO-Revision-Date: 2017-04-21 10:29+0700\n"
 "Last-Translator: evilspirit@evilspirit.org\n"
 "Language-Team: EvilSpirit\n"
 "Language: ru_RU\n"
@@ -95,177 +95,177 @@ msgstr "Неверный формат: введите целое число, ч�
 #: constraint.cpp:12
 msgctxt "constr-name"
 msgid "pts-coincident"
-msgstr ""
+msgstr "тчк-тчк-совпадение"
 
 #: constraint.cpp:13
 msgctxt "constr-name"
 msgid "pt-pt-distance"
-msgstr ""
+msgstr "тчк-тчк-расстояние"
 
 #: constraint.cpp:14
 msgctxt "constr-name"
 msgid "pt-line-distance"
-msgstr ""
+msgstr "тчк-линия-расстояние"
 
 #: constraint.cpp:15
 msgctxt "constr-name"
 msgid "pt-plane-distance"
-msgstr ""
+msgstr "тчк-плоск-расстояние"
 
 #: constraint.cpp:16
 msgctxt "constr-name"
 msgid "pt-face-distance"
-msgstr ""
+msgstr "тчк-грань-расстояние"
 
 #: constraint.cpp:17
 msgctxt "constr-name"
 msgid "proj-pt-pt-distance"
-msgstr ""
+msgstr "проекц-тчк-тчк-расст"
 
 #: constraint.cpp:18
 msgctxt "constr-name"
 msgid "pt-in-plane"
-msgstr ""
+msgstr "тчк-на-плоск"
 
 #: constraint.cpp:19
 msgctxt "constr-name"
 msgid "pt-on-line"
-msgstr ""
+msgstr "тчк-на-линии"
 
 #: constraint.cpp:20
 msgctxt "constr-name"
 msgid "pt-on-face"
-msgstr ""
+msgstr "тчк-на-грани"
 
 #: constraint.cpp:21
 msgctxt "constr-name"
 msgid "eq-length"
-msgstr ""
+msgstr "равенство-длин"
 
 #: constraint.cpp:22
 msgctxt "constr-name"
 msgid "eq-length-and-pt-ln-dist"
-msgstr ""
+msgstr "равен-длины-и-тчк-лин-расст"
 
 #: constraint.cpp:23
 msgctxt "constr-name"
 msgid "eq-pt-line-distances"
-msgstr ""
+msgstr "равен-тчк-линия-расстояний"
 
 #: constraint.cpp:24
 msgctxt "constr-name"
 msgid "length-ratio"
-msgstr ""
+msgstr "отношение-длин"
 
 #: constraint.cpp:25
 msgctxt "constr-name"
 msgid "length-difference"
-msgstr ""
+msgstr "разность-длин"
 
 #: constraint.cpp:26
 msgctxt "constr-name"
 msgid "symmetric"
-msgstr ""
+msgstr "симметричность"
 
 #: constraint.cpp:27
 msgctxt "constr-name"
 msgid "symmetric-h"
-msgstr ""
+msgstr "симметричность-гориз"
 
 #: constraint.cpp:28
 msgctxt "constr-name"
 msgid "symmetric-v"
-msgstr ""
+msgstr "симметричность-верт"
 
 #: constraint.cpp:29
 msgctxt "constr-name"
 msgid "symmetric-line"
-msgstr ""
+msgstr "симметричность-по-оси"
 
 #: constraint.cpp:30
 msgctxt "constr-name"
 msgid "at-midpoint"
-msgstr ""
+msgstr "на-середине"
 
 #: constraint.cpp:31
 msgctxt "constr-name"
 msgid "horizontal"
-msgstr ""
+msgstr "горизонтальность"
 
 #: constraint.cpp:32
 msgctxt "constr-name"
 msgid "vertical"
-msgstr ""
+msgstr "вертикальность"
 
 #: constraint.cpp:33
 msgctxt "constr-name"
 msgid "diameter"
-msgstr ""
+msgstr "диаметр"
 
 #: constraint.cpp:34
 msgctxt "constr-name"
 msgid "pt-on-circle"
-msgstr ""
+msgstr "тчк-на-окружности"
 
 #: constraint.cpp:35
 msgctxt "constr-name"
 msgid "same-orientation"
-msgstr ""
+msgstr "идентичная-ориентация"
 
 #: constraint.cpp:36
 msgctxt "constr-name"
 msgid "angle"
-msgstr ""
+msgstr "угол"
 
 #: constraint.cpp:37
 msgctxt "constr-name"
 msgid "parallel"
-msgstr ""
+msgstr "параллельность"
 
 #: constraint.cpp:38
 msgctxt "constr-name"
 msgid "arc-line-tangent"
-msgstr ""
+msgstr "кас-дуга-линия"
 
 #: constraint.cpp:39
 msgctxt "constr-name"
 msgid "cubic-line-tangent"
-msgstr ""
+msgstr "кас-сплайн-линия"
 
 #: constraint.cpp:40
 msgctxt "constr-name"
 msgid "curve-curve-tangent"
-msgstr ""
+msgstr "кас-кривых"
 
 #: constraint.cpp:41
 msgctxt "constr-name"
 msgid "perpendicular"
-msgstr ""
+msgstr "перпендикулярность"
 
 #: constraint.cpp:42
 msgctxt "constr-name"
 msgid "eq-radius"
-msgstr ""
+msgstr "равенство-радиусов"
 
 #: constraint.cpp:43
 msgctxt "constr-name"
 msgid "eq-angle"
-msgstr ""
+msgstr "равенство-углов"
 
 #: constraint.cpp:44
 msgctxt "constr-name"
 msgid "eq-line-len-arc-len"
-msgstr ""
+msgstr "равен-длины-линии-длины-дуги"
 
 #: constraint.cpp:45
 msgctxt "constr-name"
 msgid "lock-where-dragged"
-msgstr ""
+msgstr "фиксация"
 
 #: constraint.cpp:46
 msgctxt "constr-name"
 msgid "comment"
-msgstr ""
+msgstr "комментарий"
 
 #: constraint.cpp:159
 msgid ""
@@ -536,12 +536,12 @@ msgstr ""
 #: file.cpp:43 group.cpp:94
 msgctxt "group-name"
 msgid "sketch-in-plane"
-msgstr ""
+msgstr "эскиз-в-плоскости"
 
 #: file.cpp:61
 msgctxt "group-name"
 msgid "#references"
-msgstr ""
+msgstr "система-координат"
 
 #: file.cpp:508
 msgid "Unrecognized data in file. This file may be corrupt, or from a newer version of the program."
@@ -550,411 +550,411 @@ msgstr ""
 
 #: graphicswin.cpp:29
 msgid "&File"
-msgstr "Файл"
+msgstr "&Файл"
 
 #: graphicswin.cpp:30
 msgid "&New"
-msgstr "Новый"
+msgstr "&Новый"
 
 #: graphicswin.cpp:31
 msgid "&Open..."
-msgstr "Открыть..."
+msgstr "&Открыть..."
 
 #: graphicswin.cpp:32
 msgid "Open &Recent"
-msgstr "Открыть Недавний"
+msgstr "Открыть Н&едавний"
 
 #: graphicswin.cpp:33
 msgid "&Save"
-msgstr "Сохранить"
+msgstr "&Сохранить"
 
 #: graphicswin.cpp:34
 msgid "Save &As..."
-msgstr "Сохранить Как..."
+msgstr "Сохранить &Как..."
 
 #: graphicswin.cpp:36
 msgid "Export &Image..."
-msgstr "Экспортировать Изображение..."
+msgstr "Экспортировать И&зображение..."
 
 #: graphicswin.cpp:37
 msgid "Export 2d &View..."
-msgstr "Экспортировать 2d Вид..."
+msgstr "Экспортировать &2d Вид..."
 
 #: graphicswin.cpp:38
 msgid "Export 2d &Section..."
-msgstr "Экспортировать 2d Сечение..."
+msgstr "Экспортировать 2d Се&чение..."
 
 #: graphicswin.cpp:39
 msgid "Export 3d &Wireframe..."
-msgstr "Экспортировать 3d Каркас..."
+msgstr "Экспортировать &3d Каркас..."
 
 #: graphicswin.cpp:40
 msgid "Export Triangle &Mesh..."
-msgstr "Экспортировать Полигональный &Меш..."
+msgstr "Экспортировать &Полигональную сетку..."
 
 #: graphicswin.cpp:41
 msgid "Export &Surfaces..."
-msgstr "Экспортировать Поверхности..."
+msgstr "Экспортировать Повер&хности..."
 
 #: graphicswin.cpp:42
 msgid "Im&port..."
-msgstr "Импортировать..."
+msgstr "&Импортировать..."
 
 #: graphicswin.cpp:45
 msgid "E&xit"
-msgstr "Выход"
+msgstr "&Выход"
 
 #: graphicswin.cpp:48
 msgid "&Edit"
-msgstr "Правка"
+msgstr "&Правка"
 
 #: graphicswin.cpp:49
 msgid "&Undo"
-msgstr "Отменить"
+msgstr "&Отменить"
 
 #: graphicswin.cpp:50
 msgid "&Redo"
-msgstr "Поврторить"
+msgstr "&Вернуть"
 
 #: graphicswin.cpp:51
 msgid "Re&generate All"
-msgstr "Перегенерировать Все"
+msgstr "&Перегенерировать Все"
 
 #: graphicswin.cpp:53
 msgid "Snap Selection to &Grid"
-msgstr "Привязать Выделение к Сетке"
+msgstr "Привязать Выделение к &Сетке"
 
 #: graphicswin.cpp:54
 msgid "Rotate Imported &90°"
-msgstr "Повернуть Импортированное на 90°"
+msgstr "Повернуть Импортированное на &90°"
 
 #: graphicswin.cpp:56
 msgid "Cu&t"
-msgstr "Вырезать"
+msgstr "Вы&резать"
 
 #: graphicswin.cpp:57
 msgid "&Copy"
-msgstr "Копировать"
+msgstr "&Копировать"
 
 #: graphicswin.cpp:58
 msgid "&Paste"
-msgstr "Вставить"
+msgstr "В&ставить"
 
 #: graphicswin.cpp:59
 msgid "Paste &Transformed..."
-msgstr "Вставить с Трансформацией..."
+msgstr "Вставить с &Трансформацией..."
 
 #: graphicswin.cpp:60
 msgid "&Delete"
-msgstr "Удалить"
+msgstr "&Удалить"
 
 #: graphicswin.cpp:62
 msgid "Select &Edge Chain"
-msgstr "Выделить Последовательность Ребер"
+msgstr "Вы&делить Последовательность Ребер"
 
 #: graphicswin.cpp:63
 msgid "Select &All"
-msgstr "Выделить Все"
+msgstr "В&ыделить Все"
 
 #: graphicswin.cpp:64
 msgid "&Unselect All"
-msgstr "Сбросить Выделение"
+msgstr "С&бросить Выделение"
 
 #: graphicswin.cpp:66
 msgid "&View"
-msgstr "Вид"
+msgstr "&Вид"
 
 #: graphicswin.cpp:67
 msgid "Zoom &In"
-msgstr "Приблизить"
+msgstr "&Приблизить"
 
 #: graphicswin.cpp:68
 msgid "Zoom &Out"
-msgstr "Отдалить"
+msgstr "От&далить"
 
 #: graphicswin.cpp:69
 msgid "Zoom To &Fit"
-msgstr "Показать Все / Выделенное"
+msgstr "Показать &Все / Выделенное"
 
 #: graphicswin.cpp:71
 msgid "Align View to &Workplane"
-msgstr "Выровнять Вид на Рабочую Плоскость"
+msgstr "Выровнять Вид на &Рабочую Плоскость"
 
 #: graphicswin.cpp:72
 msgid "Nearest &Ortho View"
-msgstr "Ближайший Ортогональный Вид"
+msgstr "Ближайший &Ортогональный Вид"
 
 #: graphicswin.cpp:73
 msgid "Nearest &Isometric View"
-msgstr "Ближайший Изометрический Вид"
+msgstr "Ближайший &Изометрический Вид"
 
 #: graphicswin.cpp:74
 msgid "&Center View At Point"
-msgstr "Центрировать Вид на Точке"
+msgstr "&Центрировать Вид на Точке"
 
 #: graphicswin.cpp:76
 msgid "Show Snap &Grid"
-msgstr "Показать Сетку"
+msgstr "Показать &Сетку"
 
 #: graphicswin.cpp:77
 msgid "Use &Perspective Projection"
-msgstr "Перспективная Проекция"
+msgstr "Перспективная Прое&кция"
 
 #: graphicswin.cpp:80
 msgid "Show Menu &Bar"
-msgstr "Показывать Меню"
+msgstr "Показывать Мен&ю"
 
 #: graphicswin.cpp:82
 msgid "Show &Toolbar"
-msgstr "Показывать Панель Инструментов"
+msgstr "Показывать Па&нель Инструментов"
 
 #: graphicswin.cpp:83
 msgid "Show Property Bro&wser"
-msgstr "Показывать Браузер"
+msgstr "Показывать Брау&зер"
 
 #: graphicswin.cpp:85
 msgid "Dimensions in &Inches"
-msgstr "Размеры в Дюймах"
+msgstr "Размеры в Дю&ймах"
 
 #: graphicswin.cpp:86
 msgid "Dimensions in &Millimeters"
-msgstr "Размеры в Миллиметрах"
+msgstr "Размеры в Ми&ллиметрах"
 
 #: graphicswin.cpp:89
 msgid "&Full Screen"
-msgstr "Полноэкранный Режим"
+msgstr "Полно&экранный Режим"
 
 #: graphicswin.cpp:92
 msgid "&New Group"
-msgstr "Группа"
+msgstr "&Группа"
 
 #: graphicswin.cpp:93
 msgid "Sketch In &3d"
-msgstr "Создать Эскиз в 3d"
+msgstr "Создать Эскиз в &3d"
 
 #: graphicswin.cpp:94
 msgid "Sketch In New &Workplane"
-msgstr "Создать Эскиз в Новой Рабочей Плоскости"
+msgstr "Создать Эскиз в Новой &Рабочей Плоскости"
 
 #: graphicswin.cpp:96
 msgid "Step &Translating"
-msgstr "Линейный Массив"
+msgstr "&Линейный Массив"
 
 #: graphicswin.cpp:97
 msgid "Step &Rotating"
-msgstr "Круговой Массив"
+msgstr "&Круговой Массив"
 
 #: graphicswin.cpp:99
 msgid "E&xtrude"
-msgstr "Тело Выдавливания"
+msgstr "Тело &Выдавливания"
 
 #: graphicswin.cpp:100
 msgid "&Lathe"
-msgstr "Тело Вращения"
+msgstr "Тело В&ращения"
 
 #: graphicswin.cpp:102
 msgid "Link / Assemble..."
-msgstr "Импорт Детали / Сборка..."
+msgstr "&Импорт Детали / Сборка..."
 
 #: graphicswin.cpp:103
 msgid "Link Recent"
-msgstr "Последние Детали"
+msgstr "Последние &Детали"
 
 #: graphicswin.cpp:105
 msgid "&Sketch"
-msgstr "Эскиз"
+msgstr "&Эскиз"
 
 #: graphicswin.cpp:106
 msgid "In &Workplane"
-msgstr "В Рабочей Плоскости"
+msgstr "В &Рабочей Плоскости"
 
 #: graphicswin.cpp:107
 msgid "Anywhere In &3d"
-msgstr "Режим 3d"
+msgstr "Режим &3d"
 
 #: graphicswin.cpp:109
 msgid "Datum &Point"
-msgstr "Точка"
+msgstr "Опорная &Точка"
 
 #: graphicswin.cpp:110
 msgid "&Workplane"
-msgstr "Рабочая Плоскость"
+msgstr "Рабочая &Плоскость"
 
 #: graphicswin.cpp:112
 msgid "Line &Segment"
-msgstr "Отрезок"
+msgstr "&Отрезок"
 
 #: graphicswin.cpp:113
 msgid "C&onstruction Line Segment"
-msgstr "Вспомогательный Отрезок"
+msgstr "&Вспомогательный Отрезок"
 
 #: graphicswin.cpp:114
 msgid "&Rectangle"
-msgstr "Прямоугольник"
+msgstr "Прямоу&гольник"
 
 #: graphicswin.cpp:115
 msgid "&Circle"
-msgstr "Окружность"
+msgstr "О&кружность"
 
 #: graphicswin.cpp:116
 msgid "&Arc of a Circle"
-msgstr "Дуга Окружности"
+msgstr "Д&уга Окружности"
 
 #: graphicswin.cpp:117
 msgid "&Bezier Cubic Spline"
-msgstr "Кубический Сплайн Безье"
+msgstr "Кубический &Сплайн Безье"
 
 #: graphicswin.cpp:119
 msgid "&Text in TrueType Font"
-msgstr "Текст TrueType"
+msgstr "Т&екст TrueType"
 
 #: graphicswin.cpp:121
 msgid "To&ggle Construction"
-msgstr "Переключить Режим Вспомогательных Построений"
+msgstr "Переключить Режим Вс&помогательных Построений"
 
 #: graphicswin.cpp:122
 msgid "Tangent &Arc at Point"
-msgstr "Касательная в Точек"
+msgstr "Кас&ательная в Точке"
 
 #: graphicswin.cpp:123
 msgid "Split Curves at &Intersection"
-msgstr "Разбить Кривые Пересечением"
+msgstr "Ра&збить Кривые Пересечением"
 
 #: graphicswin.cpp:125
 msgid "&Constrain"
-msgstr "Ограничения"
+msgstr "&Ограничения"
 
 #: graphicswin.cpp:126
 msgid "&Distance / Diameter"
-msgstr "Расстояние / Диаметр"
+msgstr "&Расстояние / Диаметр"
 
 #: graphicswin.cpp:127
 msgid "Re&ference Dimension"
-msgstr "Справочный Размер"
+msgstr "&Справочный Размер"
 
 #: graphicswin.cpp:128
 msgid "A&ngle"
-msgstr "Угол"
+msgstr "&Угол"
 
 #: graphicswin.cpp:129
 msgid "Reference An&gle"
-msgstr "Справочный Угол"
+msgstr "С&правочный Угол"
 
 #: graphicswin.cpp:130
 msgid "Other S&upplementary Angle"
-msgstr "Переключить Смежный Угол"
+msgstr "Переключить Сме&жный Угол"
 
 #: graphicswin.cpp:131
 msgid "Toggle R&eference Dim"
-msgstr "Переключить Режим Размера Для Справок"
+msgstr "Переключить Режим Размера Для Спра&вок"
 
 #: graphicswin.cpp:133
 msgid "&Horizontal"
-msgstr "Горизонтальность"
+msgstr "&Горизонтальность"
 
 #: graphicswin.cpp:134
 msgid "&Vertical"
-msgstr "Вертикальность"
+msgstr "&Вертикальность"
 
 #: graphicswin.cpp:136
 msgid "&On Point / Curve / Plane"
-msgstr "Точка на Примитиве"
+msgstr "&Точка на Примитиве"
 
 #: graphicswin.cpp:137
 msgid "E&qual Length / Radius / Angle"
-msgstr "Равенство Длин / Радиусов / Углов"
+msgstr "&Равенство Длин / Радиусов / Углов"
 
 #: graphicswin.cpp:138
 msgid "Length Ra&tio"
-msgstr "Отношение Длин"
+msgstr "Отно&шение Длин"
 
 #: graphicswin.cpp:139
 msgid "Length Diff&erence"
-msgstr "Разница Длин"
+msgstr "Ра&зница Длин"
 
 #: graphicswin.cpp:140
 msgid "At &Midpoint"
-msgstr "На Середине"
+msgstr "&На Середине"
 
 #: graphicswin.cpp:141
 msgid "S&ymmetric"
-msgstr "Симметричность"
+msgstr "С&имметричность"
 
 #: graphicswin.cpp:142
 msgid "Para&llel / Tangent"
-msgstr "Параллельность / Касательность"
+msgstr "Пара&ллельность / Касательность"
 
 #: graphicswin.cpp:143
 msgid "&Perpendicular"
-msgstr "Перпендикулярность"
+msgstr "Перпендикул&ярность"
 
 #: graphicswin.cpp:144
 msgid "Same Orient&ation"
-msgstr "Идентичная Ориентация"
+msgstr "Идентичная &Ориентация"
 
 #: graphicswin.cpp:145
 msgid "Lock Point Where &Dragged"
-msgstr "Зафиксировать"
+msgstr "За&фиксировать"
 
 #: graphicswin.cpp:147
 msgid "Comment"
-msgstr "Текстовый Комментарий"
+msgstr "Текстовый &Комментарий"
 
 #: graphicswin.cpp:149
 msgid "&Analyze"
-msgstr "Анализ"
+msgstr "&Анализ"
 
 #: graphicswin.cpp:150
 msgid "Measure &Volume"
-msgstr "Измерить Объем"
+msgstr "Измерить &Объем"
 
 #: graphicswin.cpp:151
 msgid "Measure A&rea"
-msgstr "Измерить Площадь"
+msgstr "Измерить П&лощадь"
 
 #: graphicswin.cpp:152
 msgid "Measure &Perimeter"
-msgstr "Измерить Периметр"
+msgstr "Измерить П&ериметр"
 
 #: graphicswin.cpp:153
 msgid "Show &Interfering Parts"
-msgstr "Показать Пересекающиеся Детали"
+msgstr "Показать Пе&ресекающиеся Детали"
 
 #: graphicswin.cpp:154
 msgid "Show &Naked Edges"
-msgstr "Показать Проблемные Ребра"
+msgstr "Показать Про&блемные Ребра"
 
 #: graphicswin.cpp:156
 msgid "Show Degrees of &Freedom"
-msgstr "Показать Степени Свободы"
+msgstr "Показать Степени С&вободы"
 
 #: graphicswin.cpp:158
 msgid "&Trace Point"
-msgstr "Включить Трассировку Точки"
+msgstr "Включить &Трассировку Точки"
 
 #: graphicswin.cpp:159
 msgid "&Stop Tracing..."
-msgstr "Остановить Трассировку..."
+msgstr "Остановить Тра&ссировку..."
 
 #: graphicswin.cpp:160
 msgid "Step &Dimension..."
-msgstr "Плавное Изменение Размера..."
+msgstr "Плавное Из&менение Размера..."
 
 #: graphicswin.cpp:162
 msgid "&Help"
-msgstr "Помощь"
+msgstr "&Помощь"
 
 #: graphicswin.cpp:163
 msgid "&Website / Manual"
-msgstr "Вебсайт / Справка"
+msgstr "Вебсайт / &Справка"
 
 #: graphicswin.cpp:164
 msgid "&Language"
-msgstr "Язык"
+msgstr "&Язык"
 
 #: graphicswin.cpp:166
 msgid "&About"
-msgstr "О Программе"
+msgstr "О &Программе"
 
 #: graphicswin.cpp:492
 msgid "No workplane is active, so the grid will not appear."
@@ -1064,7 +1064,7 @@ msgstr ""
 #: group.cpp:89
 msgctxt "group-name"
 msgid "sketch-in-3d"
-msgstr ""
+msgstr "эскиз-в-3d"
 
 #: group.cpp:145
 msgid ""
@@ -1092,7 +1092,7 @@ msgstr ""
 #: group.cpp:166
 msgctxt "group-name"
 msgid "extrude"
-msgstr ""
+msgstr "тело-выдавливания"
 
 #: group.cpp:178
 msgid ""
@@ -1112,7 +1112,7 @@ msgstr ""
 #: group.cpp:188
 msgctxt "group-name"
 msgid "lathe"
-msgstr ""
+msgstr "тело-вращения"
 
 #: group.cpp:201
 msgid ""
@@ -1132,21 +1132,21 @@ msgstr ""
 #: group.cpp:214
 msgctxt "group-name"
 msgid "rotate"
-msgstr ""
+msgstr "круговой-массив"
 
 #: group.cpp:225
 msgctxt "group-name"
 msgid "translate"
-msgstr ""
+msgstr "линейный-массив"
 
 #: group.cpp:257
 msgctxt "group-name"
 msgid "link"
-msgstr ""
+msgstr "ссылка-на-деталь"
 
 #: group.cpp:339
 msgid "(unnamed)"
-msgstr ""
+msgstr "(без имени)"
 
 #: groupmesh.cpp:607
 msgid "not closed contour, or not all same style!"
@@ -1678,63 +1678,63 @@ msgstr "Выровнять вид на рабочую плоскость"
 
 #: ui.h:69
 msgid "SolveSpace models"
-msgstr ""
+msgstr "проекты SolveSpace"
 
 #: ui.h:74
 msgid "PNG file"
-msgstr ""
+msgstr "PNG изображение"
 
 #: ui.h:79
 msgid "STL mesh"
-msgstr ""
+msgstr "STL полигональная сетка"
 
 #: ui.h:80
 msgid "Wavefront OBJ mesh"
-msgstr ""
+msgstr "Wavefront OBJ полигональная сетка"
 
 #: ui.h:81
 msgid "Three.js-compatible mesh, with viewer"
-msgstr ""
+msgstr "Three.js-совместимая полигональная сетка с просмторщиком"
 
 #: ui.h:82
 msgid "Three.js-compatible mesh, mesh only"
-msgstr ""
+msgstr "Three.js-совместимая полигональная сетка"
 
 #: ui.h:87 ui.h:95 ui.h:103
 msgid "STEP file"
-msgstr ""
+msgstr "STEP файл"
 
 #: ui.h:92
 msgid "PDF file"
-msgstr ""
+msgstr "PDF документ"
 
 #: ui.h:93
 msgid "Encapsulated PostScript"
-msgstr ""
+msgstr "Encapsulated PostScript"
 
 #: ui.h:94
 msgid "Scalable Vector Graphics"
-msgstr ""
+msgstr "SVG изображение"
 
 #: ui.h:96 ui.h:104
 msgid "DXF file (AutoCAD 2007)"
-msgstr ""
+msgstr "DXF файл (AutoCAD 2007)"
 
 #: ui.h:97
 msgid "HPGL file"
-msgstr ""
+msgstr "HPGL файл"
 
 #: ui.h:98
 msgid "G Code"
-msgstr ""
+msgstr "G Code"
 
 #: ui.h:109
 msgid "AutoCAD DXF and DWG files"
-msgstr ""
+msgstr "AutoCAD DXF и DWG файлы"
 
 #: ui.h:114
 msgid "Comma-separated values"
-msgstr ""
+msgstr "CSV файлы (значения, разделенные запятой)"
 
 #: view.cpp:78
 msgid "Scale cannot be zero or negative."
