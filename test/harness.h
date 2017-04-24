@@ -29,9 +29,10 @@ public:
     bool CheckEqualEpsilon(const char *file, int line, const char *valueExpr,
                            double value, double reference);
     bool CheckLoad(const char *file, int line, const char *fixture);
+    bool ChangeDimension(const char *file, int line, const char *dim, double value);
     bool CheckSave(const char *file, int line, const char *reference);
     bool CheckRender(const char *file, int line, const char *fixture);
-    bool CheckRenderXY(const char *file, int line, const char *fixture);
+    bool CheckRenderXY(const char *file, int line, const char *fixture, bool fit);
     bool CheckRenderIso(const char *file, int line, const char *fixture);
 };
 
@@ -70,6 +71,10 @@ using namespace SolveSpace;
 #define CHECK_SAVE(fixture) \
     do { if(!helper->CheckSave(__FILE__, __LINE__, fixture)) return; } while(0)
 #define CHECK_RENDER(reference) \
-    do { if(!helper->CheckRenderXY(__FILE__, __LINE__, reference)) return; } while(0)
+    do { if(!helper->CheckRenderXY(__FILE__, __LINE__, reference, false)) return; } while(0)
+#define CHECK_RENDER_FIT(reference) \
+    do { if(!helper->CheckRenderXY(__FILE__, __LINE__, reference, true)) return; } while(0)
+#define CHANGE_DIMENSION(name, value) \
+    do { if(!helper->ChangeDimension(__FILE__, __LINE__, name, value)) return; } while(0)
 #define CHECK_RENDER_ISO(reference) \
     do { if(!helper->CheckRenderIso(__FILE__, __LINE__, reference)) return; } while(0)

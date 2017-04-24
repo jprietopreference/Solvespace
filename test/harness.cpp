@@ -215,6 +215,24 @@ bool Test::Helper::CheckLoad(const char *file, int line, const char *fixture) {
     }
 }
 
+bool Test::Helper::ChangeDimension(const char *file, int line, const char *dim, double value) {
+    bool found = false;
+    for(auto &c : SK.constraint) {
+        std::string desc = c.DescriptionString();
+        if(desc.find(dim) == std::string::npos) continue;
+        c.valA = value;
+        SS.MarkGroupDirty(c.group);
+        found = true;
+        break;
+    }
+    if(!found) {
+        PrintFailure(file, line, ssprintf("dimension '%s' not found", dim));
+        return false;
+    }
+    SS.GenerateAll();
+    return true;
+}
+
 bool Test::Helper::CheckSave(const char *file, int line, const char *reference) {
     Platform::Path refPath = GetAssetPath(file, reference),
                    outPath = GetAssetPath(file, reference, "out");
@@ -285,9 +303,10 @@ bool Test::Helper::CheckRender(const char *file, int line, const char *reference
     }
 }
 
-bool Test::Helper::CheckRenderXY(const char *file, int line, const char *fixture) {
+bool Test::Helper::CheckRenderXY(const char *file, int line, const char *fixture, bool fit) {
     SS.GW.projRight = Vector::From(1, 0, 0);
     SS.GW.projUp    = Vector::From(0, 1, 0);
+    if(fit) SS.GW.ZoomToFit(false);
     return CheckRender(file, line, fixture);
 }
 
