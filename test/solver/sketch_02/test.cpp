@@ -1,6 +1,6 @@
 #include "harness.h"
 
-TEST_CASE(sketch_01) {
+TEST_CASE(sketch_02) {
     CHECK_LOAD("sketch.slvs");
     CHECK_RENDER_FIT("sketch.png");
 
