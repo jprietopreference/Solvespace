@@ -225,12 +225,21 @@ bool Test::Helper::ChangeDimension(const char *file, int line, const char *dim, 
         found = true;
         break;
     }
-    if(!found) {
+    if(!RecordCheck(found)) {
         PrintFailure(file, line, ssprintf("dimension '%s' not found", dim));
         return false;
     }
     SS.GenerateAll();
-    return true;
+    bool solvedOkay = true;
+    for(auto &g : SK.group) {
+        if(g.IsSolvedOkay()) continue;
+        solvedOkay = false;
+        break;
+    }
+    if(!RecordCheck(solvedOkay)) {
+        PrintFailure(file, line, "solve failed!");
+    }
+    return solvedOkay;
 }
 
 bool Test::Helper::CheckSave(const char *file, int line, const char *reference) {
