@@ -8,6 +8,8 @@
 //-----------------------------------------------------------------------------
 #include "solvespace.h"
 
+#include <SparseCholesky>
+
 // This tolerance is used to determine whether two (linearized) constraints
 // are linearly dependent. If this is too small, then we will attempt to
 // solve truly inconsistent systems and fail. But if it's too large, then
@@ -257,7 +259,8 @@ bool System::SolveLinearSystem(const Eigen::SparseMatrix <double> &A,
     if(A.outerSize() == 0) return true;
     double start = GetSeconds();
     using namespace Eigen;
-    SparseQR <SparseMatrix<double>, COLAMDOrdering<int>> solver;
+    //SparseQR<SparseMatrix<double>, COLAMDOrdering<int>> solver;
+    SimplicialLDLT<SparseMatrix<double>> solver;
     solver.compute(A);
     *X = solver.solve(B);
     lsysTime += GetSeconds() - start;
