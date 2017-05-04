@@ -66,6 +66,8 @@ set(testsuite_SOURCES
     solver/sketch_01/test.cpp
     solver/sketch_02/test.cpp
     solver/sketch_03/test.cpp
+    solver/sketch_04/test.cpp
+    solver/sketch_05/test.cpp
 )
 
 add_executable(solvespace-testsuite
