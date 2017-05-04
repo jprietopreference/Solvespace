@@ -8,6 +8,9 @@
 //-----------------------------------------------------------------------------
 #include "solvespace.h"
 
+Expr *Expr::heap = NULL;
+size_t Expr::allocated = 0;
+
 ExprVector ExprVector::From(Expr *x, Expr *y, Expr *z) {
     ExprVector r = { x, y, z};
     return r;

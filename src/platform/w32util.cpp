@@ -68,6 +68,8 @@ void FreeAllTemporary()
     // This is a good place to validate, because it gets called fairly
     // often.
     vl();
+    Expr::heap = NULL;
+    Expr::allocated = 0;
 }
 
 void *MemAlloc(size_t n) {

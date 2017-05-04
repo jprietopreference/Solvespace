@@ -48,8 +48,16 @@ public:
     Expr() { }
     Expr(double val) : op(Op::CONSTANT) { v = val; }
 
-    static inline Expr *AllocExpr()
-        { return (Expr *)AllocTemporary(sizeof(Expr)); }
+    static Expr *heap;
+    static size_t allocated;
+    static inline Expr *AllocExpr() {
+        if(allocated < 1) {
+            allocated = 1024;
+            heap = (Expr *)AllocTemporary(sizeof(Expr) * allocated);
+        }
+        allocated--;
+        return heap++;
+    }
 
     static Expr *From(hParam p);
     static Expr *From(double v);
