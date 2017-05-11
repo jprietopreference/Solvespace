@@ -68,6 +68,7 @@ void FreeAllTemporary()
     // This is a good place to validate, because it gets called fairly
     // often.
     vl();
+    Expr::allocator.Clear();
 }
 
 void *MemAlloc(size_t n) {
