@@ -217,6 +217,29 @@ float CnfThawFloat(float val, const std::string &name);
 
 std::vector<std::string> InitPlatform(int argc, char **argv);
 
+template<typename T>
+class TempBlockAllocator {
+    T *heap;
+    size_t allocated;
+    size_t blockSize;
+public:
+    TempBlockAllocator(size_t block) : heap(NULL), allocated(0), blockSize(block) { }
+
+    T *Alloc() {
+        if(allocated < 1) {
+            allocated = blockSize;
+            heap = (T *)AllocTemporary(sizeof(T) * allocated);
+        }
+        allocated--;
+        return heap++;
+    }
+
+    void Clear() {
+        heap = NULL;
+        allocated = 0;
+    }
+};
+
 void *AllocTemporary(size_t n);
 void FreeTemporary(void *p);
 void FreeAllTemporary();

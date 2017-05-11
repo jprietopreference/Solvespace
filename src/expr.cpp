@@ -8,6 +8,8 @@
 //-----------------------------------------------------------------------------
 #include "solvespace.h"
 
+TempBlockAllocator<Expr> Expr::allocator(1024);
+
 ExprVector ExprVector::From(Expr *x, Expr *y, Expr *z) {
     ExprVector r = { x, y, z};
     return r;

@@ -51,8 +51,11 @@ public:
     Expr() { }
     Expr(double val) : op(Op::CONSTANT) { v = val; }
 
-    static inline Expr *AllocExpr()
-        { return (Expr *)AllocTemporary(sizeof(Expr)); }
+    static SolveSpace::TempBlockAllocator<Expr> allocator;
+
+    static inline Expr *AllocExpr() {
+        return allocator.Alloc();
+    }
 
     static Expr *From(hParam p);
     static Expr *From(double v);
