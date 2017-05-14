@@ -99,6 +99,9 @@ endif()
 message(STATUS "Using in-tree libdxfrw")
 add_subdirectory(extlib/libdxfrw)
 
+message(STATUS "Using in-tree eigen")
+INCLUDE_DIRECTORIES(extlib/eigen/Eigen)
+
 if(WIN32)
     include(FindVendoredPackage)
     include(AddVendoredSubdirectory)

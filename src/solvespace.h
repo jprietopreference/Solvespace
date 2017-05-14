@@ -31,6 +31,9 @@
 #include <chrono>
 #include <sstream>
 
+#define EIGEN_NO_DEBUG
+#include "SparseCore"
+
 // We declare these in advance instead of simply using FT_Library
 // (defined as typedef FT_LibraryRec_* FT_Library) because including
 // freetype.h invokes indescribable horrors and we would like to avoid
@@ -279,7 +282,6 @@ enum class SolveResult : uint32_t {
     DIDNT_CONVERGE           = 10,
     REDUNDANT_OKAY           = 11,
     REDUNDANT_DIDNT_CONVERGE = 12,
-    TOO_MANY_UNKNOWNS        = 20
 };
 
 
@@ -327,7 +329,6 @@ RgbaColor CnfThawColor(RgbaColor v, const std::string &name);
 
 class System {
 public:
-    enum { MAX_UNKNOWNS = 1024 };
 
     EntityList                      entity;
     ParamList                       param;
@@ -349,40 +350,35 @@ public:
     // The system Jacobian matrix
     struct {
         // The corresponding equation for each row
-        hEquation   eq[MAX_UNKNOWNS];
+        std::vector<Equation *> eq;
 
         // The corresponding parameter for each column
-        hParam      param[MAX_UNKNOWNS];
+        std::vector<hParam>     param;
 
         // We're solving AX = B
         int m, n;
         struct {
-            Expr        *sym[MAX_UNKNOWNS][MAX_UNKNOWNS];
-            double       num[MAX_UNKNOWNS][MAX_UNKNOWNS];
-        }           A;
+            Eigen::SparseMatrix<Expr*>  *sym;
+            Eigen::SparseMatrix<double> *num;
+        } A;
 
-        double      scale[MAX_UNKNOWNS];
-
-        // Some helpers for the least squares solve
-        double AAt[MAX_UNKNOWNS][MAX_UNKNOWNS];
-        double Z[MAX_UNKNOWNS];
-
-        double      X[MAX_UNKNOWNS];
+        Eigen::VectorXd scale;
+        Eigen::VectorXd X;
 
         struct {
-            Expr        *sym[MAX_UNKNOWNS];
-            double       num[MAX_UNKNOWNS];
-        }           B;
+            std::vector<Expr *> sym;
+            Eigen::VectorXd     num;
+        } B;
     } mat;
 
-    static const double RANK_MAG_TOLERANCE, CONVERGE_TOLERANCE;
+    static const double CONVERGE_TOLERANCE;
     int CalculateRank();
     bool TestRank(int *dof);
-    static bool SolveLinearSystem(double X[], double A[][MAX_UNKNOWNS],
-                                  double B[], int N);
+    static bool SolveLinearSystem(const Eigen::SparseMatrix<double> &A,
+                                  const Eigen::VectorXd &B, Eigen::VectorXd *X);
     bool SolveLeastSquares();
 
-    bool WriteJacobian(int tag);
+    void WriteJacobian(int tag);
     void EvalJacobian();
 
     void WriteEquationsExceptFor(hConstraint hc, Group *g);
