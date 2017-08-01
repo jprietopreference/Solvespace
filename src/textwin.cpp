@@ -478,7 +478,9 @@ void TextWindow::Show() {
     } else if((gs.n > 0 || gs.constraints > 0) &&
                                     shown.screen != Screen::PASTE_TRANSFORMED)
     {
-        if(edit.meaning != Edit::TTF_TEXT) HideEditControl();
+        if(edit.meaning != Edit::TTF_TEXT && 
+           edit.meaning != Edit::RANGE_MIN &&
+           edit.meaning != Edit::RANGE_MAX) HideEditControl();
         ShowHeader(false);
         DescribeSelection();
     } else {

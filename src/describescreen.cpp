@@ -50,6 +50,42 @@ void TextWindow::ScreenConstraintShowAsRadius(int link, uint32_t v) {
     SS.ScheduleShowTW();
 }
 
+void TextWindow::ScreenConstraintRanged(int link, uint32_t v) {
+    hConstraint hc = { v };
+    Constraint *c = SK.GetConstraint(hc);
+
+    SS.UndoRemember();
+    c->ranged = !c->ranged;
+    if(c->ranged) {
+        c->valMin = c->valA * 0.9;
+        c->valMax = c->valA * 1.1;
+    } else {
+        c->valA = SK.GetParam(c->valP)->val;
+    }
+
+    SS.ScheduleShowTW();
+}
+
+void TextWindow::ScreenConstraintRangeMin(int link, uint32_t v) {
+    hConstraint hc = { v };
+    Constraint *c = SK.GetConstraint(hc);
+
+    SS.TW.ShowEditControl(6, ssprintf("%lg", c->valMin / SS.MmPerUnit()));
+    SS.TW.edit.meaning = Edit::RANGE_MIN;
+    SS.TW.edit.i = 1;
+    SS.TW.edit.constraint = hc;
+}
+
+void TextWindow::ScreenConstraintRangeMax(int link, uint32_t v) {
+    hConstraint hc = { v };
+    Constraint *c = SK.GetConstraint(hc);
+
+    SS.TW.ShowEditControl(6, ssprintf("%lg", c->valMax / SS.MmPerUnit()));
+    SS.TW.edit.meaning = Edit::RANGE_MAX;
+    SS.TW.edit.i = 1;
+    SS.TW.edit.constraint = hc;
+}
+
 void TextWindow::DescribeSelection() {
     Printf(false, "");
 
@@ -375,6 +411,20 @@ void TextWindow::DescribeSelection() {
         } else {
             Printf(false, "%FtSELECTED:%E %s",
             c->DescriptionString().c_str());
+        }
+        
+        if(c->HasLabel()) {
+            Printf(true, "  %Fd%f%D%Ll%s  ranged",
+                   &ScreenConstraintRanged, gs.constraint[0].v,
+                   c->ranged ? CHECK_TRUE : CHECK_FALSE);
+            if(c->ranged) {
+                Printf(false, "    min %@ %Fl%Ll%f%D[change]%E",
+                    c->valMin,
+                    &ScreenConstraintRangeMin, gs.constraint[0].v);            
+                Printf(false, "    max %@ %Fl%Ll%f%D[change]%E",
+                    c->valMax,
+                    &ScreenConstraintRangeMax, gs.constraint[0].v);
+                }
         }
 
         std::vector<hEntity> lhe = {};

@@ -781,6 +781,21 @@ void TextWindow::EditControlDone(const char *s) {
             SS.tangentArcRadius = SS.ExprToMm(e);
             break;
         }
+        
+        case Edit::RANGE_MIN:
+        case Edit::RANGE_MAX: {
+            Expr *e = Expr::From(s, /*popUpError=*/true);
+            if(!e) break;
+            SS.UndoRemember();
+            Constraint *c = SK.GetConstraint(edit.constraint);
+            double value = e->Eval() * SS.MmPerUnit();
+            if(edit.meaning == Edit::RANGE_MIN) {
+                c->valMin = value;
+            } else {
+                c->valMax = value;
+            }
+            break;
+        }
 
         default: {
             int cnt = 0;

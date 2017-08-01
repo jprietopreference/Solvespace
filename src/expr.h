@@ -34,6 +34,9 @@ public:
         COS            = 108,
         ASIN           = 109,
         ACOS           = 110,
+        ABS            = 111,
+        SGN            = 112,
+        NORM           = 113,
     };
 
     Op      op;
@@ -67,6 +70,9 @@ public:
     inline Expr *Cos   () { return AnyOp(Op::COS,    NULL); }
     inline Expr *ASin  () { return AnyOp(Op::ASIN,   NULL); }
     inline Expr *ACos  () { return AnyOp(Op::ACOS,   NULL); }
+    inline Expr *Abs   () { return AnyOp(Op::ABS,    NULL); }
+    inline Expr *Sgn   () { return AnyOp(Op::SGN,    NULL); }
+    inline Expr *Norm  () { return AnyOp(Op::NORM,   NULL); }
 
     Expr *PartialWrt(hParam p) const;
     double Eval() const;

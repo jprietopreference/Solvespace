@@ -10,6 +10,10 @@
 
 std::string Constraint::Label() const {
     std::string result;
+    double valA = this->valA;
+    if(valP.v != 0) {
+        valA = SK.GetParam(valP)->val;
+    }
     if(type == Type::ANGLE) {
         if(valA == floor(valA)) {
             result = ssprintf("%.0f°", valA);
@@ -32,6 +36,9 @@ std::string Constraint::Label() const {
     }
     if(reference) {
         result += " REF";
+    }
+    if(ranged) {
+        result = SS.MmToString(valMin) + "<" + result + "<" + SS.MmToString(valMax);
     }
     return result;
 }

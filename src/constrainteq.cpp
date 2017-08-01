@@ -196,6 +196,16 @@ void ConstraintBase::AddEq(IdList<Equation,hEquation> *l, const ExprVector &v,
 }
 
 void ConstraintBase::Generate(IdList<Param,hParam> *l) {
+    valP.v = 0;
+    
+    if(HasLabel() && ranged) {
+        Param p = {};
+        valP = h.param(0);
+        p.h = valP;
+        l->Add(&p);
+        return;
+    }
+    
     switch(type) {
         case Type::PARALLEL:
         case Type::CUBIC_LINE_TANGENT:
@@ -220,7 +230,20 @@ void ConstraintBase::GenerateEquations(IdList<Equation,hEquation> *l,
                                        bool forReference) const {
     if(reference && !forReference) return;
 
-    Expr *exA = Expr::From(valA);
+    Expr *exA;
+    if(HasLabel() && ranged) {
+        exA = Expr::From(valP);
+        Expr *exMin = Expr::From(valMin);
+        Expr *exMax = Expr::From(valMax);
+        Expr *dMin = exA->Minus(exMin);
+        Expr *dMax = exA->Minus(exMax);
+        Expr *eqMin = dMin->Norm()->Minus(dMin->Abs());
+        Expr *eqMax = dMax->Negate()->Norm()->Minus(dMax->Abs());
+        AddEq(l, eqMin, 10);
+        AddEq(l, eqMax, 11);
+    } else {
+        exA = Expr::From(valA);
+    }
     switch(type) {
         case Type::PT_PT_DISTANCE:
             AddEq(l, Distance(workplane, ptA, ptB)->Minus(exA), 0);

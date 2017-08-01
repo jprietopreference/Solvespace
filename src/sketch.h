@@ -640,6 +640,8 @@ public:
 
     // These are the parameters for the constraint.
     double      valA;
+    double      valMin;
+    double      valMax;
     hParam      valP;
     hEntity     ptA;
     hEntity     ptB;
@@ -651,6 +653,7 @@ public:
     bool        other2;
 
     bool        reference;  // a ref dimension, that generates no eqs
+    bool        ranged;     // an indicator of ranged constraint
     std::string comment;    // since comments are represented as constraints
 
     bool HasLabel() const;

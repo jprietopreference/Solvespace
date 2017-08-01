@@ -402,6 +402,8 @@ public:
         G_CODE_FEED           = 122,
         G_CODE_PLUNGE_FEED    = 123,
         AUTOSAVE_INTERVAL     = 124,
+        RANGE_MIN             = 125,
+        RANGE_MAX             = 126,
         // For TTF text
         TTF_TEXT              = 300,
         // For the step dimension screen
@@ -435,6 +437,7 @@ public:
         hGroup      group;
         hRequest    request;
         hStyle      style;
+        hConstraint constraint;
     } edit;
 
     static void ReportHowGroupSolved(hGroup hg);
@@ -484,6 +487,9 @@ public:
 
     // when we're describing a constraint
     static void ScreenConstraintShowAsRadius(int link, uint32_t v);
+    static void ScreenConstraintRanged(int link, uint32_t v);
+    static void ScreenConstraintRangeMin(int link, uint32_t v);
+    static void ScreenConstraintRangeMax(int link, uint32_t v);
 
     // and the rest from the stuff in textscreens.cpp
     static void ScreenSelectGroup(int link, uint32_t v);

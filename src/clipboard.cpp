@@ -235,6 +235,9 @@ void GraphicsWindow::PasteClipboard(Vector trans, double theta, double scale) {
         c.workplane = SS.GW.ActiveWorkplane();
         c.type = cc->type;
         c.valA = cc->valA;
+        c.ranged = cc->ranged;
+        c.valMin = cc->valMin;
+        c.valMax = cc->valMax;
         c.ptA = SS.clipboard.NewEntityFor(mapPoint(cc->ptA));
         c.ptB = SS.clipboard.NewEntityFor(mapPoint(cc->ptB));
         c.entityA = SS.clipboard.NewEntityFor(cc->entityA);
