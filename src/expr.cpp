@@ -283,6 +283,9 @@ int Expr::Children() const {
         case Op::COS:
         case Op::ASIN:
         case Op::ACOS:
+        case Op::ABS:
+        case Op::SGN:
+        case Op::NORM:
             return 1;
     }
     ssassert(false, "Unexpected operation");
@@ -353,6 +356,9 @@ double Expr::Eval() const {
         case Op::COS:           return cos(a->Eval());
         case Op::ACOS:          return acos(a->Eval());
         case Op::ASIN:          return asin(a->Eval());
+        case Op::ABS:           return fabs(a->Eval());
+        case Op::SGN:           { double av = a->Eval(); return (double)(av > 0.0) - (double)(av < 0.0); };
+        case Op::NORM:          return a->Eval();
     }
     ssassert(false, "Unexpected operation");
 }
@@ -396,6 +402,11 @@ Expr *Expr::PartialWrt(hParam p) const {
         case Op::ACOS:
             return (From(-1)->Div((From(1)->Minus(a->Square()))->Sqrt()))
                         ->Times(a->PartialWrt(p));
+        case Op::ABS:
+            return a->Sgn()->Times(a->PartialWrt(p));
+        case Op::SGN: break;
+        case Op::NORM:
+            return a->PartialWrt(p)->Times(a->Abs()->Sgn());
     }
     ssassert(false, "Unexpected operation");
 }
@@ -481,6 +492,9 @@ Expr *Expr::FoldConstants() {
         case Op::COS:
         case Op::ASIN:
         case Op::ACOS:
+        case Op::ABS:
+        case Op::SGN:
+        case Op::NORM:
             if(n->a->op == Op::CONSTANT) {
                 double nv = n->Eval();
                 n->op = Op::CONSTANT;
@@ -569,6 +583,9 @@ p:
         case Op::COS:       return "(cos " + a->Print() + ")";
         case Op::ASIN:      return "(asin " + a->Print() + ")";
         case Op::ACOS:      return "(acos " + a->Print() + ")";
+        case Op::ABS:       return "(abs " + a->Print() + ")";
+        case Op::SGN:       return "(sgn " + a->Print() + ")";
+        case Op::NORM:      return "(norm " + a->Print() + ")";
     }
     ssassert(false, "Unexpected operation");
 }
@@ -715,6 +732,10 @@ ExprParser::Token ExprParser::Lex(std::string *error) {
             t = Token::From(TokenType::UNARY_OP, Expr::Op::ASIN);
         } else if(s == "acos") {
             t = Token::From(TokenType::UNARY_OP, Expr::Op::ACOS);
+        } else if(s == "abs") {
+            t = Token::From(TokenType::UNARY_OP, Expr::Op::ABS);
+        } else if(s == "sgn") {
+            t = Token::From(TokenType::UNARY_OP, Expr::Op::SGN);
         } else if(s == "pi") {
             t = Token::From(TokenType::OPERAND, Expr::Op::CONSTANT);
             t.expr->v = PI;
@@ -817,6 +838,8 @@ bool ExprParser::Reduce(std::string *error) {
                 case Expr::Op::COS:    e = e->Times(Expr::From(PI/180))->Cos(); break;
                 case Expr::Op::ASIN:   e = e->ASin()->Times(Expr::From(180/PI)); break;
                 case Expr::Op::ACOS:   e = e->ACos()->Times(Expr::From(180/PI)); break;
+                case Expr::Op::ABS:    e = e->Abs(); break;
+                case Expr::Op::SGN:    e = e->Sgn(); break;
                 default: ssassert(false, "Unexpected unary operator");
             }
             r.expr = e;

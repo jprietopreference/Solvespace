@@ -423,7 +423,7 @@ SolveResult System::Solve(Group *g, int *dof, List<hConstraint> *bad,
     if(!forceDofCheck) {
         SolveBySubstitution();
     }
-
+    /*
     // Before solving the big system, see if we can find any equations that
     // are soluble alone. This can be a huge speedup. We don't know whether
     // the system is consistent yet, but if it isn't then we'll catch that
@@ -452,7 +452,7 @@ SolveResult System::Solve(Group *g, int *dof, List<hConstraint> *bad,
         }
         alone++;
     }
-
+    */
     // Now write the Jacobian for what's left, and do a rank test; that
     // tells us if the system is inconsistently constrained.
     if(!WriteJacobian(0)) {
