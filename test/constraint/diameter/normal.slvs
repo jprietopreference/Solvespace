@@ -290,6 +290,7 @@ Constraint.entityA.v=00040000
 Constraint.other=0
 Constraint.other2=0
 Constraint.reference=0
+Constraint.ranged=0
 Constraint.disp.offset.x=5.00000000000000000000
 Constraint.disp.offset.y=5.00000000000000000000
 AddConstraint

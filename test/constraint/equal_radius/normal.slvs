@@ -345,5 +345,6 @@ Constraint.entityB.v=00050000
 Constraint.other=0
 Constraint.other2=0
 Constraint.reference=0
+Constraint.ranged=0
 AddConstraint
 

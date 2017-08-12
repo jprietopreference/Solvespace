@@ -152,7 +152,7 @@ Param.val=-5.00000000000000000000
 AddParam
 
 Param.h.v.=00050014
-Param.val=5.00000000000000088818
+Param.val=5.00000000000000090000
 AddParam
 
 Param.h.v.=00050015
@@ -304,7 +304,7 @@ Entity.h.v=00050002
 Entity.type=2000
 Entity.construction=0
 Entity.actPoint.x=-5.00000000000000000000
-Entity.actPoint.y=5.00000000000000088818
+Entity.actPoint.y=5.00000000000000090000
 Entity.actVisible=1
 AddEntity
 
@@ -338,6 +338,7 @@ Constraint.ptB.v=00050001
 Constraint.other=0
 Constraint.other2=0
 Constraint.reference=0
+Constraint.ranged=0
 AddConstraint
 
 Constraint.h.v=00000002
@@ -349,7 +350,8 @@ Constraint.entityB.v=00050000
 Constraint.other=1
 Constraint.other2=0
 Constraint.reference=0
-Constraint.disp.offset.x=0.51894056308654845644
-Constraint.disp.offset.y=3.99584233576642278152
+Constraint.ranged=0
+Constraint.disp.offset.x=0.51894056308654846000
+Constraint.disp.offset.y=3.99584233576642280000
 AddConstraint
 

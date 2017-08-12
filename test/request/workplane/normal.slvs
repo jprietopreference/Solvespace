@@ -123,19 +123,19 @@ Param.h.v.=00040012
 AddParam
 
 Param.h.v.=00040020
-Param.val=0.88047623921714945894
+Param.val=0.88047623921714946000
 AddParam
 
 Param.h.v.=00040021
-Param.val=-0.27984814233312144127
+Param.val=-0.27984814233312144000
 AddParam
 
 Param.h.v.=00040022
-Param.val=-0.36470519963100095362
+Param.val=-0.36470519963100095000
 AddParam
 
 Param.h.v.=00040023
-Param.val=-0.11591689595929521861
+Param.val=-0.11591689595929522000
 AddParam
 
 Request.h.v=00000001
@@ -252,10 +252,10 @@ Entity.h.v=00040020
 Entity.type=3000
 Entity.construction=0
 Entity.point[0].v=00040001
-Entity.actNormal.w=0.88047623921714945894
-Entity.actNormal.vx=-0.27984814233312144127
-Entity.actNormal.vy=-0.36470519963100095362
-Entity.actNormal.vz=-0.11591689595929521861
+Entity.actNormal.w=0.88047623921714946000
+Entity.actNormal.vx=-0.27984814233312144000
+Entity.actNormal.vy=-0.36470519963100095000
+Entity.actNormal.vz=-0.11591689595929522000
 Entity.actVisible=1
 AddEntity
 
@@ -289,5 +289,6 @@ Constraint.ptB.v=00040001
 Constraint.other=0
 Constraint.other2=0
 Constraint.reference=0
+Constraint.ranged=0
 AddConstraint
 

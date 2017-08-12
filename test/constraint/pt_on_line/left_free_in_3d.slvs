@@ -148,7 +148,7 @@ Param.h.v.=00050012
 AddParam
 
 Param.h.v.=40000001
-Param.val=0.33333333333333331483
+Param.val=0.33333333333333331000
 AddParam
 
 Request.h.v=00000001
@@ -316,5 +316,6 @@ Constraint.entityA.v=00040000
 Constraint.other=0
 Constraint.other2=0
 Constraint.reference=0
+Constraint.ranged=0
 AddConstraint
 
