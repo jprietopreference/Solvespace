@@ -284,6 +284,7 @@ Constraint.ptB.v=00050000
 Constraint.other=0
 Constraint.other2=0
 Constraint.reference=0
+Constraint.ranged=0
 Constraint.disp.offset.y=2.50000000000000000000
 AddConstraint
 

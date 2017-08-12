@@ -469,6 +469,7 @@ Constraint.ptB.v=00050001
 Constraint.other=0
 Constraint.other2=0
 Constraint.reference=0
+Constraint.ranged=0
 AddConstraint
 
 Constraint.h.v=00000002
@@ -480,6 +481,7 @@ Constraint.entityB.v=00040000
 Constraint.other=0
 Constraint.other2=1
 Constraint.reference=0
+Constraint.ranged=0
 AddConstraint
 
 Constraint.h.v=00000003
@@ -491,6 +493,7 @@ Constraint.ptB.v=00060002
 Constraint.other=0
 Constraint.other2=0
 Constraint.reference=0
+Constraint.ranged=0
 AddConstraint
 
 Constraint.h.v=00000004
@@ -502,5 +505,6 @@ Constraint.entityB.v=00060000
 Constraint.other=1
 Constraint.other2=0
 Constraint.reference=0
+Constraint.ranged=0
 AddConstraint
 
