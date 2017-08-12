@@ -18,7 +18,7 @@ deploy:
     skip_cleanup: true
     file: build/solvespace.dmg
     on:
-      repo: solvespace/solvespace
+      repo: Evil-Spirit/ranged_constraints
       tags: true
       condition: "$TRAVIS_OS_NAME == osx"
 notifications:
