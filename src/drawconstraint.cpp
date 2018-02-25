@@ -39,6 +39,8 @@ std::string Constraint::Label() const {
     }
     if(ranged) {
         result = SS.MmToString(valMin) + "<" + result + "<" + SS.MmToString(valMax);
+    } else if(expression != "") {
+        result = expression;
     }
     return result;
 }

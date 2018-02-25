@@ -570,6 +570,7 @@ public:
     double      val;
     bool        known;
     bool        free;
+    std::string name;
 
     // Used only in the solver
     Param       *substd;
@@ -656,6 +657,7 @@ public:
     bool        reference;  // a ref dimension, that generates no eqs
     bool        ranged;     // an indicator of ranged constraint
     std::string comment;    // since comments are represented as constraints
+    std::string expression;
 
     bool HasLabel() const;
 

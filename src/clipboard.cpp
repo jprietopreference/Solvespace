@@ -249,6 +249,7 @@ void GraphicsWindow::PasteClipboard(Vector trans, double theta, double scale) {
         c.reference = cc->reference;
         c.disp = cc->disp;
         c.comment = cc->comment;
+        c.expression = cc->expression;
         switch(c.type) {
             case Constraint::Type::COMMENT:
                 c.disp.offset = c.disp.offset.Plus(trans);
