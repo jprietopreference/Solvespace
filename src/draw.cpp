@@ -352,16 +352,16 @@ GraphicsWindow::Selection GraphicsWindow::ChooseFromHoverToSelect() {
 }
 
 GraphicsWindow::Selection GraphicsWindow::ChooseFromHoverToDrag() {
-    Selection sel = {};
-    for(const Hover &hov : hoverList) {
-        if(hov.selection.entity.v == 0) continue;
-        if(!hov.selection.entity.isFromRequest()) continue;
-        sel = hov.selection;
-        break;
-    }
-    if(!sel.IsEmpty()) {
-        return sel;
-    }
+//    Selection sel = {};
+//    for(const Hover &hov : hoverList) {
+//        if(hov.selection.entity.v == 0) continue;
+//        if(!hov.selection.entity.isFromRequest()) continue;
+//        sel = hov.selection;
+//        break;
+//    }
+//    if(!sel.IsEmpty()) {
+//        return sel;
+//    }
     return ChooseFromHoverToSelect();
 }
 
