@@ -33,6 +33,7 @@ void System::WriteJacobian(int tag) {
     mat.m = mat.eq.size();
     delete mat.A.sym;
     mat.A.sym = new Eigen::SparseMatrix<Expr *>(mat.m, mat.n);
+    if(mat.n == 0 || mat.m == 0) return;
     mat.A.sym->reserve(Eigen::VectorXi::Constant(mat.n, 10));
 
     // Fill the param id to index map
