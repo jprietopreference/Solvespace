@@ -679,67 +679,27 @@ void SolveSpaceUI::MenuAnalyze(Command id) {
         }
 
         case Command::VOLUME: {
-            SMesh *m = &(SK.GetGroup(SS.GW.activeGroup)->displayMesh);
+            Group *active = SK.GetGroup(SS.GW.activeGroup);
 
-            double vol = 0;
-            int i;
-            for(i = 0; i < m->l.n; i++) {
-                STriangle tr = m->l.elem[i];
-
-                // Translate to place vertex A at (x, y, 0)
-                Vector trans = Vector::From(tr.a.x, tr.a.y, 0);
-                tr.a = (tr.a).Minus(trans);
-                tr.b = (tr.b).Minus(trans);
-                tr.c = (tr.c).Minus(trans);
-
-                // Rotate to place vertex B on the y-axis. Depending on
-                // whether the triangle is CW or CCW, C is either to the
-                // right or to the left of the y-axis. This handles the
-                // sign of our normal.
-                Vector u = Vector::From(-tr.b.y, tr.b.x, 0);
-                u = u.WithMagnitude(1);
-                Vector v = Vector::From(tr.b.x, tr.b.y, 0);
-                v = v.WithMagnitude(1);
-                Vector n = Vector::From(0, 0, 1);
-
-                tr.a = (tr.a).DotInToCsys(u, v, n);
-                tr.b = (tr.b).DotInToCsys(u, v, n);
-                tr.c = (tr.c).DotInToCsys(u, v, n);
-
-                n = tr.Normal().WithMagnitude(1);
-
-                // Triangles on edge don't contribute
-                if(fabs(n.z) < LENGTH_EPS) continue;
-
-                // The plane has equation p dot n = a dot n
-                double d = (tr.a).Dot(n);
-                // nx*x + ny*y + nz*z = d
-                // nz*z = d - nx*x - ny*y
-                double A = -n.x/n.z, B = -n.y/n.z, C = d/n.z;
-
-                double mac = tr.c.y/tr.c.x, mbc = (tr.c.y - tr.b.y)/tr.c.x;
-                double xc = tr.c.x, yb = tr.b.y;
-
-                // I asked Maple for
-                //    int(int(A*x + B*y +C, y=mac*x..(mbc*x + yb)), x=0..xc);
-                double integral =
-                    (1.0/3)*(
-                        A*(mbc-mac)+
-                        (1.0/2)*B*(mbc*mbc-mac*mac)
-                    )*(xc*xc*xc)+
-                    (1.0/2)*(A*yb+B*yb*mbc+C*(mbc-mac))*xc*xc+
-                    C*yb*xc+
-                    (1.0/2)*B*yb*yb*xc;
-
-                vol += integral;
-            }
-
+            double vol = active->displayMesh.CalculateVolume();
             std::string msg = ssprintf("The volume of the solid model is:\n\n""    %.3f %s^3",
                 vol / pow(SS.MmPerUnit(), 3),
                 SS.UnitName());
-
             if(SS.viewUnits == Unit::MM) {
                 msg += ssprintf("\n    %.2f mL", vol/(10*10*10));
+            }
+
+            SMesh curMesh = {};
+            active->thisShell.TriangulateInto(&curMesh);
+            double curVol = curMesh.CalculateVolume();
+            if(curVol > 0.0) {
+                msg += ssprintf("\nThe volume of current group mesh is:\n\n""    %.3f %s^3",
+                    curVol / pow(SS.MmPerUnit(), 3),
+                    SS.UnitName());
+            }
+
+            if(SS.viewUnits == Unit::MM) {
+                msg += ssprintf("\n    %.2f mL", curVol/(10*10*10));
             }
             msg += "\n\nCurved surfaces have been approximated as triangles.\n"
                    "This introduces error, typically of around 1%.";
@@ -749,6 +709,24 @@ void SolveSpaceUI::MenuAnalyze(Command id) {
 
         case Command::AREA: {
             Group *g = SK.GetGroup(SS.GW.activeGroup);
+            SS.GW.GroupSelection();
+            auto const &gs = SS.GW.gs;
+            double scale = SS.MmPerUnit();
+
+            if(gs.faces > 0) {
+                std::vector<uint32_t> faces;
+                faces.push_back(gs.face[0].v);
+                if(gs.faces > 1) faces.push_back(gs.face[1].v);
+                double area = g->displayMesh.CalculateSurfaceArea(faces);
+                Message("The surface area of the selected faces is:\n\n"
+                        "    %.3f %s^2\n\n"
+                        "Curves have been approximated as piecewise linear.\n"
+                        "This introduces error, typically of around 1%%.",
+                    area / (scale*scale),
+                    SS.UnitName());
+                break;
+            }
+
             if(g->polyError.how != PolyError::GOOD) {
                 Error(_("This group does not contain a correctly-formed "
                         "2d closed area. It is open, not coplanar, or self-"
@@ -762,7 +740,6 @@ void SolveSpaceUI::MenuAnalyze(Command id) {
             sp.normal = sp.ComputeNormal();
             sp.FixContourDirections();
             double area = sp.SignedArea();
-            double scale = SS.MmPerUnit();
             Message("The area of the region sketched in this group is:\n\n"
                     "    %.3f %s^2\n\n"
                     "Curves have been approximated as piecewise linear.\n"
